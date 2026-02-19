@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { WorkerForm } from "../worker-form";
 import { PaymentForm } from "../payment-form";
 import { PaymentsTable } from "./payments-table";
+import { AvailabilitySection } from "./availability-section";
 
 export default async function WorkerDetailPage({
   params,
@@ -17,39 +18,41 @@ export default async function WorkerDetailPage({
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: worker } = await supabase
-    .from("workers")
-    .select("*")
-    .eq("id", id)
-    .single();
+  const [{ data: worker }, { data: payments }, { data: workerJobs }, { data: availability }] =
+    await Promise.all([
+      supabase.from("workers").select("*").eq("id", id).single(),
+      supabase
+        .from("worker_payments")
+        .select(
+          `
+        id,
+        amount,
+        payment_date,
+        confirmation_number,
+        notes,
+        job_id,
+        jobs (
+          job_number
+        )
+      `
+        )
+        .eq("worker_id", id)
+        .order("payment_date", { ascending: false }),
+      supabase
+        .from("jobs")
+        .select("id, job_number, building_address, client_company")
+        .eq("worker_id", id)
+        .order("job_number", { ascending: false }),
+      supabase
+        .from("worker_availability")
+        .select("id, type, day_of_week, specific_date, reason")
+        .eq("worker_id", id)
+        .order("created_at"),
+    ]);
 
   if (!worker) {
     notFound();
   }
-
-  const { data: payments } = await supabase
-    .from("worker_payments")
-    .select(
-      `
-      id,
-      amount,
-      payment_date,
-      confirmation_number,
-      notes,
-      job_id,
-      jobs (
-        job_number
-      )
-    `
-    )
-    .eq("worker_id", id)
-    .order("payment_date", { ascending: false });
-
-  const { data: workerJobs } = await supabase
-    .from("jobs")
-    .select("id, job_number, building_address, client_company")
-    .eq("worker_id", id)
-    .order("job_number", { ascending: false });
 
   const paymentRows = (payments ?? []).map((p) => ({
     id: p.id,
@@ -132,6 +135,10 @@ export default async function WorkerDetailPage({
           </dl>
         </CardContent>
       </Card>
+
+      <div className="mb-8">
+        <AvailabilitySection workerId={worker.id} blocks={availability ?? []} />
+      </div>
 
       <div>
         <div className="mb-4 flex items-center justify-between">

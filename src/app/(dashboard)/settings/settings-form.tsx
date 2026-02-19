@@ -23,6 +23,7 @@ interface SettingsFormProps {
 export function SettingsForm({ settings }: SettingsFormProps) {
   const [isBizPending, startBizTransition] = useTransition();
   const [isPricingPending, startPricingTransition] = useTransition();
+  const [isDurationPending, startDurationTransition] = useTransition();
 
   function handleBusinessSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -46,6 +47,19 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         toast.error(result.error);
       } else {
         toast.success("Pricing defaults saved.");
+      }
+    });
+  }
+
+  function handleDurationSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startDurationTransition(async () => {
+      const result = await updateSettings(formData);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Duration estimates saved.");
       }
     });
   }
@@ -259,6 +273,85 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           <CardFooter>
             <Button type="submit" disabled={isPricingPending}>
               {isPricingPending ? "Saving..." : "Save Pricing Defaults"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+
+      <form onSubmit={handleDurationSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Duration Estimates</CardTitle>
+            <CardDescription>
+              Used to auto-calculate job end times for scheduling.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium">LPT (XRF Scanning)</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Estimated time per unit and per common space.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="lpt_duration_per_unit">Minutes / Unit</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="lpt_duration_per_unit"
+                      name="lpt_duration_per_unit"
+                      type="number"
+                      min="1"
+                      defaultValue={settings.lpt_duration_per_unit ?? "45"}
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lpt_duration_per_common_space">Minutes / Common Space</Label>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="lpt_duration_per_common_space"
+                      name="lpt_duration_per_common_space"
+                      type="number"
+                      min="1"
+                      defaultValue={settings.lpt_duration_per_common_space ?? "30"}
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-3">
+              <div>
+                <p className="text-sm font-medium">Dust Swab</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Flat duration for dust swab inspections.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="dust_swab_duration">Duration</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="dust_swab_duration"
+                    name="dust_swab_duration"
+                    type="number"
+                    min="1"
+                    className="w-32"
+                    defaultValue={settings.dust_swab_duration ?? "90"}
+                  />
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isDurationPending}>
+              {isDurationPending ? "Saving..." : "Save Duration Estimates"}
             </Button>
           </CardFooter>
         </Card>

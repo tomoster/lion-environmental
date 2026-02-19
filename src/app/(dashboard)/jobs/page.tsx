@@ -26,7 +26,11 @@ export default async function JobsPage() {
     supabase
       .from("settings")
       .select("key, value")
-      .in("key", ["lpt_price_per_unit", "lpt_price_per_common_space", "dust_swab_site_visit", "dust_swab_report", "dust_swab_wipe_rate"]),
+      .in("key", [
+        "lpt_price_per_unit", "lpt_price_per_common_space",
+        "dust_swab_site_visit", "dust_swab_report", "dust_swab_wipe_rate",
+        "lpt_duration_per_unit", "lpt_duration_per_common_space", "dust_swab_duration",
+      ]),
   ]);
 
   const s = Object.fromEntries((settings ?? []).map((r) => [r.key, r.value]));
@@ -36,6 +40,11 @@ export default async function JobsPage() {
     dust_swab_site_visit: parseFloat(s.dust_swab_site_visit ?? "375"),
     dust_swab_report: parseFloat(s.dust_swab_report ?? "135"),
     dust_swab_wipe_rate: parseFloat(s.dust_swab_wipe_rate ?? "20"),
+  };
+  const durationDefaults = {
+    lpt_duration_per_unit: parseInt(s.lpt_duration_per_unit ?? "45"),
+    lpt_duration_per_common_space: parseInt(s.lpt_duration_per_common_space ?? "30"),
+    dust_swab_duration: parseInt(s.dust_swab_duration ?? "90"),
   };
 
   return (
@@ -55,7 +64,11 @@ export default async function JobsPage() {
             <DialogHeader>
               <DialogTitle>Create New Job</DialogTitle>
             </DialogHeader>
-            <JobForm workers={workers ?? []} pricingDefaults={pricingDefaults} />
+            <JobForm
+              workers={workers ?? []}
+              pricingDefaults={pricingDefaults}
+              durationDefaults={durationDefaults}
+            />
           </DialogContent>
         </Dialog>
       </div>

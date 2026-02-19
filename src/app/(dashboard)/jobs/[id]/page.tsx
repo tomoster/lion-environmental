@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateJob, deleteJob, uploadReport } from "../actions";
+import { getAvailableWorkers } from "@/lib/scheduling";
 
 const DUST_SWAB_SITE_VISIT = 375;
 const DUST_SWAB_REPORT_FEE = 135;
@@ -71,6 +72,14 @@ function formatDate(date: string | null): string {
   });
 }
 
+function formatTime12h(time: string | null): string {
+  if (!time) return "—";
+  const [h, m] = time.split(":").map(Number);
+  const period = h >= 12 ? "pm" : "am";
+  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${hour12}:${m.toString().padStart(2, "0")}${period}`;
+}
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -86,20 +95,31 @@ export default async function JobDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: job }, { data: workers }] = await Promise.all([
-    supabase
-      .from("jobs")
-      .select("*, workers(id, name)")
-      .eq("id", id)
-      .single(),
-    supabase
-      .from("workers")
-      .select("id, name, active")
-      .eq("active", true)
-      .order("name"),
-  ]);
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("*, workers(id, name)")
+    .eq("id", id)
+    .single();
 
   if (!job) notFound();
+
+  let availability = { available: [] as { id: string; name: string }[], unavailable: [] as { worker: { id: string; name: string }; reason: string }[] };
+
+  if (job.scan_date) {
+    availability = await getAvailableWorkers(
+      job.scan_date,
+      job.start_time,
+      job.estimated_end_time,
+      id
+    );
+  } else {
+    const { data: workers } = await supabase
+      .from("workers")
+      .select("id, name")
+      .eq("active", true)
+      .order("name");
+    availability = { available: workers ?? [], unavailable: [] };
+  }
 
   const lptSubtotal =
     job.service_type === "lpt"
@@ -240,6 +260,27 @@ export default async function JobDetailPage({ params }: PageProps) {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="start_time">Start Time</Label>
+                    <Input
+                      id="start_time"
+                      name="start_time"
+                      type="time"
+                      defaultValue={job.start_time ?? ""}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="estimated_end_time">Est. End Time</Label>
+                    <Input
+                      id="estimated_end_time"
+                      name="estimated_end_time"
+                      type="time"
+                      defaultValue={job.estimated_end_time ?? ""}
+                    />
+                  </div>
+                </div>
+
                 <Separator />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -254,9 +295,14 @@ export default async function JobDetailPage({ params }: PageProps) {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="">Unassigned</SelectItem>
-                        {(workers ?? []).map((w) => (
+                        {availability.available.map((w) => (
                           <SelectItem key={w.id} value={w.id}>
                             {w.name}
+                          </SelectItem>
+                        ))}
+                        {availability.unavailable.map(({ worker: w, reason }) => (
+                          <SelectItem key={w.id} value={w.id} disabled>
+                            {w.name} — {reason}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -433,6 +479,15 @@ export default async function JobDetailPage({ params }: PageProps) {
                 <span className="text-muted-foreground">Scan date</span>
                 <span>{formatDate(job.scan_date)}</span>
               </div>
+              {job.start_time && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Time</span>
+                  <span>
+                    {formatTime12h(job.start_time)}
+                    {job.estimated_end_time ? ` – ${formatTime12h(job.estimated_end_time)}` : ""}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Worker</span>
                 <span>{workerData?.name ?? "Unassigned"}</span>

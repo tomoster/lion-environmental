@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +14,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { createJob } from "./actions";
+import { calculateEndTime } from "@/lib/scheduling-utils";
 
 type Worker = {
   id: string;
   name: string;
   active: boolean | null;
+};
+
+type UnavailableWorker = {
+  worker: Worker;
+  reason: string;
 };
 
 type PricingDefaults = {
@@ -29,9 +35,16 @@ type PricingDefaults = {
   dust_swab_wipe_rate: number;
 };
 
+type DurationDefaults = {
+  lpt_duration_per_unit: number;
+  lpt_duration_per_common_space: number;
+  dust_swab_duration: number;
+};
+
 type JobFormProps = {
   workers: Worker[];
   pricingDefaults?: PricingDefaults;
+  durationDefaults?: DurationDefaults;
   defaultValues?: {
     client_company?: string;
     client_email?: string;
@@ -41,11 +54,14 @@ type JobFormProps = {
   onSuccess?: () => void;
 };
 
-export function JobForm({ workers, pricingDefaults, defaultValues, onSuccess }: JobFormProps) {
+export function JobForm({ workers, pricingDefaults, durationDefaults, defaultValues, onSuccess }: JobFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [serviceType, setServiceType] = useState("lpt");
   const [numWipes, setNumWipes] = useState(0);
+  const [numUnits, setNumUnits] = useState(0);
+  const [numCommonSpaces, setNumCommonSpaces] = useState(0);
+  const [startTime, setStartTime] = useState("");
 
   const pricing = {
     lpt_price_per_unit: pricingDefaults?.lpt_price_per_unit ?? 0,
@@ -55,7 +71,21 @@ export function JobForm({ workers, pricingDefaults, defaultValues, onSuccess }: 
     dust_swab_wipe_rate: pricingDefaults?.dust_swab_wipe_rate ?? 20,
   };
 
+  const duration = {
+    lpt_duration_per_unit: durationDefaults?.lpt_duration_per_unit ?? 45,
+    lpt_duration_per_common_space: durationDefaults?.lpt_duration_per_common_space ?? 30,
+    dust_swab_duration: durationDefaults?.dust_swab_duration ?? 90,
+  };
+
+  const estimatedEndTime = useMemo(() => {
+    if (!startTime) return "";
+    return calculateEndTime(startTime, serviceType, numUnits, numCommonSpaces, duration);
+  }, [startTime, serviceType, numUnits, numCommonSpaces, duration]);
+
   async function handleSubmit(formData: FormData) {
+    if (estimatedEndTime) {
+      formData.set("estimated_end_time", estimatedEndTime);
+    }
     startTransition(async () => {
       try {
         await createJob(formData);
@@ -131,6 +161,28 @@ export function JobForm({ workers, pricingDefaults, defaultValues, onSuccess }: 
         </div>
       </div>
 
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="start_time">Start Time</Label>
+          <Input
+            id="start_time"
+            name="start_time"
+            type="time"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="estimated_end_time_display">Est. End Time</Label>
+          <Input
+            id="estimated_end_time_display"
+            value={estimatedEndTime || "—"}
+            readOnly
+            className="bg-muted/40 cursor-not-allowed"
+          />
+        </div>
+      </div>
+
       {serviceType === "lpt" && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
@@ -141,6 +193,8 @@ export function JobForm({ workers, pricingDefaults, defaultValues, onSuccess }: 
               type="number"
               min="0"
               placeholder="0"
+              value={numUnits || ""}
+              onChange={(e) => setNumUnits(Number(e.target.value))}
             />
           </div>
           <div className="space-y-1.5">
@@ -163,6 +217,8 @@ export function JobForm({ workers, pricingDefaults, defaultValues, onSuccess }: 
               type="number"
               min="0"
               placeholder="0"
+              value={numCommonSpaces || ""}
+              onChange={(e) => setNumCommonSpaces(Number(e.target.value))}
             />
           </div>
           <div className="space-y-1.5">

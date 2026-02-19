@@ -89,6 +89,7 @@ export type Database = {
           client_email: string | null
           created_at: string | null
           dispatch_status: string
+          estimated_end_time: string | null
           id: string
           job_number: number
           notes: string | null
@@ -102,6 +103,7 @@ export type Database = {
           report_status: string
           scan_date: string | null
           service_type: string | null
+          start_time: string | null
           updated_at: string | null
           worker_id: string | null
         }
@@ -111,6 +113,7 @@ export type Database = {
           client_email?: string | null
           created_at?: string | null
           dispatch_status?: string
+          estimated_end_time?: string | null
           id?: string
           job_number?: number
           notes?: string | null
@@ -124,6 +127,7 @@ export type Database = {
           report_status?: string
           scan_date?: string | null
           service_type?: string | null
+          start_time?: string | null
           updated_at?: string | null
           worker_id?: string | null
         }
@@ -133,6 +137,7 @@ export type Database = {
           client_email?: string | null
           created_at?: string | null
           dispatch_status?: string
+          estimated_end_time?: string | null
           id?: string
           job_number?: number
           notes?: string | null
@@ -146,6 +151,7 @@ export type Database = {
           report_status?: string
           scan_date?: string | null
           service_type?: string | null
+          start_time?: string | null
           updated_at?: string | null
           worker_id?: string | null
         }
@@ -231,6 +237,53 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      worker_availability: {
+        Row: {
+          all_day: boolean | null
+          created_at: string | null
+          day_of_week: number | null
+          end_time: string | null
+          id: string
+          reason: string | null
+          specific_date: string | null
+          start_time: string | null
+          type: string
+          worker_id: string | null
+        }
+        Insert: {
+          all_day?: boolean | null
+          created_at?: string | null
+          day_of_week?: number | null
+          end_time?: string | null
+          id?: string
+          reason?: string | null
+          specific_date?: string | null
+          start_time?: string | null
+          type: string
+          worker_id?: string | null
+        }
+        Update: {
+          all_day?: boolean | null
+          created_at?: string | null
+          day_of_week?: number | null
+          end_time?: string | null
+          id?: string
+          reason?: string | null
+          specific_date?: string | null
+          start_time?: string | null
+          type?: string
+          worker_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "worker_availability_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       worker_payments: {
         Row: {

@@ -130,3 +130,56 @@ export async function deletePayment(id: string, workerId: string) {
   revalidatePath(`/workers/${workerId}`);
   return { success: true };
 }
+
+export async function addRecurringBlock(workerId: string, dayOfWeek: number) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("worker_availability").insert({
+    worker_id: workerId,
+    type: "recurring",
+    day_of_week: dayOfWeek,
+    all_day: true,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/workers/${workerId}`);
+  return { success: true };
+}
+
+export async function addOneOffBlock(workerId: string, date: string, reason?: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("worker_availability").insert({
+    worker_id: workerId,
+    type: "one_off",
+    specific_date: date,
+    all_day: true,
+    reason: reason || null,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/workers/${workerId}`);
+  return { success: true };
+}
+
+export async function removeAvailabilityBlock(id: string, workerId: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("worker_availability")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath(`/workers/${workerId}`);
+  return { success: true };
+}
