@@ -74,7 +74,6 @@ export function TeamTable({ members }: { members: MemberRow[] }) {
                   <TableHead>Phone</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
-                  {group.role !== "management" && <TableHead>Rate</TableHead>}
                   <TableHead className="text-right">Jobs Done</TableHead>
                   <TableHead className="w-10" />
                 </TableRow>
@@ -149,13 +148,6 @@ function MemberTableRow({ member }: { member: MemberRow }) {
           <Badge variant="secondary">Inactive</Badge>
         )}
       </TableCell>
-      {member.role !== "management" && (
-        <TableCell className="text-muted-foreground text-xs">
-          {member.rate_per_unit != null || member.rate_per_common_space != null
-            ? `$${member.rate_per_unit?.toFixed(2) ?? "\u2014"}/unit, $${member.rate_per_common_space?.toFixed(2) ?? "\u2014"}/cs`
-            : "\u2014"}
-        </TableCell>
-      )}
       <TableCell className="text-right">{member.jobsDone}</TableCell>
       <TableCell>
         <DropdownMenu>
