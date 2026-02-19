@@ -303,6 +303,27 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_state: {
+        Row: {
+          chat_id: string
+          created_at: string | null
+          payload: Json | null
+          state_type: string
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string | null
+          payload?: Json | null
+          state_type: string
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string | null
+          payload?: Json | null
+          state_type?: string
+        }
+        Relationships: []
+      }
       worker_availability: {
         Row: {
           all_day: boolean | null
@@ -445,7 +466,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      accept_job: {
+        Args: { p_job_id: string; p_worker_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

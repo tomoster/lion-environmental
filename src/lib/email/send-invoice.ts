@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -84,4 +85,98 @@ export async function sendInvoiceEmail({
   }
 
   return data;
+}
+
+export async function sendInvoiceForId(
+  invoiceId: string,
+  supabase: SupabaseClient
+): Promise<{ invoiceNumber: number; sentTo: string }> {
+  const { data: invoice, error: invoiceError } = await supabase
+    .from("invoices")
+    .select(
+      "*, jobs(service_type, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, client_email)"
+    )
+    .eq("id", invoiceId)
+    .single();
+
+  if (invoiceError || !invoice) {
+    throw new Error("Invoice not found");
+  }
+
+  const job = invoice.jobs as {
+    service_type: string | null;
+    num_units: number | null;
+    price_per_unit: number | null;
+    num_common_spaces: number | null;
+    price_per_common_space: number | null;
+    num_wipes: number | null;
+    client_email: string | null;
+  } | null;
+
+  if (!job?.client_email) {
+    throw new Error("No client email address on file for this job");
+  }
+
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("key, value");
+  const settingsMap = Object.fromEntries(
+    (settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value])
+  );
+  const senderName = settingsMap["sender_name"] ?? "Avi Bursztyn";
+
+  const { renderInvoiceToBuffer } = await import("@/lib/pdf/invoice-template");
+
+  const pdfBuffer = await renderInvoiceToBuffer(
+    {
+      invoice_number: invoice.invoice_number,
+      client_company: invoice.client_company,
+      building_address: invoice.building_address,
+      subtotal: invoice.subtotal,
+      tax_rate: invoice.tax_rate,
+      tax_amount: invoice.tax_amount,
+      total: invoice.total,
+      date_sent: invoice.date_sent,
+      due_date: invoice.due_date,
+      created_at: invoice.created_at,
+    },
+    {
+      service_type: job.service_type,
+      num_units: job.num_units,
+      price_per_unit: job.price_per_unit,
+      num_common_spaces: job.num_common_spaces,
+      price_per_common_space: job.price_per_common_space,
+      num_wipes: job.num_wipes,
+    }
+  );
+
+  await sendInvoiceEmail({
+    to: job.client_email,
+    invoiceNumber: invoice.invoice_number,
+    clientCompany: invoice.client_company ?? "Client",
+    total: invoice.total ?? 0,
+    dueDate: invoice.due_date ?? "",
+    pdfBuffer: Buffer.from(pdfBuffer),
+    senderName,
+  });
+
+  const pdfPath = `invoices/${invoiceId}/invoice-${invoice.invoice_number}.pdf`;
+  await supabase.storage
+    .from("invoices")
+    .upload(pdfPath, pdfBuffer, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
+
+  await supabase
+    .from("invoices")
+    .update({
+      status: "sent",
+      date_sent: new Date().toISOString(),
+      pdf_path: pdfPath,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", invoiceId);
+
+  return { invoiceNumber: invoice.invoice_number, sentTo: job.client_email };
 }

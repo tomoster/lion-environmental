@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateJob, deleteJob, uploadReport } from "../actions";
+import { dispatchJob, sendReport } from "./automation-actions";
 import { getAvailableWorkers } from "@/lib/scheduling";
 
 const DUST_SWAB_SITE_VISIT = 375;
@@ -64,7 +65,7 @@ function reportBadgeClass(status: string): string {
 }
 
 function formatDate(date: string | null): string {
-  if (!date) return "—";
+  if (!date) return "\u2014";
   return new Date(date + "T00:00:00").toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -73,7 +74,7 @@ function formatDate(date: string | null): string {
 }
 
 function formatTime12h(time: string | null): string {
-  if (!time) return "—";
+  if (!time) return "\u2014";
   const [h, m] = time.split(":").map(Number);
   const period = h >= 12 ? "pm" : "am";
   const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
@@ -143,6 +144,11 @@ export default async function JobDetailPage({ params }: PageProps) {
   const updateJobWithId = updateJob.bind(null, id);
   const deleteJobWithId = deleteJob.bind(null, id);
   const uploadReportWithId = uploadReport.bind(null, id);
+  const dispatchJobWithId = dispatchJob.bind(null, id);
+  const sendReportWithId = sendReport.bind(null, id);
+
+  const canDispatch = job.dispatch_status === "not_dispatched";
+  const canSendReport = job.report_file_path && job.report_status !== "report_sent" && job.report_status !== "complete";
 
   return (
     <div className="space-y-6">
@@ -170,6 +176,20 @@ export default async function JobDetailPage({ params }: PageProps) {
           <span className="text-sm font-medium">Job #{job.job_number}</span>
         </div>
         <div className="flex items-center gap-2">
+          {canDispatch && (
+            <form action={dispatchJobWithId}>
+              <Button type="submit" variant="outline">
+                Dispatch to Workers
+              </Button>
+            </form>
+          )}
+          {canSendReport && (
+            <form action={sendReportWithId}>
+              <Button type="submit" variant="outline">
+                Send Report to Client
+              </Button>
+            </form>
+          )}
           <Link href={`/invoices/new?job_id=${id}`}>
             <Button variant="outline">Generate Invoice</Button>
           </Link>
@@ -252,7 +272,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                           ? "LPT"
                           : job.service_type === "dust_swab"
                           ? "Dust Swab"
-                          : job.service_type ?? "—"
+                          : job.service_type ?? "\u2014"
                       }
                       readOnly
                       className="bg-muted/40 cursor-not-allowed"
@@ -397,7 +417,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Units</span>
-                      <span>{job.num_units ?? 0} × {formatCurrency(job.price_per_unit ?? 0)}</span>
+                      <span>{job.num_units ?? 0} x {formatCurrency(job.price_per_unit ?? 0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span></span>
@@ -407,7 +427,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Common spaces</span>
-                      <span>{job.num_common_spaces ?? 0} × {formatCurrency(job.price_per_common_space ?? 0)}</span>
+                      <span>{job.num_common_spaces ?? 0} x {formatCurrency(job.price_per_common_space ?? 0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span></span>
@@ -429,7 +449,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Wipes ({job.num_wipes ?? 0} × {formatCurrency(DUST_SWAB_WIPE_RATE)})
+                      Wipes ({job.num_wipes ?? 0} x {formatCurrency(DUST_SWAB_WIPE_RATE)})
                     </span>
                     <span>{formatCurrency((job.num_wipes ?? 0) * DUST_SWAB_WIPE_RATE)}</span>
                   </div>
@@ -472,7 +492,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                     ? "LPT"
                     : job.service_type === "dust_swab"
                     ? "Dust Swab"
-                    : "—"}
+                    : "\u2014"}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -484,7 +504,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                   <span className="text-muted-foreground">Time</span>
                   <span>
                     {formatTime12h(job.start_time)}
-                    {job.estimated_end_time ? ` – ${formatTime12h(job.estimated_end_time)}` : ""}
+                    {job.estimated_end_time ? ` \u2013 ${formatTime12h(job.estimated_end_time)}` : ""}
                   </span>
                 </div>
               )}
@@ -502,7 +522,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                         day: "numeric",
                         year: "numeric",
                       })
-                    : "—"}
+                    : "\u2014"}
                 </span>
               </div>
             </CardContent>
