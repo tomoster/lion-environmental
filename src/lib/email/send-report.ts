@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 type SendReportParams = {
   to: string;
   jobNumber: number;
@@ -23,6 +21,7 @@ export async function sendReportEmail({
   filename,
   senderName,
 }: SendReportParams) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const serviceLabel =
     serviceType === "lpt"
       ? "Lead Paint Testing (XRF)"

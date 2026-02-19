@@ -1,8 +1,6 @@
 import { Resend } from "resend";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 type SendInvoiceParams = {
   to: string;
   invoiceNumber: number;
@@ -22,6 +20,7 @@ export async function sendInvoiceEmail({
   pdfBuffer,
   senderName,
 }: SendInvoiceParams) {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const formattedTotal = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
