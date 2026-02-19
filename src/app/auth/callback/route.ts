@@ -1,13 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
 
   if (code) {
-    const redirectUrl = `${origin}/`;
-    const response = NextResponse.redirect(redirectUrl);
+    const response = NextResponse.redirect(`${origin}/`);
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -15,13 +14,7 @@ export async function GET(request: Request) {
       {
         cookies: {
           getAll() {
-            return request.headers
-              .get("cookie")
-              ?.split("; ")
-              .map((c) => {
-                const [name, ...rest] = c.split("=");
-                return { name, value: rest.join("=") };
-              }) ?? [];
+            return request.cookies.getAll();
           },
           setAll(cookiesToSet) {
             cookiesToSet.forEach(({ name, value, options }) => {
