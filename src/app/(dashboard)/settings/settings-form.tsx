@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { updateSettings } from "./actions";
 
 interface SettingsFormProps {
@@ -22,8 +21,8 @@ interface SettingsFormProps {
 
 export function SettingsForm({ settings }: SettingsFormProps) {
   const [isBizPending, startBizTransition] = useTransition();
-  const [isPricingPending, startPricingTransition] = useTransition();
-  const [isDurationPending, startDurationTransition] = useTransition();
+  const [isXrfPending, startXrfTransition] = useTransition();
+  const [isDustSwabPending, startDustSwabTransition] = useTransition();
 
   function handleBusinessSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -38,28 +37,28 @@ export function SettingsForm({ settings }: SettingsFormProps) {
     });
   }
 
-  function handlePricingSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleXrfSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    startPricingTransition(async () => {
+    startXrfTransition(async () => {
       const result = await updateSettings(formData);
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Pricing defaults saved.");
+        toast.success("XRF scanning settings saved.");
       }
     });
   }
 
-  function handleDurationSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleDustSwabSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    startDurationTransition(async () => {
+    startDustSwabTransition(async () => {
       const result = await updateSettings(formData);
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Duration estimates saved.");
+        toast.success("Dust swab settings saved.");
       }
     });
   }
@@ -130,26 +129,6 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                   defaultValue={settings.business_check_address ?? ""}
                 />
               </div>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={isBizPending}>
-              {isBizPending ? "Saving..." : "Save Business Information"}
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
-
-      <form onSubmit={handlePricingSubmit}>
-        <Card>
-          <CardHeader>
-            <CardTitle>Pricing Defaults</CardTitle>
-            <CardDescription>
-              Default rates used when creating invoices.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
               <div className="space-y-1.5">
                 <Label htmlFor="tax_rate">Tax Rate</Label>
                 <div className="flex items-center gap-2">
@@ -170,179 +149,75 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                 </p>
               </div>
             </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm font-medium">LPT (XRF Scanning)</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Default per-unit and per-common-space rates for new jobs.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="lpt_price_per_unit">Price / Unit</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">$</span>
-                    <Input
-                      id="lpt_price_per_unit"
-                      name="lpt_price_per_unit"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      defaultValue={settings.lpt_price_per_unit ?? ""}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lpt_price_per_common_space">Price / Common Space</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">$</span>
-                    <Input
-                      id="lpt_price_per_common_space"
-                      name="lpt_price_per_common_space"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      defaultValue={settings.lpt_price_per_common_space ?? ""}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm font-medium">Dust Swab</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Default rates for dust swab jobs.
-                </p>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="dust_swab_site_visit">Site Visit</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">$</span>
-                    <Input
-                      id="dust_swab_site_visit"
-                      name="dust_swab_site_visit"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      defaultValue={settings.dust_swab_site_visit ?? ""}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="dust_swab_report">Report</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">$</span>
-                    <Input
-                      id="dust_swab_report"
-                      name="dust_swab_report"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      defaultValue={settings.dust_swab_report ?? ""}
-                    />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="dust_swab_wipe_rate">Wipe Rate</Label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm text-muted-foreground">$</span>
-                    <Input
-                      id="dust_swab_wipe_rate"
-                      name="dust_swab_wipe_rate"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      defaultValue={settings.dust_swab_wipe_rate ?? ""}
-                    />
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">
-                      / wipe
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" disabled={isPricingPending}>
-              {isPricingPending ? "Saving..." : "Save Pricing Defaults"}
+            <Button type="submit" disabled={isBizPending}>
+              {isBizPending ? "Saving..." : "Save Business Information"}
             </Button>
           </CardFooter>
         </Card>
       </form>
 
-      <form onSubmit={handleDurationSubmit}>
+      <form onSubmit={handleXrfSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>Duration Estimates</CardTitle>
+            <CardTitle>XRF Scanning (LPT)</CardTitle>
             <CardDescription>
-              Used to auto-calculate job end times for scheduling.
+              Default pricing and duration estimates for XRF scanning jobs.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm font-medium">LPT (XRF Scanning)</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Estimated time per unit and per common space.
-                </p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="lpt_duration_per_unit">Minutes / Unit</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="lpt_duration_per_unit"
-                      name="lpt_duration_per_unit"
-                      type="number"
-                      min="1"
-                      defaultValue={settings.lpt_duration_per_unit ?? "45"}
-                    />
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
-                  </div>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="lpt_price_per_unit">Price / Unit ($)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="lpt_price_per_unit"
+                    name="lpt_price_per_unit"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings.lpt_price_per_unit ?? ""}
+                  />
                 </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="lpt_duration_per_common_space">Minutes / Common Space</Label>
-                  <div className="flex items-center gap-2">
-                    <Input
-                      id="lpt_duration_per_common_space"
-                      name="lpt_duration_per_common_space"
-                      type="number"
-                      min="1"
-                      defaultValue={settings.lpt_duration_per_common_space ?? "30"}
-                    />
-                    <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="space-y-3">
-              <div>
-                <p className="text-sm font-medium">Dust Swab</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Flat duration for dust swab inspections.
-                </p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="dust_swab_duration">Duration</Label>
+                <Label htmlFor="lpt_price_per_common_space">Price / Common Space ($)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="lpt_price_per_common_space"
+                    name="lpt_price_per_common_space"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings.lpt_price_per_common_space ?? ""}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lpt_duration_per_unit">Minutes / Unit</Label>
                 <div className="flex items-center gap-2">
                   <Input
-                    id="dust_swab_duration"
-                    name="dust_swab_duration"
+                    id="lpt_duration_per_unit"
+                    name="lpt_duration_per_unit"
                     type="number"
                     min="1"
-                    className="w-32"
-                    defaultValue={settings.dust_swab_duration ?? "90"}
+                    defaultValue={settings.lpt_duration_per_unit ?? "45"}
+                  />
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="lpt_duration_per_common_space">Minutes / Common Space</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="lpt_duration_per_common_space"
+                    name="lpt_duration_per_common_space"
+                    type="number"
+                    min="1"
+                    defaultValue={settings.lpt_duration_per_common_space ?? "30"}
                   />
                   <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
                 </div>
@@ -350,8 +225,87 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             </div>
           </CardContent>
           <CardFooter>
-            <Button type="submit" disabled={isDurationPending}>
-              {isDurationPending ? "Saving..." : "Save Duration Estimates"}
+            <Button type="submit" disabled={isXrfPending}>
+              {isXrfPending ? "Saving..." : "Save XRF Settings"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+
+      <form onSubmit={handleDustSwabSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Dust Swab</CardTitle>
+            <CardDescription>
+              Default pricing and duration estimates for dust swab jobs.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="dust_swab_site_visit">Site Visit ($)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="dust_swab_site_visit"
+                    name="dust_swab_site_visit"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings.dust_swab_site_visit ?? ""}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="dust_swab_report">Report ($)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="dust_swab_report"
+                    name="dust_swab_report"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings.dust_swab_report ?? ""}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="dust_swab_wipe_rate">Wipe Rate ($/wipe)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="dust_swab_wipe_rate"
+                    name="dust_swab_wipe_rate"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings.dust_swab_wipe_rate ?? ""}
+                  />
+                  <span className="text-sm text-muted-foreground whitespace-nowrap">
+                    / wipe
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="dust_swab_duration">Duration (min)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="dust_swab_duration"
+                  name="dust_swab_duration"
+                  type="number"
+                  min="1"
+                  className="w-32"
+                  defaultValue={settings.dust_swab_duration ?? "90"}
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isDustSwabPending}>
+              {isDustSwabPending ? "Saving..." : "Save Dust Swab Settings"}
             </Button>
           </CardFooter>
         </Card>
