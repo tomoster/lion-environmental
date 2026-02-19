@@ -58,6 +58,7 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          priority: number
           title: string
         }
         Insert: {
@@ -65,6 +66,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          priority?: number
           title: string
         }
         Update: {
@@ -72,6 +74,7 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          priority?: number
           title?: string
         }
         Relationships: []

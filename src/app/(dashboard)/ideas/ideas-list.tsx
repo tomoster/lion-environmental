@@ -11,6 +11,19 @@ type Idea = {
   description: string | null;
   created_by: string;
   created_at: string | null;
+  priority: number;
+};
+
+const PRIORITY_DISPLAY: Record<number, string> = {
+  1: "!",
+  2: "!!",
+  3: "!!!",
+};
+
+const PRIORITY_COLOR: Record<number, string> = {
+  1: "text-muted-foreground",
+  2: "text-yellow-600",
+  3: "text-red-600",
 };
 
 function relativeTime(dateStr: string | null): string {
@@ -71,7 +84,12 @@ function IdeaCard({ idea }: { idea: Idea }) {
       }`}
     >
       <div className="min-w-0">
-        <h3 className="font-medium">{idea.title}</h3>
+        <div className="flex items-center gap-2">
+          <h3 className="font-medium">{idea.title}</h3>
+          <span className={`text-sm font-bold ${PRIORITY_COLOR[idea.priority] ?? "text-muted-foreground"}`}>
+            {PRIORITY_DISPLAY[idea.priority] ?? "!"}
+          </span>
+        </div>
         {idea.description && (
           <p className="mt-1 text-sm text-muted-foreground">
             {idea.description}

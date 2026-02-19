@@ -66,17 +66,32 @@ export function IdeaForm({ trigger }: { trigger: React.ReactNode }) {
                 placeholder="Optional description"
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="created_by">Created By</Label>
-              <Select name="created_by" defaultValue="Avi">
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Avi">Avi</SelectItem>
-                  <SelectItem value="Tom">Tom</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="created_by">Created By</Label>
+                <Select name="created_by" defaultValue="Avi">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Avi">Avi</SelectItem>
+                    <SelectItem value="Tom">Tom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="priority">Priority</Label>
+                <Select name="priority" defaultValue="1">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">!</SelectItem>
+                    <SelectItem value="2">!!</SelectItem>
+                    <SelectItem value="3">!!!</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
           <DialogFooter className="mt-4">
