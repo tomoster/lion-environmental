@@ -39,6 +39,7 @@ import {
 import { Tables } from "@/lib/supabase/types";
 import { ProspectForm } from "./prospect-form";
 import { deleteProspect } from "./actions";
+import { createJobFromProspect } from "../jobs/actions";
 
 type Prospect = Tables<"prospects">;
 
@@ -109,7 +110,13 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
   }
 
   function handleCreateJob() {
-    router.push(`/jobs/new?prospect_id=${prospect.id}`);
+    startTransition(async () => {
+      try {
+        await createJobFromProspect(prospect.id);
+      } catch {
+        // redirect happens inside the action
+      }
+    });
   }
 
   return (
