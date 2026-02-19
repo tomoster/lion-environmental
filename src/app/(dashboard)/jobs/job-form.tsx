@@ -21,8 +21,17 @@ type Worker = {
   active: boolean | null;
 };
 
+type PricingDefaults = {
+  lpt_price_per_unit: number;
+  lpt_price_per_common_space: number;
+  dust_swab_site_visit: number;
+  dust_swab_report: number;
+  dust_swab_wipe_rate: number;
+};
+
 type JobFormProps = {
   workers: Worker[];
+  pricingDefaults?: PricingDefaults;
   defaultValues?: {
     client_company?: string;
     client_email?: string;
@@ -32,15 +41,19 @@ type JobFormProps = {
   onSuccess?: () => void;
 };
 
-const DUST_SWAB_SITE_VISIT = 375;
-const DUST_SWAB_REPORT = 135;
-const DUST_SWAB_WIPE_RATE = 20;
-
-export function JobForm({ workers, defaultValues, onSuccess }: JobFormProps) {
+export function JobForm({ workers, pricingDefaults, defaultValues, onSuccess }: JobFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [serviceType, setServiceType] = useState("lpt");
   const [numWipes, setNumWipes] = useState(0);
+
+  const pricing = {
+    lpt_price_per_unit: pricingDefaults?.lpt_price_per_unit ?? 0,
+    lpt_price_per_common_space: pricingDefaults?.lpt_price_per_common_space ?? 0,
+    dust_swab_site_visit: pricingDefaults?.dust_swab_site_visit ?? 375,
+    dust_swab_report: pricingDefaults?.dust_swab_report ?? 135,
+    dust_swab_wipe_rate: pricingDefaults?.dust_swab_wipe_rate ?? 20,
+  };
 
   async function handleSubmit(formData: FormData) {
     startTransition(async () => {
@@ -55,7 +68,7 @@ export function JobForm({ workers, defaultValues, onSuccess }: JobFormProps) {
   }
 
   const dustSwabTotal =
-    DUST_SWAB_SITE_VISIT + DUST_SWAB_REPORT + numWipes * DUST_SWAB_WIPE_RATE;
+    pricing.dust_swab_site_visit + pricing.dust_swab_report + numWipes * pricing.dust_swab_wipe_rate;
 
   return (
     <form action={handleSubmit} className="space-y-4">
@@ -138,6 +151,7 @@ export function JobForm({ workers, defaultValues, onSuccess }: JobFormProps) {
               type="number"
               min="0"
               step="0.01"
+              defaultValue={pricing.lpt_price_per_unit || ""}
               placeholder="0.00"
             />
           </div>
@@ -159,6 +173,7 @@ export function JobForm({ workers, defaultValues, onSuccess }: JobFormProps) {
               type="number"
               min="0"
               step="0.01"
+              defaultValue={pricing.lpt_price_per_common_space || ""}
               placeholder="0.00"
             />
           </div>
@@ -170,15 +185,15 @@ export function JobForm({ workers, defaultValues, onSuccess }: JobFormProps) {
           <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Site visit</span>
-              <span>${DUST_SWAB_SITE_VISIT}</span>
+              <span>${pricing.dust_swab_site_visit}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Report</span>
-              <span>${DUST_SWAB_REPORT}</span>
+              <span>${pricing.dust_swab_report}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-muted-foreground">Per wipe</span>
-              <span>${DUST_SWAB_WIPE_RATE}</span>
+              <span>${pricing.dust_swab_wipe_rate}</span>
             </div>
           </div>
           <div className="space-y-1.5">

@@ -29,6 +29,7 @@ type WorkerRow = {
   name: string;
   phone: string | null;
   email: string | null;
+  zelle: string | null;
   active: boolean | null;
   specialization: string | null;
   rate: number | null;

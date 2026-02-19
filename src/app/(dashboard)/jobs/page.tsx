@@ -13,7 +13,7 @@ import { JobsTable } from "./jobs-table";
 export default async function JobsPage() {
   const supabase = await createClient();
 
-  const [{ data: jobs }, { data: workers }] = await Promise.all([
+  const [{ data: jobs }, { data: workers }, { data: settings }] = await Promise.all([
     supabase
       .from("jobs")
       .select("id, job_number, client_company, building_address, service_type, scan_date, dispatch_status, report_status, workers(name)")
@@ -23,7 +23,20 @@ export default async function JobsPage() {
       .select("id, name, active")
       .eq("active", true)
       .order("name"),
+    supabase
+      .from("settings")
+      .select("key, value")
+      .in("key", ["lpt_price_per_unit", "lpt_price_per_common_space", "dust_swab_site_visit", "dust_swab_report", "dust_swab_wipe_rate"]),
   ]);
+
+  const s = Object.fromEntries((settings ?? []).map((r) => [r.key, r.value]));
+  const pricingDefaults = {
+    lpt_price_per_unit: parseFloat(s.lpt_price_per_unit ?? "0"),
+    lpt_price_per_common_space: parseFloat(s.lpt_price_per_common_space ?? "0"),
+    dust_swab_site_visit: parseFloat(s.dust_swab_site_visit ?? "375"),
+    dust_swab_report: parseFloat(s.dust_swab_report ?? "135"),
+    dust_swab_wipe_rate: parseFloat(s.dust_swab_wipe_rate ?? "20"),
+  };
 
   return (
     <div className="space-y-6">
@@ -42,7 +55,7 @@ export default async function JobsPage() {
             <DialogHeader>
               <DialogTitle>Create New Job</DialogTitle>
             </DialogHeader>
-            <JobForm workers={workers ?? []} />
+            <JobForm workers={workers ?? []} pricingDefaults={pricingDefaults} />
           </DialogContent>
         </Dialog>
       </div>

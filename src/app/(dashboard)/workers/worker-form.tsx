@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -20,6 +21,7 @@ type Worker = {
   name: string;
   phone: string | null;
   email: string | null;
+  zelle: string | null;
   specialization: string | null;
   rate: number | null;
 };
@@ -32,8 +34,14 @@ export function WorkerForm(props: WorkerFormProps) {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
+  const editWorker = props.mode === "edit" ? props.worker : null;
+  const [zelleSameAsPhone, setZelleSameAsPhone] = useState(
+    !!editWorker?.phone && !!editWorker?.zelle && editWorker.phone === editWorker.zelle
+  );
+  const [phone, setPhone] = useState(editWorker?.phone ?? "");
+  const [zelle, setZelle] = useState(editWorker?.zelle ?? "");
 
-  const worker = props.mode === "edit" ? props.worker : null;
+  const worker = editWorker;
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -83,7 +91,34 @@ export function WorkerForm(props: WorkerFormProps) {
                 name="phone"
                 type="tel"
                 defaultValue={worker?.phone ?? ""}
+                onChange={(e) => setPhone(e.target.value)}
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="zelle">Zelle</Label>
+              <Input
+                id="zelle"
+                name="zelle"
+                value={zelleSameAsPhone ? phone : zelle}
+                onChange={(e) => setZelle(e.target.value)}
+                disabled={zelleSameAsPhone}
+                placeholder="Phone number or email"
+              />
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="zelle_same"
+                  checked={zelleSameAsPhone}
+                  onCheckedChange={(checked) =>
+                    setZelleSameAsPhone(checked === true)
+                  }
+                />
+                <Label
+                  htmlFor="zelle_same"
+                  className="text-xs text-muted-foreground font-normal"
+                >
+                  Same as phone number
+                </Label>
+              </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>

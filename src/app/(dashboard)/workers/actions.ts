@@ -12,6 +12,7 @@ export async function createWorker(formData: FormData) {
     name: formData.get("name") as string,
     phone: (formData.get("phone") as string) || null,
     email: (formData.get("email") as string) || null,
+    zelle: (formData.get("zelle") as string) || null,
     specialization: (formData.get("specialization") as string) || null,
     rate: rateRaw ? parseFloat(rateRaw) : null,
     active: true,
@@ -36,6 +37,7 @@ export async function updateWorker(id: string, formData: FormData) {
       name: formData.get("name") as string,
       phone: (formData.get("phone") as string) || null,
       email: (formData.get("email") as string) || null,
+      zelle: (formData.get("zelle") as string) || null,
       specialization: (formData.get("specialization") as string) || null,
       rate: rateRaw ? parseFloat(rateRaw) : null,
     })

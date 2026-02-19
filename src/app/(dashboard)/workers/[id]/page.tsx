@@ -110,6 +110,10 @@ export default async function WorkerDetailPage({
               <dd className="mt-1 text-sm">{worker.email ?? "—"}</dd>
             </div>
             <div>
+              <dt className="text-xs text-muted-foreground">Zelle</dt>
+              <dd className="mt-1 text-sm">{worker.zelle ?? "—"}</dd>
+            </div>
+            <div>
               <dt className="text-xs text-muted-foreground">Specialization</dt>
               <dd className="mt-1 text-sm">{worker.specialization ?? "—"}</dd>
             </div>

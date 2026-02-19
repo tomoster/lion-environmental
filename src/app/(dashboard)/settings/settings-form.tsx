@@ -161,9 +161,50 @@ export function SettingsForm({ settings }: SettingsFormProps) {
 
             <div className="space-y-3">
               <div>
+                <p className="text-sm font-medium">LPT (XRF Scanning)</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Default per-unit and per-common-space rates for new jobs.
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="lpt_price_per_unit">Price / Unit</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <Input
+                      id="lpt_price_per_unit"
+                      name="lpt_price_per_unit"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      defaultValue={settings.lpt_price_per_unit ?? ""}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="lpt_price_per_common_space">Price / Common Space</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <Input
+                      id="lpt_price_per_common_space"
+                      name="lpt_price_per_common_space"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      defaultValue={settings.lpt_price_per_common_space ?? ""}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            <div className="space-y-3">
+              <div>
                 <p className="text-sm font-medium">Dust Swab</p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  LPT pricing is per-job and entered when creating the job.
+                  Default rates for dust swab jobs.
                 </p>
               </div>
               <div className="grid grid-cols-3 gap-4">
