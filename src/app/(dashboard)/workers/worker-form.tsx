@@ -23,7 +23,8 @@ type Worker = {
   email: string | null;
   zelle: string | null;
   specialization: string | null;
-  rate: number | null;
+  rate_per_unit: number | null;
+  rate_per_common_space: number | null;
 };
 
 type WorkerFormProps =
@@ -137,16 +138,29 @@ export function WorkerForm(props: WorkerFormProps) {
                 defaultValue={worker?.specialization ?? ""}
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="rate">Rate ($/hr)</Label>
-              <Input
-                id="rate"
-                name="rate"
-                type="number"
-                step="0.01"
-                min="0"
-                defaultValue={worker?.rate ?? ""}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="rate_per_unit">Rate / Unit ($)</Label>
+                <Input
+                  id="rate_per_unit"
+                  name="rate_per_unit"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={worker?.rate_per_unit ?? ""}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="rate_per_common_space">Rate / Common Space ($)</Label>
+                <Input
+                  id="rate_per_common_space"
+                  name="rate_per_common_space"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={worker?.rate_per_common_space ?? ""}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter className="mt-4">

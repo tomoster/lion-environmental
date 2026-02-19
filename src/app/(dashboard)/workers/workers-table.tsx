@@ -32,7 +32,8 @@ type WorkerRow = {
   zelle: string | null;
   active: boolean | null;
   specialization: string | null;
-  rate: number | null;
+  rate_per_unit: number | null;
+  rate_per_common_space: number | null;
   jobsDone: number;
 };
 
@@ -125,8 +126,10 @@ function WorkerTableRow({ worker }: { worker: WorkerRow }) {
       <TableCell className="text-muted-foreground">
         {worker.specialization ?? "—"}
       </TableCell>
-      <TableCell className="text-muted-foreground">
-        {worker.rate != null ? `$${worker.rate.toFixed(2)}/hr` : "—"}
+      <TableCell className="text-muted-foreground text-xs">
+        {worker.rate_per_unit != null || worker.rate_per_common_space != null
+          ? `$${worker.rate_per_unit?.toFixed(2) ?? "—"}/unit, $${worker.rate_per_common_space?.toFixed(2) ?? "—"}/cs`
+          : "—"}
       </TableCell>
       <TableCell className="text-right">{worker.jobsDone}</TableCell>
       <TableCell>

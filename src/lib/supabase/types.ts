@@ -14,6 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      expenses: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          job_id: string | null
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          job_id?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          job_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "expenses_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ideas: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          title?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           building_address: string | null
@@ -341,7 +403,8 @@ export type Database = {
           id: string
           name: string
           phone: string | null
-          rate: number | null
+          rate_per_common_space: number | null
+          rate_per_unit: number | null
           specialization: string | null
           telegram_chat_id: string | null
           zelle: string | null
@@ -353,7 +416,8 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
-          rate?: number | null
+          rate_per_common_space?: number | null
+          rate_per_unit?: number | null
           specialization?: string | null
           telegram_chat_id?: string | null
           zelle?: string | null
@@ -365,7 +429,8 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
-          rate?: number | null
+          rate_per_common_space?: number | null
+          rate_per_unit?: number | null
           specialization?: string | null
           telegram_chat_id?: string | null
           zelle?: string | null
