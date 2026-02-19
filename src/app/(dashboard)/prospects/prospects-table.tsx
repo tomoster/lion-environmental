@@ -111,11 +111,7 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
 
   function handleCreateJob() {
     startTransition(async () => {
-      try {
-        await createJobFromProspect(prospect.id);
-      } catch {
-        // redirect happens inside the action
-      }
+      await createJobFromProspect(prospect.id);
     });
   }
 
