@@ -31,7 +31,6 @@ type MemberRow = {
   email: string | null;
   zelle: string | null;
   active: boolean | null;
-  specialization: string | null;
   rate_per_unit: number | null;
   rate_per_common_space: number | null;
   role: string;
@@ -75,7 +74,6 @@ export function TeamTable({ members }: { members: MemberRow[] }) {
                   <TableHead>Phone</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Specialization</TableHead>
                   {group.role !== "management" && <TableHead>Rate</TableHead>}
                   <TableHead className="text-right">Jobs Done</TableHead>
                   <TableHead className="w-10" />
@@ -150,9 +148,6 @@ function MemberTableRow({ member }: { member: MemberRow }) {
         ) : (
           <Badge variant="secondary">Inactive</Badge>
         )}
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {member.specialization ?? "\u2014"}
       </TableCell>
       {member.role !== "management" && (
         <TableCell className="text-muted-foreground text-xs">

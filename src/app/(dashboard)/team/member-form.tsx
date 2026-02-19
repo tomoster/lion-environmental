@@ -29,7 +29,6 @@ type Member = {
   phone: string | null;
   email: string | null;
   zelle: string | null;
-  specialization: string | null;
   rate_per_unit: number | null;
   rate_per_common_space: number | null;
   role: string;
@@ -153,23 +152,6 @@ export function MemberForm(props: MemberFormProps) {
                 name="email"
                 type="email"
                 defaultValue={worker?.email ?? ""}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="telegram_chat_id">Telegram Chat ID</Label>
-              <Input
-                id="telegram_chat_id"
-                name="telegram_chat_id"
-                defaultValue={worker?.telegram_chat_id ?? ""}
-                placeholder="Numeric chat ID from Telegram"
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="specialization">Specialization</Label>
-              <Input
-                id="specialization"
-                name="specialization"
-                defaultValue={worker?.specialization ?? ""}
               />
             </div>
             {showRates && (

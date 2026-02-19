@@ -134,14 +134,18 @@ export default async function MemberDetailPage({
               <dd className="mt-1 text-sm">{worker.zelle ?? "\u2014"}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Telegram Chat ID</dt>
-              <dd className="mt-1 text-sm font-mono text-xs">
-                {worker.telegram_chat_id ?? "\u2014"}
+              <dt className="text-xs text-muted-foreground">Telegram</dt>
+              <dd className="mt-1">
+                {worker.telegram_chat_id ? (
+                  <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+                    Connected
+                  </Badge>
+                ) : (
+                  <span className="text-sm text-muted-foreground">
+                    Not connected — have them message /start to the bot
+                  </span>
+                )}
               </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Specialization</dt>
-              <dd className="mt-1 text-sm">{worker.specialization ?? "\u2014"}</dd>
             </div>
             {worker.role !== "management" && (
               <>

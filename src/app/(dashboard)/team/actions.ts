@@ -14,11 +14,9 @@ export async function createWorker(formData: FormData) {
     phone: (formData.get("phone") as string) || null,
     email: (formData.get("email") as string) || null,
     zelle: (formData.get("zelle") as string) || null,
-    specialization: (formData.get("specialization") as string) || null,
     rate_per_unit: ratePerUnitRaw ? parseFloat(ratePerUnitRaw) : null,
     rate_per_common_space: ratePerCommonSpaceRaw ? parseFloat(ratePerCommonSpaceRaw) : null,
     role: (formData.get("role") as string) || "field",
-    telegram_chat_id: (formData.get("telegram_chat_id") as string) || null,
     active: true,
   });
 
@@ -43,11 +41,9 @@ export async function updateWorker(id: string, formData: FormData) {
       phone: (formData.get("phone") as string) || null,
       email: (formData.get("email") as string) || null,
       zelle: (formData.get("zelle") as string) || null,
-      specialization: (formData.get("specialization") as string) || null,
       rate_per_unit: ratePerUnitRaw ? parseFloat(ratePerUnitRaw) : null,
       rate_per_common_space: ratePerCommonSpaceRaw ? parseFloat(ratePerCommonSpaceRaw) : null,
       role: (formData.get("role") as string) || "field",
-      telegram_chat_id: (formData.get("telegram_chat_id") as string) || null,
     })
     .eq("id", id);
 
