@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { generateInvoice } from "../actions";
 
+export const dynamic = "force-dynamic";
+
 type PageProps = {
   searchParams: Promise<{ job_id?: string }>;
 };
