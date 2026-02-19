@@ -3,9 +3,16 @@
 import { useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -61,11 +68,15 @@ export function IdeaForm({ trigger }: { trigger: React.ReactNode }) {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="created_by">Created By</Label>
-              <Input
-                id="created_by"
-                name="created_by"
-                defaultValue="Avi"
-              />
+              <Select name="created_by" defaultValue="Avi">
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Avi">Avi</SelectItem>
+                  <SelectItem value="Tom">Tom</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter className="mt-4">
