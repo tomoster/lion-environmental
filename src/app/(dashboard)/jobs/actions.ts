@@ -59,7 +59,10 @@ export async function updateJob(id: string, formData: FormData) {
     start_time: (formData.get("start_time") as string) || null,
     estimated_end_time: (formData.get("estimated_end_time") as string) || null,
     notes: (formData.get("notes") as string) || null,
-    worker_id: (formData.get("worker_id") as string) || null,
+    worker_id: (() => {
+      const v = formData.get("worker_id") as string;
+      return v && v !== "unassigned" ? v : null;
+    })(),
     dispatch_status: formData.get("dispatch_status") as string,
     report_status: formData.get("report_status") as string,
     updated_at: new Date().toISOString(),

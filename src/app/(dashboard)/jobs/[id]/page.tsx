@@ -308,13 +308,13 @@ export default async function JobDetailPage({ params }: PageProps) {
                     <Label htmlFor="worker_id">Assigned Worker</Label>
                     <Select
                       name="worker_id"
-                      defaultValue={workerData?.id ?? ""}
+                      defaultValue={workerData?.id ?? "unassigned"}
                     >
                       <SelectTrigger id="worker_id" className="w-full">
                         <SelectValue placeholder="Unassigned" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Unassigned</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
                         {availability.available.map((w) => (
                           <SelectItem key={w.id} value={w.id}>
                             {w.name}
