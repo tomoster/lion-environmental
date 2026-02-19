@@ -11,7 +11,7 @@ const navigation = [
   { name: "Jobs", href: "/jobs", icon: BriefcaseIcon },
   { name: "Invoices", href: "/invoices", icon: FileTextIcon },
   { name: "Finances", href: "/finances", icon: DollarSignIcon },
-  { name: "Workers", href: "/workers", icon: HardHatIcon },
+  { name: "Team", href: "/team", icon: UsersGroupIcon },
   { name: "Settings", href: "/settings", icon: SettingsIcon },
   { name: "Ideas", href: "/ideas", icon: LightbulbIcon },
 ];
@@ -102,10 +102,10 @@ function FileTextIcon({ className }: { className?: string }) {
   );
 }
 
-function HardHatIcon({ className }: { className?: string }) {
+function UsersGroupIcon({ className }: { className?: string }) {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M2 18a1 1 0 0 0 1 1h18a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1H3a1 1 0 0 0-1 1v2z" /><path d="M10 15V6" /><path d="M14 15V6" /><path d="M12 6a4 4 0 0 0-4 4h8a4 4 0 0 0-4-4z" />
+      <path d="M18 21a8 8 0 0 0-16 0" /><circle cx="10" cy="8" r="5" /><path d="M22 20c0-3.37-2-6.5-4-8a5 5 0 0 0-.45-8.3" />
     </svg>
   );
 }

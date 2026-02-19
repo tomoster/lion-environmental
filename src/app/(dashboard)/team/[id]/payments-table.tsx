@@ -111,13 +111,13 @@ function PaymentRow({
         ${payment.amount.toFixed(2)}
       </TableCell>
       <TableCell className="text-muted-foreground">
-        {payment.job_number != null ? `#${payment.job_number}` : "—"}
+        {payment.job_number != null ? `#${payment.job_number}` : "\u2014"}
       </TableCell>
       <TableCell className="text-muted-foreground">
-        {payment.confirmation_number ?? "—"}
+        {payment.confirmation_number ?? "\u2014"}
       </TableCell>
       <TableCell className="max-w-xs truncate text-muted-foreground">
-        {payment.notes ?? "—"}
+        {payment.notes ?? "\u2014"}
       </TableCell>
       <TableCell>
         <Button

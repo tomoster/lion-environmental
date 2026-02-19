@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendMessage } from "@/lib/telegram/client";
-import { sendInvoiceKeyboard } from "@/lib/telegram/keyboard";
+import { getManagementChatIds } from "@/lib/telegram/get-management-chat-ids";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -11,17 +11,12 @@ export async function GET(request: NextRequest) {
 
   const supabase = createAdminClient();
 
-  const { data: aviSetting } = await supabase
-    .from("settings")
-    .select("value")
-    .eq("key", "avi_telegram_chat_id")
-    .single();
+  const mgmtChatIds = await getManagementChatIds(supabase);
 
-  if (!aviSetting?.value) {
-    return NextResponse.json({ ok: true, message: "No Avi chat ID configured" });
+  if (mgmtChatIds.length === 0) {
+    return NextResponse.json({ ok: true, message: "No management chat IDs configured" });
   }
 
-  const aviChatId = aviSetting.value;
   const today = new Date().toLocaleDateString("en-CA", {
     timeZone: "America/New_York",
   });
@@ -36,9 +31,11 @@ export async function GET(request: NextRequest) {
   if (overdueProspects && overdueProspects.length > 0) {
     let text = `<b>Overdue Follow-ups (${overdueProspects.length})</b>\n\n`;
     for (const p of overdueProspects) {
-      text += `${p.company} — ${p.contact_name ?? "No contact"} (due ${p.next_followup})\n`;
+      text += `${p.company} \u2014 ${p.contact_name ?? "No contact"} (due ${p.next_followup})\n`;
     }
-    await sendMessage(aviChatId, text);
+    await Promise.allSettled(
+      mgmtChatIds.map((id) => sendMessage(id, text))
+    );
   }
 
   // Overdue invoices (Mondays only)
@@ -62,9 +59,11 @@ export async function GET(request: NextRequest) {
           style: "currency",
           currency: "USD",
         }).format(inv.total ?? 0);
-        text += `Invoice #${inv.invoice_number} — ${inv.client_company ?? "—"} — ${total} (due ${inv.due_date})\n`;
+        text += `Invoice #${inv.invoice_number} \u2014 ${inv.client_company ?? "\u2014"} \u2014 ${total} (due ${inv.due_date})\n`;
       }
-      await sendMessage(aviChatId, text);
+      await Promise.allSettled(
+        mgmtChatIds.map((id) => sendMessage(id, text))
+      );
     }
 
     // Unsent invoices
@@ -80,9 +79,11 @@ export async function GET(request: NextRequest) {
           style: "currency",
           currency: "USD",
         }).format(inv.total ?? 0);
-        text += `Invoice #${inv.invoice_number} — ${inv.client_company ?? "—"} — ${total}\n`;
+        text += `Invoice #${inv.invoice_number} \u2014 ${inv.client_company ?? "\u2014"} \u2014 ${total}\n`;
       }
-      await sendMessage(aviChatId, text);
+      await Promise.allSettled(
+        mgmtChatIds.map((id) => sendMessage(id, text))
+      );
     }
   }
 

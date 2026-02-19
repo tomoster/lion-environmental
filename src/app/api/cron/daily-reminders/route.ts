@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendMessage } from "@/lib/telegram/client";
 import { completeJobKeyboard } from "@/lib/telegram/keyboard";
+import { getManagementChatIds } from "@/lib/telegram/get-management-chat-ids";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -53,21 +54,16 @@ export async function GET(request: NextRequest) {
     const text =
       `<b>Reminder: Job ${dayLabel}${timeStr}</b>\n\n` +
       `Job #${job.job_number}\n` +
-      `Client: ${job.client_company ?? "—"}\n` +
-      `Address: ${job.building_address ?? "—"}`;
+      `Client: ${job.client_company ?? "\u2014"}\n` +
+      `Address: ${job.building_address ?? "\u2014"}`;
 
     const keyboard = isToday ? completeJobKeyboard(job.id) : undefined;
     await sendMessage(worker.telegram_chat_id, text, keyboard);
   }
 
-  // Send Avi a summary
-  const { data: aviSetting } = await supabase
-    .from("settings")
-    .select("value")
-    .eq("key", "avi_telegram_chat_id")
-    .single();
+  const mgmtChatIds = await getManagementChatIds(supabase);
 
-  if (aviSetting?.value && allJobs.length > 0) {
+  if (mgmtChatIds.length > 0 && allJobs.length > 0) {
     const todayCount = (todayJobs ?? []).length;
     const tomorrowCount = (tomorrowJobs ?? []).length;
 
@@ -76,18 +72,20 @@ export async function GET(request: NextRequest) {
       summary += `<b>Today (${today}):</b>\n`;
       for (const job of todayJobs ?? []) {
         const worker = job.workers as { name: string } | null;
-        summary += `  Job #${job.job_number} — ${job.client_company ?? "—"} (${worker?.name ?? "Unassigned"})\n`;
+        summary += `  Job #${job.job_number} \u2014 ${job.client_company ?? "\u2014"} (${worker?.name ?? "Unassigned"})\n`;
       }
     }
     if (tomorrowCount > 0) {
       summary += `\n<b>Tomorrow (${tomorrowStr}):</b>\n`;
       for (const job of tomorrowJobs ?? []) {
         const worker = job.workers as { name: string } | null;
-        summary += `  Job #${job.job_number} — ${job.client_company ?? "—"} (${worker?.name ?? "Unassigned"})\n`;
+        summary += `  Job #${job.job_number} \u2014 ${job.client_company ?? "\u2014"} (${worker?.name ?? "Unassigned"})\n`;
       }
     }
 
-    await sendMessage(aviSetting.value, summary);
+    await Promise.allSettled(
+      mgmtChatIds.map((id) => sendMessage(id, summary))
+    );
   }
 
   return NextResponse.json({

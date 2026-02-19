@@ -23,7 +23,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   const [isBizPending, startBizTransition] = useTransition();
   const [isXrfPending, startXrfTransition] = useTransition();
   const [isDustSwabPending, startDustSwabTransition] = useTransition();
-  const [isTelegramPending, startTelegramTransition] = useTransition();
+
 
   function handleBusinessSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -312,50 +312,6 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         </Card>
       </form>
 
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          const formData = new FormData(e.currentTarget);
-          startTelegramTransition(async () => {
-            const result = await updateSettings(formData);
-            if (result.error) {
-              toast.error(result.error);
-            } else {
-              toast.success("Telegram settings saved.");
-            }
-          });
-        }}
-      >
-        <Card>
-          <CardHeader>
-            <CardTitle>Telegram</CardTitle>
-            <CardDescription>
-              Telegram bot notifications for job dispatch and worker communication.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-1.5">
-              <Label htmlFor="avi_telegram_chat_id">
-                Avi's Telegram Chat ID
-              </Label>
-              <Input
-                id="avi_telegram_chat_id"
-                name="avi_telegram_chat_id"
-                defaultValue={settings.avi_telegram_chat_id ?? ""}
-                placeholder="Numeric chat ID from Telegram"
-              />
-              <p className="text-xs text-muted-foreground">
-                Avi receives job updates, report approvals, and alert notifications here.
-              </p>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" disabled={isTelegramPending}>
-              {isTelegramPending ? "Saving..." : "Save Telegram Settings"}
-            </Button>
-          </CardFooter>
-        </Card>
-      </form>
     </div>
   );
 }

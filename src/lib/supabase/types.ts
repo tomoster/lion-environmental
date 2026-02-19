@@ -429,6 +429,7 @@ export type Database = {
           phone: string | null
           rate_per_common_space: number | null
           rate_per_unit: number | null
+          role: string
           specialization: string | null
           telegram_chat_id: string | null
           zelle: string | null
@@ -442,6 +443,7 @@ export type Database = {
           phone?: string | null
           rate_per_common_space?: number | null
           rate_per_unit?: number | null
+          role?: string
           specialization?: string | null
           telegram_chat_id?: string | null
           zelle?: string | null
@@ -455,6 +457,7 @@ export type Database = {
           phone?: string | null
           rate_per_common_space?: number | null
           rate_per_unit?: number | null
+          role?: string
           specialization?: string | null
           telegram_chat_id?: string | null
           zelle?: string | null

@@ -1,14 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/button";
-import { WorkerForm } from "./worker-form";
-import { WorkersTable } from "./workers-table";
+import { MemberForm } from "./member-form";
+import { TeamTable } from "./team-table";
 
-export default async function WorkersPage() {
+export default async function TeamPage() {
   const supabase = await createClient();
 
   const { data: workers } = await supabase
     .from("workers")
-    .select("id, name, phone, email, zelle, active, specialization, rate_per_unit, rate_per_common_space")
+    .select("id, name, phone, email, zelle, active, specialization, rate_per_unit, rate_per_common_space, role, telegram_chat_id")
     .order("name");
 
   const workerList = workers ?? [];
@@ -28,7 +28,7 @@ export default async function WorkersPage() {
     jobCountResults.map((r) => [r.id, r.count])
   );
 
-  const workersWithCounts = workerList.map((w) => ({
+  const membersWithCounts = workerList.map((w) => ({
     ...w,
     jobsDone: jobCountMap[w.id] ?? 0,
   }));
@@ -37,19 +37,17 @@ export default async function WorkersPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Workers</h1>
+          <h1 className="text-2xl font-semibold">Team</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage field inspectors and track payments
+            Manage team members, payments, and availability
           </p>
         </div>
-        <WorkerForm
+        <MemberForm
           mode="create"
-          trigger={<Button>Add Worker</Button>}
+          trigger={<Button>Add Member</Button>}
         />
       </div>
-      <div className="rounded-lg border">
-        <WorkersTable workers={workersWithCounts} />
-      </div>
+      <TeamTable members={membersWithCounts} />
     </div>
   );
 }

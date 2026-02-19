@@ -17,6 +17,8 @@ export async function createWorker(formData: FormData) {
     specialization: (formData.get("specialization") as string) || null,
     rate_per_unit: ratePerUnitRaw ? parseFloat(ratePerUnitRaw) : null,
     rate_per_common_space: ratePerCommonSpaceRaw ? parseFloat(ratePerCommonSpaceRaw) : null,
+    role: (formData.get("role") as string) || "field",
+    telegram_chat_id: (formData.get("telegram_chat_id") as string) || null,
     active: true,
   });
 
@@ -24,7 +26,7 @@ export async function createWorker(formData: FormData) {
     return { error: error.message };
   }
 
-  revalidatePath("/workers");
+  revalidatePath("/team");
   return { success: true };
 }
 
@@ -44,6 +46,8 @@ export async function updateWorker(id: string, formData: FormData) {
       specialization: (formData.get("specialization") as string) || null,
       rate_per_unit: ratePerUnitRaw ? parseFloat(ratePerUnitRaw) : null,
       rate_per_common_space: ratePerCommonSpaceRaw ? parseFloat(ratePerCommonSpaceRaw) : null,
+      role: (formData.get("role") as string) || "field",
+      telegram_chat_id: (formData.get("telegram_chat_id") as string) || null,
     })
     .eq("id", id);
 
@@ -51,8 +55,8 @@ export async function updateWorker(id: string, formData: FormData) {
     return { error: error.message };
   }
 
-  revalidatePath("/workers");
-  revalidatePath(`/workers/${id}`);
+  revalidatePath("/team");
+  revalidatePath(`/team/${id}`);
   return { success: true };
 }
 
@@ -78,8 +82,8 @@ export async function toggleWorkerActive(id: string) {
     return { error: error.message };
   }
 
-  revalidatePath("/workers");
-  revalidatePath(`/workers/${id}`);
+  revalidatePath("/team");
+  revalidatePath(`/team/${id}`);
   return { success: true };
 }
 
@@ -92,7 +96,7 @@ export async function deleteWorker(id: string) {
     return { error: error.message };
   }
 
-  revalidatePath("/workers");
+  revalidatePath("/team");
   return { success: true };
 }
 
@@ -115,7 +119,7 @@ export async function createPayment(formData: FormData) {
   }
 
   const workerId = formData.get("worker_id") as string;
-  revalidatePath(`/workers/${workerId}`);
+  revalidatePath(`/team/${workerId}`);
   return { success: true };
 }
 
@@ -131,7 +135,7 @@ export async function deletePayment(id: string, workerId: string) {
     return { error: error.message };
   }
 
-  revalidatePath(`/workers/${workerId}`);
+  revalidatePath(`/team/${workerId}`);
   return { success: true };
 }
 
@@ -149,7 +153,7 @@ export async function addRecurringBlock(workerId: string, dayOfWeek: number) {
     return { error: error.message };
   }
 
-  revalidatePath(`/workers/${workerId}`);
+  revalidatePath(`/team/${workerId}`);
   return { success: true };
 }
 
@@ -168,7 +172,7 @@ export async function addOneOffBlock(workerId: string, date: string, reason?: st
     return { error: error.message };
   }
 
-  revalidatePath(`/workers/${workerId}`);
+  revalidatePath(`/team/${workerId}`);
   return { success: true };
 }
 
@@ -184,6 +188,6 @@ export async function removeAvailabilityBlock(id: string, workerId: string) {
     return { error: error.message };
   }
 
-  revalidatePath(`/workers/${workerId}`);
+  revalidatePath(`/team/${workerId}`);
   return { success: true };
 }

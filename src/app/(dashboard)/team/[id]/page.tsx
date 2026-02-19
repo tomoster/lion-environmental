@@ -5,12 +5,24 @@ import { createClient } from "@/lib/supabase/server";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { WorkerForm } from "../worker-form";
+import { MemberForm } from "../member-form";
 import { PaymentForm } from "../payment-form";
 import { PaymentsTable } from "./payments-table";
 import { AvailabilitySection } from "./availability-section";
 
-export default async function WorkerDetailPage({
+const ROLE_LABELS: Record<string, string> = {
+  management: "Management",
+  field: "Field Inspector",
+  office: "Office Staff",
+};
+
+const ROLE_BADGE_STYLES: Record<string, string> = {
+  management: "bg-purple-100 text-purple-800 hover:bg-purple-100",
+  field: "bg-blue-100 text-blue-800 hover:bg-blue-100",
+  office: "bg-amber-100 text-amber-800 hover:bg-amber-100",
+};
+
+export default async function MemberDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -70,25 +82,30 @@ export default async function WorkerDetailPage({
     <div>
       <div className="mb-6">
         <Link
-          href="/workers"
+          href="/team"
           className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeftIcon className="h-4 w-4" />
-          Workers
+          Team
         </Link>
         <div className="mt-2 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">{worker.name}</h1>
-          <WorkerForm
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-semibold">{worker.name}</h1>
+            <Badge className={ROLE_BADGE_STYLES[worker.role] ?? ""}>
+              {ROLE_LABELS[worker.role] ?? worker.role}
+            </Badge>
+          </div>
+          <MemberForm
             mode="edit"
             worker={worker}
-            trigger={<Button variant="outline">Edit Worker</Button>}
+            trigger={<Button variant="outline">Edit Member</Button>}
           />
         </div>
       </div>
 
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Worker Info</CardTitle>
+          <CardTitle>Member Info</CardTitle>
         </CardHeader>
         <CardContent>
           <dl className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
@@ -106,32 +123,42 @@ export default async function WorkerDetailPage({
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Phone</dt>
-              <dd className="mt-1 text-sm">{worker.phone ?? "—"}</dd>
+              <dd className="mt-1 text-sm">{worker.phone ?? "\u2014"}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Email</dt>
-              <dd className="mt-1 text-sm">{worker.email ?? "—"}</dd>
+              <dd className="mt-1 text-sm">{worker.email ?? "\u2014"}</dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Zelle</dt>
-              <dd className="mt-1 text-sm">{worker.zelle ?? "—"}</dd>
+              <dd className="mt-1 text-sm">{worker.zelle ?? "\u2014"}</dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Telegram Chat ID</dt>
+              <dd className="mt-1 text-sm font-mono text-xs">
+                {worker.telegram_chat_id ?? "\u2014"}
+              </dd>
             </div>
             <div>
               <dt className="text-xs text-muted-foreground">Specialization</dt>
-              <dd className="mt-1 text-sm">{worker.specialization ?? "—"}</dd>
+              <dd className="mt-1 text-sm">{worker.specialization ?? "\u2014"}</dd>
             </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Rate / Unit</dt>
-              <dd className="mt-1 text-sm">
-                {worker.rate_per_unit != null ? `$${worker.rate_per_unit.toFixed(2)}` : "—"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-muted-foreground">Rate / Common Space</dt>
-              <dd className="mt-1 text-sm">
-                {worker.rate_per_common_space != null ? `$${worker.rate_per_common_space.toFixed(2)}` : "—"}
-              </dd>
-            </div>
+            {worker.role !== "management" && (
+              <>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Rate / Unit</dt>
+                  <dd className="mt-1 text-sm">
+                    {worker.rate_per_unit != null ? `$${worker.rate_per_unit.toFixed(2)}` : "\u2014"}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-muted-foreground">Rate / Common Space</dt>
+                  <dd className="mt-1 text-sm">
+                    {worker.rate_per_common_space != null ? `$${worker.rate_per_common_space.toFixed(2)}` : "\u2014"}
+                  </dd>
+                </div>
+              </>
+            )}
             <div>
               <dt className="text-xs text-muted-foreground">Total Paid</dt>
               <dd className="mt-1 text-sm font-medium">

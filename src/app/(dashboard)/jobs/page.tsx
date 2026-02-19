@@ -22,6 +22,7 @@ export default async function JobsPage() {
       .from("workers")
       .select("id, name, active")
       .eq("active", true)
+      .eq("role", "field")
       .order("name"),
     supabase
       .from("settings")

@@ -18,6 +18,7 @@ export async function broadcastJobToWorkers(
     .from("workers")
     .select("id, name, telegram_chat_id")
     .eq("active", true)
+    .eq("role", "field")
     .not("telegram_chat_id", "is", null);
 
   if (!workers || workers.length === 0) return;

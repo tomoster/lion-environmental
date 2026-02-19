@@ -1,6 +1,7 @@
 import type { TelegramCallbackQuery } from "../types";
 import { sendMessage, answerCallbackQuery } from "../client";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getManagementChatIds } from "../get-management-chat-ids";
 
 export async function handleAcceptJob(query: TelegramCallbackQuery) {
   const chatId = query.message?.chat.id;
@@ -41,21 +42,18 @@ export async function handleAcceptJob(query: TelegramCallbackQuery) {
   await sendMessage(
     chatId,
     `You've accepted <b>Job #${job?.job_number}</b>!\n\n` +
-      `Client: ${job?.client_company ?? "—"}\n` +
-      `Address: ${job?.building_address ?? "—"}\n` +
+      `Client: ${job?.client_company ?? "\u2014"}\n` +
+      `Address: ${job?.building_address ?? "\u2014"}\n` +
       `Date: ${job?.scan_date ?? "TBD"}`
   );
 
-  const { data: aviSetting } = await supabase
-    .from("settings")
-    .select("value")
-    .eq("key", "avi_telegram_chat_id")
-    .single();
-
-  if (aviSetting?.value) {
-    await sendMessage(
-      aviSetting.value,
-      `<b>${worker.name}</b> accepted Job #${job?.job_number} (${job?.client_company ?? "—"}).`
-    );
-  }
+  const mgmtChatIds = await getManagementChatIds(supabase);
+  await Promise.allSettled(
+    mgmtChatIds.map((id) =>
+      sendMessage(
+        id,
+        `<b>${worker.name}</b> accepted Job #${job?.job_number} (${job?.client_company ?? "\u2014"}).`
+      )
+    )
+  );
 }
