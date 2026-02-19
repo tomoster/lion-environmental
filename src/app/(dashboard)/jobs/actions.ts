@@ -1,0 +1,150 @@
+"use server";
+
+import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+
+export async function createJob(formData: FormData) {
+  const supabase = await createClient();
+
+  const serviceType = formData.get("service_type") as string;
+
+  const data = {
+    client_company: (formData.get("client_company") as string) || null,
+    client_email: (formData.get("client_email") as string) || null,
+    building_address: (formData.get("building_address") as string) || null,
+    service_type: serviceType || null,
+    num_units: formData.get("num_units") ? Number(formData.get("num_units")) : null,
+    price_per_unit: formData.get("price_per_unit") ? Number(formData.get("price_per_unit")) : null,
+    num_common_spaces: formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : null,
+    price_per_common_space: formData.get("price_per_common_space") ? Number(formData.get("price_per_common_space")) : null,
+    num_wipes: formData.get("num_wipes") ? Number(formData.get("num_wipes")) : null,
+    scan_date: (formData.get("scan_date") as string) || null,
+    notes: (formData.get("notes") as string) || null,
+    worker_id: (formData.get("worker_id") as string) || null,
+    dispatch_status: "not_dispatched",
+    report_status: "scheduled",
+    prospect_id: (formData.get("prospect_id") as string) || null,
+  };
+
+  const { data: job, error } = await supabase
+    .from("jobs")
+    .insert(data)
+    .select("id")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/jobs");
+  redirect(`/jobs/${job.id}`);
+}
+
+export async function updateJob(id: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const data = {
+    client_company: (formData.get("client_company") as string) || null,
+    client_email: (formData.get("client_email") as string) || null,
+    building_address: (formData.get("building_address") as string) || null,
+    num_units: formData.get("num_units") ? Number(formData.get("num_units")) : null,
+    price_per_unit: formData.get("price_per_unit") ? Number(formData.get("price_per_unit")) : null,
+    num_common_spaces: formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : null,
+    price_per_common_space: formData.get("price_per_common_space") ? Number(formData.get("price_per_common_space")) : null,
+    num_wipes: formData.get("num_wipes") ? Number(formData.get("num_wipes")) : null,
+    scan_date: (formData.get("scan_date") as string) || null,
+    notes: (formData.get("notes") as string) || null,
+    worker_id: (formData.get("worker_id") as string) || null,
+    dispatch_status: formData.get("dispatch_status") as string,
+    report_status: formData.get("report_status") as string,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from("jobs").update(data).eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${id}`);
+}
+
+export async function deleteJob(id: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.from("jobs").delete().eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/jobs");
+  redirect("/jobs");
+}
+
+export async function uploadReport(jobId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const file = formData.get("file") as File;
+  if (!file || file.size === 0) {
+    throw new Error("No file provided");
+  }
+
+  const ext = file.name.split(".").pop();
+  const path = `${jobId}/${Date.now()}.${ext}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("reports")
+    .upload(path, file, { upsert: true });
+
+  if (uploadError) {
+    throw new Error(uploadError.message);
+  }
+
+  const { error: updateError } = await supabase
+    .from("jobs")
+    .update({ report_file_path: path, updated_at: new Date().toISOString() })
+    .eq("id", jobId);
+
+  if (updateError) {
+    throw new Error(updateError.message);
+  }
+
+  revalidatePath(`/jobs/${jobId}`);
+}
+
+export async function createJobFromProspect(prospectId: string) {
+  const supabase = await createClient();
+
+  const { data: prospect, error: prospectError } = await supabase
+    .from("prospects")
+    .select("company, email, building_address")
+    .eq("id", prospectId)
+    .single();
+
+  if (prospectError || !prospect) {
+    throw new Error("Prospect not found");
+  }
+
+  const { data: job, error } = await supabase
+    .from("jobs")
+    .insert({
+      prospect_id: prospectId,
+      client_company: prospect.company,
+      client_email: prospect.email,
+      building_address: prospect.building_address,
+      dispatch_status: "not_dispatched",
+      report_status: "scheduled",
+    })
+    .select("id")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/jobs");
+  redirect(`/jobs/${job.id}`);
+}
