@@ -5,22 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { TimeInput } from "@/components/ui/time-input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { updateJob, deleteJob, uploadReport } from "../actions";
 import { dispatchJob, sendReport } from "./automation-actions";
 import { DeleteJobButton } from "./delete-job-button";
+import { JobDetailForm } from "./job-detail-form";
 import { getAvailableWorkers } from "@/lib/scheduling";
-import { hasLpt, hasDustSwab, formatServiceType } from "@/lib/service-type-utils";
+import { formatServiceTypes } from "@/lib/service-type-utils";
 
 const DUST_SWAB_SITE_VISIT = 375;
 const DUST_SWAB_REPORT_FEE = 135;
@@ -110,15 +101,15 @@ export default async function JobDetailPage({ params }: PageProps) {
   const { data: settings } = await supabase
     .from("settings")
     .select("key, value")
-    .in("key", ["lpt_price_per_unit", "lpt_price_per_common_space"]);
+    .in("key", ["xrf_price_per_unit", "xrf_price_per_common_space"]);
 
   const settingsMap: Record<string, string> = {};
   for (const s of settings ?? []) {
     settingsMap[s.key] = s.value;
   }
 
-  const defaultPricePerUnit = job.price_per_unit ?? (settingsMap.lpt_price_per_unit ? Number(settingsMap.lpt_price_per_unit) : null);
-  const defaultPricePerCommonSpace = job.price_per_common_space ?? (settingsMap.lpt_price_per_common_space ? Number(settingsMap.lpt_price_per_common_space) : null);
+  const defaultPricePerUnit = job.price_per_unit ?? (settingsMap.xrf_price_per_unit ? Number(settingsMap.xrf_price_per_unit) : null);
+  const defaultPricePerCommonSpace = job.price_per_common_space ?? (settingsMap.xrf_price_per_common_space ? Number(settingsMap.xrf_price_per_common_space) : null);
 
   let availability = { available: [] as { id: string; name: string }[], unavailable: [] as { worker: { id: string; name: string }; reason: string }[] };
 
@@ -138,18 +129,18 @@ export default async function JobDetailPage({ params }: PageProps) {
     availability = { available: workers ?? [], unavailable: [] };
   }
 
-  const lptSubtotal = hasLpt(job.service_type)
+  const xrfSubtotal = job.has_xrf
     ? (job.num_units ?? 0) * (defaultPricePerUnit ?? 0) +
       (job.num_common_spaces ?? 0) * (defaultPricePerCommonSpace ?? 0)
     : 0;
 
-  const dustSwabSubtotal = hasDustSwab(job.service_type)
+  const dustSwabSubtotal = job.has_dust_swab
     ? DUST_SWAB_SITE_VISIT +
       DUST_SWAB_REPORT_FEE +
       (job.num_wipes ?? 0) * DUST_SWAB_WIPE_RATE
     : 0;
 
-  const subtotal = lptSubtotal + dustSwabSubtotal;
+  const subtotal = xrfSubtotal + dustSwabSubtotal;
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
@@ -225,229 +216,16 @@ export default async function JobDetailPage({ params }: PageProps) {
 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 space-y-6">
-          <form action={updateJobWithId} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Job Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="client_company">Company</Label>
-                    <Input
-                      id="client_company"
-                      name="client_company"
-                      defaultValue={job.client_company ?? ""}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="client_email">Email</Label>
-                    <Input
-                      id="client_email"
-                      name="client_email"
-                      type="email"
-                      defaultValue={job.client_email ?? ""}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="building_address">Building Address</Label>
-                  <Input
-                    id="building_address"
-                    name="building_address"
-                    defaultValue={job.building_address ?? ""}
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="scan_date">Scan Date</Label>
-                    <Input
-                      id="scan_date"
-                      name="scan_date"
-                      type="date"
-                      defaultValue={job.scan_date ?? ""}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="service_type">Service Type</Label>
-                    <Select
-                      name="service_type"
-                      defaultValue={job.service_type ?? "lpt"}
-                    >
-                      <SelectTrigger id="service_type" className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="lpt">LPT</SelectItem>
-                        <SelectItem value="dust_swab">Dust Swab</SelectItem>
-                        <SelectItem value="both">LPT + Dust Swab</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="start_time">Start Time</Label>
-                    <TimeInput
-                      id="start_time"
-                      name="start_time"
-                      defaultValue={job.start_time ?? ""}
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="estimated_end_time">Est. End Time</Label>
-                    <Input
-                      id="estimated_end_time"
-                      type="time"
-                      step="300"
-                      defaultValue={job.estimated_end_time ?? ""}
-                      readOnly
-                      className="bg-muted/40 cursor-not-allowed"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="num_units"># Units</Label>
-                      <Input
-                        id="num_units"
-                        name="num_units"
-                        type="number"
-                        min="0"
-                        defaultValue={job.num_units ?? ""}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="price_per_unit">$/Unit</Label>
-                      <Input
-                        id="price_per_unit"
-                        name="price_per_unit"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        defaultValue={defaultPricePerUnit ?? ""}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="num_common_spaces"># Common Spaces</Label>
-                      <Input
-                        id="num_common_spaces"
-                        name="num_common_spaces"
-                        type="number"
-                        min="0"
-                        defaultValue={job.num_common_spaces ?? ""}
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="price_per_common_space">$/Common Space</Label>
-                      <Input
-                        id="price_per_common_space"
-                        name="price_per_common_space"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        defaultValue={defaultPricePerCommonSpace ?? ""}
-                      />
-                    </div>
-                  </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="num_wipes"># Wipes</Label>
-                      <Input
-                        id="num_wipes"
-                        name="num_wipes"
-                        type="number"
-                        min="0"
-                        defaultValue={job.num_wipes ?? ""}
-                      />
-                    </div>
-                  </div>
-
-                <Separator />
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="worker_id">Assigned Worker</Label>
-                    <Select
-                      name="worker_id"
-                      defaultValue={workerData?.id ?? "unassigned"}
-                    >
-                      <SelectTrigger id="worker_id" className="w-full">
-                        <SelectValue placeholder="Unassigned" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
-                        {availability.available.map((w) => (
-                          <SelectItem key={w.id} value={w.id}>
-                            {w.name}
-                          </SelectItem>
-                        ))}
-                        {availability.unavailable.map(({ worker: w, reason }) => (
-                          <SelectItem key={w.id} value={w.id} disabled>
-                            {w.name} — {reason}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor="dispatch_status">Dispatch Status</Label>
-                    <Select
-                      name="dispatch_status"
-                      defaultValue={job.dispatch_status}
-                    >
-                      <SelectTrigger id="dispatch_status" className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(DISPATCH_STATUS_LABELS).map(([value, label]) => (
-                          <SelectItem key={value} value={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="report_status">Report Status</Label>
-                  <Select name="report_status" defaultValue={job.report_status}>
-                    <SelectTrigger id="report_status" className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(REPORT_STATUS_LABELS).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>
-                          {label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    name="notes"
-                    rows={4}
-                    defaultValue={job.notes ?? ""}
-                    placeholder="Add notes..."
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <Button type="submit">Save Changes</Button>
-                </div>
-              </CardContent>
-            </Card>
-          </form>
+          <JobDetailForm
+            action={updateJobWithId}
+            job={job}
+            defaultPricePerUnit={defaultPricePerUnit}
+            defaultPricePerCommonSpace={defaultPricePerCommonSpace}
+            workerData={workerData}
+            availability={availability}
+            dispatchStatusLabels={DISPATCH_STATUS_LABELS}
+            reportStatusLabels={REPORT_STATUS_LABELS}
+          />
 
           <Card>
             <CardHeader>
@@ -479,7 +257,7 @@ export default async function JobDetailPage({ params }: PageProps) {
               <CardTitle className="text-base">Pricing Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              {hasLpt(job.service_type) && (
+              {job.has_xrf && (
                 <>
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-muted-foreground">
@@ -504,7 +282,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                 </>
               )}
 
-              {hasDustSwab(job.service_type) && (
+              {job.has_dust_swab && (
                 <>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Site visit</span>
@@ -554,7 +332,7 @@ export default async function JobDetailPage({ params }: PageProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service</span>
-                <span>{formatServiceType(job.service_type)}</span>
+                <span>{formatServiceTypes(job)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Scan date</span>

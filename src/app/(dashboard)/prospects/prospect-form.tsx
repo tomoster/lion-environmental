@@ -27,16 +27,12 @@ export function ProspectForm({ prospect, onSuccess }: ProspectFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState(prospect?.status ?? "new");
-  const [serviceInterest, setServiceInterest] = useState(
-    prospect?.service_interest ?? ""
-  );
   const [source, setSource] = useState(prospect?.source ?? "manual");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     formData.set("status", status);
-    formData.set("service_interest", serviceInterest);
     formData.set("source", source);
 
     startTransition(async () => {
@@ -51,7 +47,6 @@ export function ProspectForm({ prospect, onSuccess }: ProspectFormProps) {
         if (!prospect) {
           formRef.current?.reset();
           setStatus("new");
-          setServiceInterest("");
           setSource("manual");
         }
         onSuccess?.();
@@ -139,20 +134,6 @@ export function ProspectForm({ prospect, onSuccess }: ProspectFormProps) {
               <SelectItem value="followup">Follow-up</SelectItem>
               <SelectItem value="confirmed">Confirmed</SelectItem>
               <SelectItem value="lost">Lost</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Service Interest</Label>
-          <Select value={serviceInterest} onValueChange={setServiceInterest}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select service" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="lpt">LPT</SelectItem>
-              <SelectItem value="dust_swab">Dust Swab</SelectItem>
-              <SelectItem value="both">Both</SelectItem>
             </SelectContent>
           </Select>
         </div>

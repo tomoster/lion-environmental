@@ -1,14 +1,11 @@
-export function hasLpt(type: string | null): boolean {
-  return type === "lpt" || type === "both";
-}
-
-export function hasDustSwab(type: string | null): boolean {
-  return type === "dust_swab" || type === "both";
-}
-
-export function formatServiceType(type: string | null): string {
-  if (type === "lpt") return "LPT";
-  if (type === "dust_swab") return "Dust Swab";
-  if (type === "both") return "LPT + Dust Swab";
-  return "\u2014";
+export function formatServiceTypes(job: {
+  has_xrf: boolean;
+  has_dust_swab: boolean;
+  has_asbestos: boolean;
+}): string {
+  const parts: string[] = [];
+  if (job.has_xrf) parts.push("XRF");
+  if (job.has_dust_swab) parts.push("Dust Swab");
+  if (job.has_asbestos) parts.push("Asbestos");
+  return parts.length > 0 ? parts.join(" + ") : "\u2014";
 }

@@ -15,7 +15,6 @@ export async function createProspect(formData: FormData) {
     status: (formData.get("status") as string) || "new",
     next_followup: (formData.get("next_followup") as string) || null,
     source: (formData.get("source") as string) || "manual",
-    service_interest: (formData.get("service_interest") as string) || null,
     notes: (formData.get("notes") as string) || null,
   });
 
@@ -41,7 +40,6 @@ export async function updateProspect(id: string, formData: FormData) {
       status: (formData.get("status") as string) || "new",
       next_followup: (formData.get("next_followup") as string) || null,
       source: (formData.get("source") as string) || "manual",
-      service_interest: (formData.get("service_interest") as string) || null,
       notes: (formData.get("notes") as string) || null,
       updated_at: new Date().toISOString(),
     })

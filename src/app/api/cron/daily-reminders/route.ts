@@ -24,13 +24,13 @@ export async function GET(request: NextRequest) {
 
   const { data: todayJobs } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, building_address, scan_date, start_time, service_type, worker_id, workers(name, telegram_chat_id)")
+    .select("id, job_number, client_company, building_address, scan_date, start_time, worker_id, workers(name, telegram_chat_id)")
     .eq("scan_date", today)
     .in("dispatch_status", ["assigned", "open"]);
 
   const { data: tomorrowJobs } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, building_address, scan_date, start_time, service_type, worker_id, workers(name, telegram_chat_id)")
+    .select("id, job_number, client_company, building_address, scan_date, start_time, worker_id, workers(name, telegram_chat_id)")
     .eq("scan_date", tomorrowStr)
     .in("dispatch_status", ["assigned", "open"]);
 

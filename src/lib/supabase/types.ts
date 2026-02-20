@@ -155,6 +155,9 @@ export type Database = {
           created_at: string | null
           dispatch_status: string
           estimated_end_time: string | null
+          has_asbestos: boolean
+          has_dust_swab: boolean
+          has_xrf: boolean
           id: string
           job_number: number
           notes: string | null
@@ -167,7 +170,6 @@ export type Database = {
           report_file_path: string | null
           report_status: string
           scan_date: string | null
-          service_type: string | null
           start_time: string | null
           updated_at: string | null
           worker_id: string | null
@@ -179,6 +181,9 @@ export type Database = {
           created_at?: string | null
           dispatch_status?: string
           estimated_end_time?: string | null
+          has_asbestos?: boolean
+          has_dust_swab?: boolean
+          has_xrf?: boolean
           id?: string
           job_number?: number
           notes?: string | null
@@ -191,7 +196,6 @@ export type Database = {
           report_file_path?: string | null
           report_status?: string
           scan_date?: string | null
-          service_type?: string | null
           start_time?: string | null
           updated_at?: string | null
           worker_id?: string | null
@@ -203,6 +207,9 @@ export type Database = {
           created_at?: string | null
           dispatch_status?: string
           estimated_end_time?: string | null
+          has_asbestos?: boolean
+          has_dust_swab?: boolean
+          has_xrf?: boolean
           id?: string
           job_number?: number
           notes?: string | null
@@ -215,7 +222,6 @@ export type Database = {
           report_file_path?: string | null
           report_status?: string
           scan_date?: string | null
-          service_type?: string | null
           start_time?: string | null
           updated_at?: string | null
           worker_id?: string | null
@@ -248,7 +254,6 @@ export type Database = {
           next_followup: string | null
           notes: string | null
           phone: string | null
-          service_interest: string | null
           source: string | null
           status: string
           updated_at: string | null
@@ -263,7 +268,6 @@ export type Database = {
           next_followup?: string | null
           notes?: string | null
           phone?: string | null
-          service_interest?: string | null
           source?: string | null
           status?: string
           updated_at?: string | null
@@ -278,7 +282,6 @@ export type Database = {
           next_followup?: string | null
           notes?: string | null
           phone?: string | null
-          service_interest?: string | null
           source?: string | null
           status?: string
           updated_at?: string | null

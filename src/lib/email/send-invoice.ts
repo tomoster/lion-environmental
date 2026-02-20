@@ -93,7 +93,7 @@ export async function sendInvoiceForId(
   const { data: invoice, error: invoiceError } = await supabase
     .from("invoices")
     .select(
-      "*, jobs(service_type, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, client_email)"
+      "*, jobs(has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, client_email)"
     )
     .eq("id", invoiceId)
     .single();
@@ -103,7 +103,9 @@ export async function sendInvoiceForId(
   }
 
   const job = invoice.jobs as {
-    service_type: string | null;
+    has_xrf: boolean;
+    has_dust_swab: boolean;
+    has_asbestos: boolean;
     num_units: number | null;
     price_per_unit: number | null;
     num_common_spaces: number | null;
@@ -140,7 +142,9 @@ export async function sendInvoiceForId(
       created_at: invoice.created_at,
     },
     {
-      service_type: job.service_type,
+      has_xrf: job.has_xrf,
+      has_dust_swab: job.has_dust_swab,
+      has_asbestos: job.has_asbestos,
       num_units: job.num_units,
       price_per_unit: job.price_per_unit,
       num_common_spaces: job.num_common_spaces,

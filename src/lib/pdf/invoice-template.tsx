@@ -8,7 +8,6 @@ import {
   StyleSheet,
   renderToBuffer,
 } from "@react-pdf/renderer";
-import { hasLpt, hasDustSwab } from "@/lib/service-type-utils";
 
 const styles = StyleSheet.create({
   page: {
@@ -191,7 +190,9 @@ export type InvoiceData = {
 };
 
 export type JobData = {
-  service_type: string | null;
+  has_xrf: boolean;
+  has_dust_swab: boolean;
+  has_asbestos: boolean;
   num_units: number | null;
   price_per_unit: number | null;
   num_common_spaces: number | null;
@@ -256,7 +257,7 @@ export function InvoiceDocument({
             </Text>
           </View>
 
-          {hasLpt(job.service_type) && (
+          {job.has_xrf && (
             <>
               <View style={styles.tableRow}>
                 <Text style={styles.colDescription}>
@@ -284,7 +285,7 @@ export function InvoiceDocument({
             </>
           )}
 
-          {hasDustSwab(job.service_type) && (
+          {job.has_dust_swab && (
             <>
               <View style={styles.tableRow}>
                 <Text style={styles.colDescription}>Site Visit</Text>

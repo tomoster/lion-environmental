@@ -25,25 +25,30 @@ export function formatTime12h(time: string): string {
 
 export function calculateEndTime(
   startTime: string,
-  serviceType: string,
+  services: { has_xrf: boolean; has_dust_swab: boolean; has_asbestos: boolean },
   numUnits: number,
   numCommonSpaces: number,
   durationSettings: {
-    lpt_duration_per_unit: number;
-    lpt_duration_per_common_space: number;
+    xrf_duration_per_unit: number;
+    xrf_duration_per_common_space: number;
     dust_swab_duration: number;
+    asbestos_duration: number;
   }
 ): string {
   let totalMinutes = 0;
 
-  if (serviceType === "lpt" || serviceType === "both") {
+  if (services.has_xrf) {
     totalMinutes +=
-      numUnits * durationSettings.lpt_duration_per_unit +
-      numCommonSpaces * durationSettings.lpt_duration_per_common_space;
+      numUnits * durationSettings.xrf_duration_per_unit +
+      numCommonSpaces * durationSettings.xrf_duration_per_common_space;
   }
 
-  if (serviceType === "dust_swab" || serviceType === "both") {
+  if (services.has_dust_swab) {
     totalMinutes += durationSettings.dust_swab_duration;
+  }
+
+  if (services.has_asbestos) {
+    totalMinutes += durationSettings.asbestos_duration;
   }
 
   if (totalMinutes === 0) totalMinutes = 60;

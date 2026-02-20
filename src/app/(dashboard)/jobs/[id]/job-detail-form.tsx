@@ -1,0 +1,324 @@
+"use client";
+
+import { useTransition } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { TimeInput } from "@/components/ui/time-input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
+
+type JobDetailFormProps = {
+  action: (formData: FormData) => Promise<void>;
+  job: {
+    client_company: string | null;
+    client_email: string | null;
+    building_address: string | null;
+    scan_date: string | null;
+    has_xrf: boolean;
+    has_dust_swab: boolean;
+    has_asbestos: boolean;
+    start_time: string | null;
+    estimated_end_time: string | null;
+    num_units: number | null;
+    num_common_spaces: number | null;
+    num_wipes: number | null;
+    dispatch_status: string;
+    report_status: string;
+    notes: string | null;
+  };
+  defaultPricePerUnit: number | null;
+  defaultPricePerCommonSpace: number | null;
+  workerData: { id: string; name: string } | null;
+  availability: {
+    available: { id: string; name: string }[];
+    unavailable: { worker: { id: string; name: string }; reason: string }[];
+  };
+  dispatchStatusLabels: Record<string, string>;
+  reportStatusLabels: Record<string, string>;
+};
+
+export function JobDetailForm({
+  action,
+  job,
+  defaultPricePerUnit,
+  defaultPricePerCommonSpace,
+  workerData,
+  availability,
+  dispatchStatusLabels,
+  reportStatusLabels,
+}: JobDetailFormProps) {
+  const [isPending, startTransition] = useTransition();
+  const [xrfChecked, setXrfChecked] = useState(job.has_xrf);
+  const [dustSwabChecked, setDustSwabChecked] = useState(job.has_dust_swab);
+  const [asbestosChecked, setAsbestosChecked] = useState(job.has_asbestos);
+
+  return (
+    <form
+      action={(formData) => {
+        startTransition(async () => {
+          try {
+            await action(formData);
+            toast.success("Changes saved");
+          } catch {
+            toast.error("Failed to save changes");
+          }
+        });
+      }}
+      className="space-y-6"
+    >
+      <input type="hidden" name="has_xrf" value={xrfChecked ? "true" : "false"} />
+      <input type="hidden" name="has_dust_swab" value={dustSwabChecked ? "true" : "false"} />
+      <input type="hidden" name="has_asbestos" value={asbestosChecked ? "true" : "false"} />
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">Job Details</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="client_company">Company</Label>
+              <Input
+                id="client_company"
+                name="client_company"
+                defaultValue={job.client_company ?? ""}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="client_email">Email</Label>
+              <Input
+                id="client_email"
+                name="client_email"
+                type="email"
+                defaultValue={job.client_email ?? ""}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="building_address">Building Address</Label>
+            <Input
+              id="building_address"
+              name="building_address"
+              defaultValue={job.building_address ?? ""}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="scan_date">Scan Date</Label>
+              <Input
+                id="scan_date"
+                name="scan_date"
+                type="date"
+                defaultValue={job.scan_date ?? ""}
+              />
+            </div>
+            <div className="space-y-2.5">
+              <Label>Service Type</Label>
+              <div className="flex items-center gap-4">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={xrfChecked}
+                    onCheckedChange={(checked) => setXrfChecked(checked === true)}
+                  />
+                  <span className="text-sm">XRF</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={dustSwabChecked}
+                    onCheckedChange={(checked) => setDustSwabChecked(checked === true)}
+                  />
+                  <span className="text-sm">Dust Swab</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <Checkbox
+                    checked={asbestosChecked}
+                    onCheckedChange={(checked) => setAsbestosChecked(checked === true)}
+                  />
+                  <span className="text-sm">Asbestos</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="start_time">Start Time</Label>
+              <TimeInput
+                id="start_time"
+                name="start_time"
+                defaultValue={job.start_time ?? ""}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="estimated_end_time">Est. End Time</Label>
+              <Input
+                id="estimated_end_time"
+                type="time"
+                step="300"
+                defaultValue={job.estimated_end_time ?? ""}
+                readOnly
+                className="bg-muted/40 cursor-not-allowed"
+              />
+            </div>
+          </div>
+
+          {xrfChecked && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="num_units"># Units</Label>
+                <Input
+                  id="num_units"
+                  name="num_units"
+                  type="number"
+                  min="0"
+                  defaultValue={job.num_units ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="price_per_unit">$/Unit</Label>
+                <Input
+                  id="price_per_unit"
+                  name="price_per_unit"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={defaultPricePerUnit ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="num_common_spaces"># Common Spaces</Label>
+                <Input
+                  id="num_common_spaces"
+                  name="num_common_spaces"
+                  type="number"
+                  min="0"
+                  defaultValue={job.num_common_spaces ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="price_per_common_space">$/Common Space</Label>
+                <Input
+                  id="price_per_common_space"
+                  name="price_per_common_space"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={defaultPricePerCommonSpace ?? ""}
+                />
+              </div>
+            </div>
+          )}
+
+          {dustSwabChecked && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="num_wipes"># Wipes</Label>
+                <Input
+                  id="num_wipes"
+                  name="num_wipes"
+                  type="number"
+                  min="0"
+                  defaultValue={job.num_wipes ?? ""}
+                />
+              </div>
+            </div>
+          )}
+
+          <Separator />
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="worker_id">Assigned Worker</Label>
+              <Select
+                name="worker_id"
+                defaultValue={workerData?.id ?? "unassigned"}
+              >
+                <SelectTrigger id="worker_id" className="w-full">
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {availability.available.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name}
+                    </SelectItem>
+                  ))}
+                  {availability.unavailable.map(({ worker: w, reason }) => (
+                    <SelectItem key={w.id} value={w.id} disabled>
+                      {w.name} — {reason}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="dispatch_status">Dispatch Status</Label>
+              <Select
+                name="dispatch_status"
+                defaultValue={job.dispatch_status}
+              >
+                <SelectTrigger id="dispatch_status" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.entries(dispatchStatusLabels).map(([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="report_status">Report Status</Label>
+            <Select name="report_status" defaultValue={job.report_status}>
+              <SelectTrigger id="report_status" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(reportStatusLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              rows={4}
+              defaultValue={job.notes ?? ""}
+              placeholder="Add notes..."
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="flex justify-end">
+        <Button type="submit" disabled={isPending}>
+          {isPending ? "Saving..." : "Save Changes"}
+        </Button>
+      </div>
+    </form>
+  );
+}

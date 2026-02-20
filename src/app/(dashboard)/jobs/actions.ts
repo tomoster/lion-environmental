@@ -10,13 +10,13 @@ import { broadcastJobToWorkers } from "@/lib/telegram/broadcast";
 export async function createJob(formData: FormData) {
   const supabase = await createClient();
 
-  const serviceType = formData.get("service_type") as string;
-
   const data = {
     client_company: (formData.get("client_company") as string) || null,
     client_email: (formData.get("client_email") as string) || null,
     building_address: (formData.get("building_address") as string) || null,
-    service_type: serviceType || null,
+    has_xrf: formData.get("has_xrf") === "true",
+    has_dust_swab: formData.get("has_dust_swab") === "true",
+    has_asbestos: formData.get("has_asbestos") === "true",
     num_units: formData.get("num_units") ? Number(formData.get("num_units")) : null,
     price_per_unit: formData.get("price_per_unit") ? Number(formData.get("price_per_unit")) : null,
     num_common_spaces: formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : null,
@@ -57,34 +57,45 @@ export async function updateJob(id: string, formData: FormData) {
   const wasNotDispatched = currentJob?.dispatch_status === "not_dispatched";
 
   const startTime = (formData.get("start_time") as string) || null;
-  const serviceType = (formData.get("service_type") as string) || null;
+  const hasXrf = formData.get("has_xrf") === "true";
+  const hasDustSwab = formData.get("has_dust_swab") === "true";
+  const hasAsbestos = formData.get("has_asbestos") === "true";
   const numUnits = formData.get("num_units") ? Number(formData.get("num_units")) : 0;
   const numCommonSpaces = formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : 0;
 
   let estimatedEndTime: string | null = null;
-  if (startTime && serviceType) {
+  if (startTime && (hasXrf || hasDustSwab || hasAsbestos)) {
     const { data: settings } = await supabase
       .from("settings")
       .select("key, value")
-      .in("key", ["lpt_duration_per_unit", "lpt_duration_per_common_space", "dust_swab_duration"]);
+      .in("key", ["xrf_duration_per_unit", "xrf_duration_per_common_space", "dust_swab_duration", "asbestos_duration"]);
 
     const settingsMap: Record<string, number> = {};
     for (const s of settings ?? []) {
       settingsMap[s.key] = Number(s.value);
     }
 
-    estimatedEndTime = calculateEndTime(startTime, serviceType, numUnits, numCommonSpaces, {
-      lpt_duration_per_unit: settingsMap.lpt_duration_per_unit ?? 15,
-      lpt_duration_per_common_space: settingsMap.lpt_duration_per_common_space ?? 10,
-      dust_swab_duration: settingsMap.dust_swab_duration ?? 60,
-    });
+    estimatedEndTime = calculateEndTime(
+      startTime,
+      { has_xrf: hasXrf, has_dust_swab: hasDustSwab, has_asbestos: hasAsbestos },
+      numUnits,
+      numCommonSpaces,
+      {
+        xrf_duration_per_unit: settingsMap.xrf_duration_per_unit ?? 15,
+        xrf_duration_per_common_space: settingsMap.xrf_duration_per_common_space ?? 10,
+        dust_swab_duration: settingsMap.dust_swab_duration ?? 60,
+        asbestos_duration: settingsMap.asbestos_duration ?? 60,
+      }
+    );
   }
 
   const data = {
     client_company: (formData.get("client_company") as string) || null,
     client_email: (formData.get("client_email") as string) || null,
     building_address: (formData.get("building_address") as string) || null,
-    service_type: serviceType,
+    has_xrf: hasXrf,
+    has_dust_swab: hasDustSwab,
+    has_asbestos: hasAsbestos,
     num_units: formData.get("num_units") ? Number(formData.get("num_units")) : null,
     price_per_unit: formData.get("price_per_unit") ? Number(formData.get("price_per_unit")) : null,
     num_common_spaces: formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : null,

@@ -90,7 +90,7 @@ _None_
 
 ## Step 5: Job Detail Page
 
-**Status:** [ ] IN PROGRESS
+**Status:** [x] DONE
 
 **What to do:**
 - Open the job detail page for the job created in Step 4
@@ -112,13 +112,13 @@ _None_
 - Changes persist after save
 
 **Issues found:**
-
+- Save button had no loading state or confirmation toast — user couldn't tell if save worked. Fixed: added SaveForm client component with useTransition + sonner toast.
 
 ---
 
 ## Step 6: Dispatch
 
-**Status:** [ ] NEXT
+**Status:** [x] DONE
 
 > **Note:** There's auto-dispatch on first save behavior. In `src/app/(dashboard)/jobs/actions.ts:112-114`, any time a job is saved while its status is "not_dispatched", `broadcastJobToWorkers()` fires automatically. If you already edited and saved the job in Step 5, dispatch may have already triggered. Check the job's dispatch_status before manually dispatching.
 
@@ -136,13 +136,13 @@ _None_
 - Workers without Telegram chat ID are skipped without error
 
 **Issues found:**
-
+- Auto-dispatch confirmed working: saving a job with status "not_dispatched" triggers broadcastJobToWorkers automatically, changing status to "open". Telegram messages received by workers.
 
 ---
 
 ## Step 7: Worker Accepts Job
 
-**Status:** [ ] NOT STARTED
+**Status:** [ ] NEXT
 
 **What to do:**
 - In Telegram, tap "Accept" on the dispatched job message

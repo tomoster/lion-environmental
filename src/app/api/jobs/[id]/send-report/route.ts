@@ -12,7 +12,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, report_file_path, service_type")
+    .select("id, job_number, client_company, client_email, building_address, report_file_path, has_xrf, has_dust_swab, has_asbestos")
     .eq("id", id)
     .single();
 
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       jobNumber: job.job_number,
       clientCompany: job.client_company ?? "Client",
       buildingAddress: job.building_address ?? "",
-      serviceType: job.service_type ?? "lpt",
+      services: { has_xrf: job.has_xrf, has_dust_swab: job.has_dust_swab, has_asbestos: job.has_asbestos },
       pdfBuffer: buffer,
       filename,
       senderName: settingsMap["sender_name"] ?? "Avi Bursztyn",

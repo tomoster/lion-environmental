@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { markAsPaid, updateInvoiceStatus, generateAndStorePdf, sendInvoiceToClient } from "../actions";
-import { hasLpt, hasDustSwab, formatServiceType } from "@/lib/service-type-utils";
+import { formatServiceTypes } from "@/lib/service-type-utils";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -61,7 +61,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   const { data: invoice } = await supabase
     .from("invoices")
     .select(
-      "*, jobs(id, job_number, service_type, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, client_email)"
+      "*, jobs(id, job_number, has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, client_email)"
     )
     .eq("id", id)
     .single();
@@ -71,7 +71,9 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   const job = invoice.jobs as {
     id: string;
     job_number: number;
-    service_type: string | null;
+    has_xrf: boolean;
+    has_dust_swab: boolean;
+    has_asbestos: boolean;
     num_units: number | null;
     price_per_unit: number | null;
     num_common_spaces: number | null;
@@ -223,7 +225,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {job && hasLpt(job.service_type) && (
+                    {job && job.has_xrf && (
                       <>
                         <tr>
                           <td className="px-4 py-3">
@@ -255,7 +257,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                       </>
                     )}
 
-                    {job && hasDustSwab(job.service_type) && (
+                    {job && job.has_dust_swab && (
                       <>
                         <tr>
                           <td className="px-4 py-3">Site Visit</td>
@@ -402,7 +404,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Service</span>
-                  <span>{formatServiceType(job.service_type)}</span>
+                  <span>{formatServiceTypes(job)}</span>
                 </div>
                 {job.client_email && (
                   <div className="flex justify-between">

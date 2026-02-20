@@ -18,14 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { formatServiceType } from "@/lib/service-type-utils";
+import { formatServiceTypes } from "@/lib/service-type-utils";
 
 type Job = {
   id: string;
   job_number: number;
   client_company: string | null;
   building_address: string | null;
-  service_type: string | null;
+  has_xrf: boolean;
+  has_dust_swab: boolean;
+  has_asbestos: boolean;
   scan_date: string | null;
   dispatch_status: string;
   report_status: string;
@@ -190,7 +192,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
                   <TableCell className="text-muted-foreground max-w-[200px] truncate">
                     {job.building_address ?? "—"}
                   </TableCell>
-                  <TableCell>{formatServiceType(job.service_type)}</TableCell>
+                  <TableCell>{formatServiceTypes(job)}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {formatDate(job.scan_date)}
                   </TableCell>

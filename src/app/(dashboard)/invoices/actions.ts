@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { hasLpt, hasDustSwab } from "@/lib/service-type-utils";
 
 export async function generateInvoice(jobId: string) {
   const supabase = await createClient();
@@ -13,7 +12,7 @@ export async function generateInvoice(jobId: string) {
       supabase
         .from("jobs")
         .select(
-          "id, job_number, client_company, client_email, building_address, service_type, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes"
+          "id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes"
         )
         .eq("id", jobId)
         .single(),
@@ -32,13 +31,13 @@ export async function generateInvoice(jobId: string) {
 
   let subtotal = 0;
 
-  if (hasLpt(job.service_type)) {
+  if (job.has_xrf) {
     subtotal +=
       (job.num_units ?? 0) * (job.price_per_unit ?? 0) +
       (job.num_common_spaces ?? 0) * (job.price_per_common_space ?? 0);
   }
 
-  if (hasDustSwab(job.service_type)) {
+  if (job.has_dust_swab) {
     const siteVisit = parseFloat(
       settingsMap["dust_swab_site_visit"] ?? "375"
     );
@@ -136,7 +135,7 @@ export async function generateAndStorePdf(invoiceId: string): Promise<void> {
 
   const { data: invoice, error: invoiceError } = await supabase
     .from("invoices")
-    .select("*, jobs(service_type, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes)")
+    .select("*, jobs(has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes)")
     .eq("id", invoiceId)
     .single();
 
@@ -145,7 +144,9 @@ export async function generateAndStorePdf(invoiceId: string): Promise<void> {
   }
 
   const job = invoice.jobs as {
-    service_type: string | null;
+    has_xrf: boolean;
+    has_dust_swab: boolean;
+    has_asbestos: boolean;
     num_units: number | null;
     price_per_unit: number | null;
     num_common_spaces: number | null;
@@ -169,7 +170,9 @@ export async function generateAndStorePdf(invoiceId: string): Promise<void> {
       created_at: invoice.created_at,
     },
     {
-      service_type: job?.service_type ?? null,
+      has_xrf: job?.has_xrf ?? false,
+      has_dust_swab: job?.has_dust_swab ?? false,
+      has_asbestos: job?.has_asbestos ?? false,
       num_units: job?.num_units ?? null,
       price_per_unit: job?.price_per_unit ?? null,
       num_common_spaces: job?.num_common_spaces ?? null,

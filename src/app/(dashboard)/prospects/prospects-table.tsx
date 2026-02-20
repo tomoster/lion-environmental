@@ -69,12 +69,6 @@ const STATUS_COLORS: Record<string, string> = {
   lost: "bg-red-100 text-red-700 border-red-200",
 };
 
-const SERVICE_LABELS: Record<string, string> = {
-  lpt: "LPT",
-  dust_swab: "Dust Swab",
-  both: "Both",
-};
-
 function StatusBadge({ status }: { status: string }) {
   const label = STATUS_LABELS[status] ?? status;
   const colorClass =
@@ -132,12 +126,6 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
       </TableCell>
       <TableCell className="text-muted-foreground">
         {formatDate(prospect.next_followup)}
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {prospect.service_interest
-          ? SERVICE_LABELS[prospect.service_interest] ??
-            prospect.service_interest
-          : "—"}
       </TableCell>
       <TableCell>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -274,7 +262,6 @@ export function ProspectsTable({
               <TableHead>Email</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Next Follow-up</TableHead>
-              <TableHead>Service</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -282,7 +269,7 @@ export function ProspectsTable({
             {prospects.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={7}
                   className="text-muted-foreground py-10 text-center text-sm"
                 >
                   No prospects found.

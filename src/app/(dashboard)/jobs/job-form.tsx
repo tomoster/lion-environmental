@@ -24,23 +24,19 @@ type Worker = {
   active: boolean | null;
 };
 
-type UnavailableWorker = {
-  worker: Worker;
-  reason: string;
-};
-
 type PricingDefaults = {
-  lpt_price_per_unit: number;
-  lpt_price_per_common_space: number;
+  xrf_price_per_unit: number;
+  xrf_price_per_common_space: number;
   dust_swab_site_visit: number;
   dust_swab_report: number;
   dust_swab_wipe_rate: number;
 };
 
 type DurationDefaults = {
-  lpt_duration_per_unit: number;
-  lpt_duration_per_common_space: number;
+  xrf_duration_per_unit: number;
+  xrf_duration_per_common_space: number;
   dust_swab_duration: number;
+  asbestos_duration: number;
 };
 
 type JobFormProps = {
@@ -59,39 +55,37 @@ type JobFormProps = {
 export function JobForm({ workers, pricingDefaults, durationDefaults, defaultValues, onSuccess }: JobFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [lptChecked, setLptChecked] = useState(true);
+  const [xrfChecked, setXrfChecked] = useState(true);
   const [dustSwabChecked, setDustSwabChecked] = useState(false);
+  const [asbestosChecked, setAsbestosChecked] = useState(false);
   const [numWipes, setNumWipes] = useState(0);
   const [numUnits, setNumUnits] = useState(0);
   const [numCommonSpaces, setNumCommonSpaces] = useState(0);
   const [startTime, setStartTime] = useState("");
 
-  const serviceType = lptChecked && dustSwabChecked
-    ? "both"
-    : lptChecked
-    ? "lpt"
-    : dustSwabChecked
-    ? "dust_swab"
-    : "";
+  const anyServiceChecked = xrfChecked || dustSwabChecked || asbestosChecked;
+
+  const services = { has_xrf: xrfChecked, has_dust_swab: dustSwabChecked, has_asbestos: asbestosChecked };
 
   const pricing = {
-    lpt_price_per_unit: pricingDefaults?.lpt_price_per_unit ?? 0,
-    lpt_price_per_common_space: pricingDefaults?.lpt_price_per_common_space ?? 0,
+    xrf_price_per_unit: pricingDefaults?.xrf_price_per_unit ?? 0,
+    xrf_price_per_common_space: pricingDefaults?.xrf_price_per_common_space ?? 0,
     dust_swab_site_visit: pricingDefaults?.dust_swab_site_visit ?? 375,
     dust_swab_report: pricingDefaults?.dust_swab_report ?? 135,
     dust_swab_wipe_rate: pricingDefaults?.dust_swab_wipe_rate ?? 20,
   };
 
   const duration = {
-    lpt_duration_per_unit: durationDefaults?.lpt_duration_per_unit ?? 45,
-    lpt_duration_per_common_space: durationDefaults?.lpt_duration_per_common_space ?? 30,
+    xrf_duration_per_unit: durationDefaults?.xrf_duration_per_unit ?? 45,
+    xrf_duration_per_common_space: durationDefaults?.xrf_duration_per_common_space ?? 30,
     dust_swab_duration: durationDefaults?.dust_swab_duration ?? 90,
+    asbestos_duration: durationDefaults?.asbestos_duration ?? 60,
   };
 
   const estimatedEndTime = useMemo(() => {
-    if (!startTime || !serviceType) return "";
-    return calculateEndTime(startTime, serviceType, numUnits, numCommonSpaces, duration);
-  }, [startTime, serviceType, numUnits, numCommonSpaces, duration]);
+    if (!startTime || !anyServiceChecked) return "";
+    return calculateEndTime(startTime, services, numUnits, numCommonSpaces, duration);
+  }, [startTime, xrfChecked, dustSwabChecked, asbestosChecked, numUnits, numCommonSpaces, duration]);
 
   async function handleSubmit(formData: FormData) {
     if (estimatedEndTime) {
@@ -116,7 +110,9 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
       {defaultValues?.prospect_id && (
         <input type="hidden" name="prospect_id" value={defaultValues.prospect_id} />
       )}
-      <input type="hidden" name="service_type" value={serviceType} />
+      <input type="hidden" name="has_xrf" value={xrfChecked ? "true" : "false"} />
+      <input type="hidden" name="has_dust_swab" value={dustSwabChecked ? "true" : "false"} />
+      <input type="hidden" name="has_asbestos" value={asbestosChecked ? "true" : "false"} />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
@@ -156,10 +152,10 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
           <div className="flex items-center gap-4">
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
-                checked={lptChecked}
-                onCheckedChange={(checked) => setLptChecked(checked === true)}
+                checked={xrfChecked}
+                onCheckedChange={(checked) => setXrfChecked(checked === true)}
               />
-              <span className="text-sm">LPT</span>
+              <span className="text-sm">XRF</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <Checkbox
@@ -167,6 +163,13 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
                 onCheckedChange={(checked) => setDustSwabChecked(checked === true)}
               />
               <span className="text-sm">Dust Swab</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={asbestosChecked}
+                onCheckedChange={(checked) => setAsbestosChecked(checked === true)}
+              />
+              <span className="text-sm">Asbestos</span>
             </label>
           </div>
         </div>
@@ -197,7 +200,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
         </div>
       </div>
 
-      {lptChecked && (
+      {xrfChecked && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="num_units">Units</Label>
@@ -219,7 +222,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
               type="number"
               min="0"
               step="0.01"
-              defaultValue={pricing.lpt_price_per_unit || ""}
+              defaultValue={pricing.xrf_price_per_unit || ""}
               placeholder="0.00"
             />
           </div>
@@ -243,7 +246,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
               type="number"
               min="0"
               step="0.01"
-              defaultValue={pricing.lpt_price_per_common_space || ""}
+              defaultValue={pricing.xrf_price_per_common_space || ""}
               placeholder="0.00"
             />
           </div>
@@ -312,7 +315,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="submit" disabled={isPending || !serviceType}>
+        <Button type="submit" disabled={isPending || !anyServiceChecked}>
           {isPending ? "Creating..." : "Create Job"}
         </Button>
       </div>

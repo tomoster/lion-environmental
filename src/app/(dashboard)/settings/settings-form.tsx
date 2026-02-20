@@ -23,7 +23,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   const [isBizPending, startBizTransition] = useTransition();
   const [isXrfPending, startXrfTransition] = useTransition();
   const [isDustSwabPending, startDustSwabTransition] = useTransition();
-
+  const [isAsbestosPending, startAsbestosTransition] = useTransition();
 
   function handleBusinessSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -60,6 +60,19 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         toast.error(result.error);
       } else {
         toast.success("Dust swab settings saved.");
+      }
+    });
+  }
+
+  function handleAsbestosSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startAsbestosTransition(async () => {
+      const result = await updateSettings(formData);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Asbestos testing settings saved.");
       }
     });
   }
@@ -162,7 +175,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       <form onSubmit={handleXrfSubmit}>
         <Card>
           <CardHeader>
-            <CardTitle>XRF Scanning (LPT)</CardTitle>
+            <CardTitle>XRF Scanning</CardTitle>
             <CardDescription>
               Default pricing and duration estimates for XRF scanning jobs.
             </CardDescription>
@@ -170,55 +183,55 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           <CardContent>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="lpt_price_per_unit">Price / Unit ($)</Label>
+                <Label htmlFor="xrf_price_per_unit">Price / Unit ($)</Label>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">$</span>
                   <Input
-                    id="lpt_price_per_unit"
-                    name="lpt_price_per_unit"
+                    id="xrf_price_per_unit"
+                    name="xrf_price_per_unit"
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={settings.lpt_price_per_unit ?? ""}
+                    defaultValue={settings.xrf_price_per_unit ?? ""}
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lpt_price_per_common_space">Price / Common Space ($)</Label>
+                <Label htmlFor="xrf_price_per_common_space">Price / Common Space ($)</Label>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">$</span>
                   <Input
-                    id="lpt_price_per_common_space"
-                    name="lpt_price_per_common_space"
+                    id="xrf_price_per_common_space"
+                    name="xrf_price_per_common_space"
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={settings.lpt_price_per_common_space ?? ""}
+                    defaultValue={settings.xrf_price_per_common_space ?? ""}
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lpt_duration_per_unit">Minutes / Unit</Label>
+                <Label htmlFor="xrf_duration_per_unit">Minutes / Unit</Label>
                 <div className="flex items-center gap-2">
                   <Input
-                    id="lpt_duration_per_unit"
-                    name="lpt_duration_per_unit"
+                    id="xrf_duration_per_unit"
+                    name="xrf_duration_per_unit"
                     type="number"
                     min="1"
-                    defaultValue={settings.lpt_duration_per_unit ?? "45"}
+                    defaultValue={settings.xrf_duration_per_unit ?? "45"}
                   />
                   <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lpt_duration_per_common_space">Minutes / Common Space</Label>
+                <Label htmlFor="xrf_duration_per_common_space">Minutes / Common Space</Label>
                 <div className="flex items-center gap-2">
                   <Input
-                    id="lpt_duration_per_common_space"
-                    name="lpt_duration_per_common_space"
+                    id="xrf_duration_per_common_space"
+                    name="xrf_duration_per_common_space"
                     type="number"
                     min="1"
-                    defaultValue={settings.lpt_duration_per_common_space ?? "30"}
+                    defaultValue={settings.xrf_duration_per_common_space ?? "30"}
                   />
                   <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
                 </div>
@@ -312,6 +325,37 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         </Card>
       </form>
 
+      <form onSubmit={handleAsbestosSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Asbestos Testing</CardTitle>
+            <CardDescription>
+              Duration estimate for asbestos testing jobs. Pricing TBD.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-1.5">
+              <Label htmlFor="asbestos_duration">Duration (min)</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="asbestos_duration"
+                  name="asbestos_duration"
+                  type="number"
+                  min="1"
+                  className="w-32"
+                  defaultValue={settings.asbestos_duration ?? "60"}
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">min</span>
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isAsbestosPending}>
+              {isAsbestosPending ? "Saving..." : "Save Asbestos Settings"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
     </div>
   );
 }
