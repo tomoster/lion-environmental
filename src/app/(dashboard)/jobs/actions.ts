@@ -1,9 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calculateEndTime } from "@/lib/scheduling-utils";
+import { broadcastJobToWorkers } from "@/lib/telegram/broadcast";
 
 export async function createJob(formData: FormData) {
   const supabase = await createClient();
@@ -46,6 +48,13 @@ export async function createJob(formData: FormData) {
 
 export async function updateJob(id: string, formData: FormData) {
   const supabase = await createClient();
+
+  const { data: currentJob } = await supabase
+    .from("jobs")
+    .select("dispatch_status")
+    .eq("id", id)
+    .single();
+  const wasNotDispatched = currentJob?.dispatch_status === "not_dispatched";
 
   const startTime = (formData.get("start_time") as string) || null;
   const serviceType = (formData.get("service_type") as string) || null;
@@ -98,6 +107,11 @@ export async function updateJob(id: string, formData: FormData) {
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (wasNotDispatched) {
+    const adminClient = createAdminClient();
+    await broadcastJobToWorkers(adminClient, id);
   }
 
   revalidatePath("/jobs");

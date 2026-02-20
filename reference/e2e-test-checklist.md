@@ -6,29 +6,29 @@ Manual testing checklist covering the full prospect-to-invoice workflow. Run thr
 
 ## 1. Prospects
 
-- [ ] Create a new prospect from the Prospects page
-- [ ] Fill all fields: company, contact name, phone, email, building address, service interest
-- [ ] Verify prospect appears in the table with correct data
-- [ ] Edit a prospect's details and save
-- [ ] Change prospect status (New -> Called -> Qualified, etc.)
-- [ ] Delete a prospect
+- [x] Create a new prospect from the Prospects page
+- [x] Fill all fields: company, contact name, phone, email, building address, service interest
+- [x] Verify prospect appears in the table with correct data
+- [x] Edit a prospect's details and save
+- [x] Change prospect status (New -> Called -> Qualified, etc.)
+- [x] Delete a prospect
 
 ## 2. Prospect to Job Conversion
 
-- [ ] From a prospect row, click "Create Job"
-- [ ] Verify company, email, and building address carry over to the new job form
-- [ ] Verify prospect_id is linked on the created job
+- [x] From a prospect row, click "Create Job"
+- [x] Verify company, email, and building address carry over to the new job form
+- [x] Verify prospect_id is linked on the created job
 
 ## 3. Job Creation
 
-- [ ] Create a new job from the Jobs page
-- [ ] Select service type: **LPT** — fill units, price/unit, common spaces, price/common space
-- [ ] Select service type: **Dust Swab** — fill number of wipes
-- [ ] Select service type: **Both** — verify both LPT and Dust Swab fields appear
-- [ ] Set scan date, start time — verify estimated end time auto-calculates
-- [ ] Change service type or units — verify end time recalculates
-- [ ] Assign a worker from the dropdown
-- [ ] Save and verify redirect to job detail page
+- [x] Create a new job from the Jobs page
+- [x] Select service type: **LPT** — fill units, price/unit, common spaces, price/common space
+- [x] Select service type: **Dust Swab** — fill number of wipes
+- [x] Select service type: **Both** — verify both LPT and Dust Swab fields appear
+- [x] Set scan date, start time — verify estimated end time auto-calculates
+- [x] Change service type or units — verify end time recalculates
+- [x] Assign a worker from the dropdown
+- [x] Save and verify redirect to job detail page
 
 ## 4. Job Detail Page
 

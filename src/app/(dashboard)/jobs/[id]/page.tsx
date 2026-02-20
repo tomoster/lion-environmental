@@ -297,8 +297,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                   </div>
                 </div>
 
-                {hasLpt(job.service_type) && (
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label htmlFor="num_units">Units</Label>
                       <Input
@@ -342,10 +341,8 @@ export default async function JobDetailPage({ params }: PageProps) {
                       />
                     </div>
                   </div>
-                )}
 
-                {hasDustSwab(job.service_type) && (
-                  <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label htmlFor="num_wipes">Number of Wipes</Label>
                       <Input
@@ -357,7 +354,6 @@ export default async function JobDetailPage({ params }: PageProps) {
                       />
                     </div>
                   </div>
-                )}
 
                 <Separator />
 
