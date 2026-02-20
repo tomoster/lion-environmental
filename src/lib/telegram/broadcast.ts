@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendMessage } from "./client";
 import { acceptJobKeyboard } from "./keyboard";
 import { formatServiceTypes } from "@/lib/service-type-utils";
+import { timesOverlap } from "@/lib/scheduling-utils";
 
 export async function broadcastJobToWorkers(
   supabase: SupabaseClient,
@@ -9,7 +10,7 @@ export async function broadcastJobToWorkers(
 ) {
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, building_address, scan_date, start_time, has_xrf, has_dust_swab, has_asbestos, num_units, num_common_spaces, num_wipes, notes")
+    .select("id, job_number, client_company, building_address, scan_date, start_time, estimated_end_time, has_xrf, has_dust_swab, has_asbestos, num_units, num_common_spaces, num_wipes, notes")
     .eq("id", jobId)
     .single();
 
@@ -24,7 +25,7 @@ export async function broadcastJobToWorkers(
 
   if (!allWorkers || allWorkers.length === 0) return;
 
-  const workers = allWorkers.filter((w) => {
+  let workers = allWorkers.filter((w) => {
     if (job.has_xrf && w.has_xrf) return true;
     if (job.has_dust_swab && w.has_dust_swab) return true;
     if (job.has_asbestos && w.has_asbestos) return true;
@@ -32,6 +33,53 @@ export async function broadcastJobToWorkers(
   });
 
   if (workers.length === 0) return;
+
+  if (job.scan_date) {
+    const workerIds = workers.map((w) => w.id);
+
+    const [{ data: blocks }, { data: conflictingJobs }] = await Promise.all([
+      supabase
+        .from("worker_availability")
+        .select("*")
+        .in("worker_id", workerIds),
+      supabase
+        .from("jobs")
+        .select("id, job_number, worker_id, start_time, estimated_end_time")
+        .eq("scan_date", job.scan_date)
+        .neq("id", jobId)
+        .in("worker_id", workerIds),
+    ]);
+
+    const date = new Date(job.scan_date + "T00:00:00");
+    const dayOfWeek = date.getDay();
+
+    workers = workers.filter((w) => {
+      const workerBlocks = (blocks ?? []).filter((b) => b.worker_id === w.id);
+
+      if (workerBlocks.some((b) => b.type === "recurring" && b.day_of_week === dayOfWeek)) {
+        return false;
+      }
+
+      if (workerBlocks.some((b) => b.type === "one_off" && b.specific_date === job.scan_date)) {
+        return false;
+      }
+
+      if (job.start_time && job.estimated_end_time) {
+        const hasConflict = (conflictingJobs ?? []).some(
+          (j) =>
+            j.worker_id === w.id &&
+            j.start_time &&
+            j.estimated_end_time &&
+            timesOverlap(job.start_time!, job.estimated_end_time!, j.start_time!, j.estimated_end_time!)
+        );
+        if (hasConflict) return false;
+      }
+
+      return true;
+    });
+
+    if (workers.length === 0) return;
+  }
 
   const serviceLabel = formatServiceTypes(job);
 

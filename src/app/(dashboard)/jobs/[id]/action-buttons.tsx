@@ -3,13 +3,13 @@
 import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 
-export function DispatchButton({ action }: { action: () => Promise<void> }) {
+export function DispatchButton({ action, label = "Dispatch to Workers" }: { action: () => Promise<void>; label?: string }) {
   const [isPending, startTransition] = useTransition();
 
   return (
     <form action={() => startTransition(() => action())}>
       <Button type="submit" variant="outline" disabled={isPending}>
-        {isPending ? "Dispatching..." : "Dispatch to Workers"}
+        {isPending ? "Dispatching..." : label}
       </Button>
     </form>
   );

@@ -179,7 +179,7 @@ export default async function JobDetailPage({ params }: PageProps) {
   const uploadDustSwabReport = uploadReport.bind(null, id, "dust_swab");
   const markClientPaidWithId = markClientPaid.bind(null, id);
 
-  const canDispatch = job.job_status === "not_dispatched";
+  const canDispatch = job.job_status === "not_dispatched" || job.job_status === "open";
   const canMarkPaid = jobInvoice && jobInvoice.status !== "paid";
 
   return (

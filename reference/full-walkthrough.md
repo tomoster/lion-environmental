@@ -190,7 +190,7 @@ _None_
 
 ## Step 9: Report Upload
 
-**Status:** [ ] NOT STARTED
+**Status:** [x] DONE
 
 **What to do:**
 - Upload a PDF via Telegram — bot asks which job it belongs to
@@ -206,13 +206,14 @@ _None_
 - Report is NOT sent to client at this point (just stored)
 
 **Issues found:**
-
+- Telegram upload query missed dust swab intermediate statuses (sent_to_lab, results_received). Fixed: widened filter.
+- After "Client Paid" triggered autoSendReports prematurely (sent 1/3 XRF, 1/2 dust swab), statuses became "sent" and upload query returned nothing. Fixed: reset test data + query fix.
 
 ---
 
 ## Step 10: Invoice Auto-Generated on Completion
 
-**Status:** [ ] NOT STARTED
+**Status:** [x] DONE
 
 **What to do:**
 - Verify the invoice that was auto-generated when the worker marked complete (Step 8)
@@ -234,7 +235,7 @@ _None_
 
 ## Step 11: Send Invoice
 
-**Status:** [ ] NOT STARTED
+**Status:** [x] DONE — sent via Telegram "Approve & Send Invoice" button. Gmail SMTP working. Added duplicate send guard. PDF fits on one page.
 
 **What to do:**
 - Avi taps "Approve & Send Invoice" button in Telegram
@@ -252,7 +253,7 @@ _None_
 
 ## Step 12: Mark as Paid
 
-**Status:** [ ] NOT STARTED
+**Status:** [x] DONE
 
 **What to do:**
 - On the invoice, click "Mark as Paid"
@@ -269,7 +270,7 @@ _None_
 
 ## Step 13: Send Report (After Payment)
 
-**Status:** [ ] NOT STARTED
+**Status:** [x] DONE
 
 **What to do:**
 - Try sending report BEFORE marking invoice as paid — should be blocked
@@ -389,12 +390,12 @@ _None_
 | 6 | Dispatch | [x] DONE |
 | 7 | Worker Accepts Job | [x] DONE |
 | 8 | Worker Completes Job | [x] DONE |
-| 9 | Report Upload | [ ] NEXT |
-| 10 | Invoice Auto-Generated on Completion | [ ] NOT STARTED |
-| 11 | Send Invoice | [ ] NOT STARTED |
-| 12 | Mark as Paid | [ ] NOT STARTED |
-| 13 | Send Report (After Payment) | [ ] NOT STARTED |
-| 14 | Daily Reminders | [ ] NOT STARTED |
-| 15 | Overdue Alerts | [ ] NOT STARTED |
+| 9 | Report Upload | [x] DONE |
+| 10 | Invoice Auto-Generated on Completion | [x] DONE |
+| 11 | Send Invoice | [x] DONE |
+| 12 | Mark as Paid | [x] DONE |
+| 13 | Send Report (After Payment) | [x] DONE |
+| 14 | Daily Reminders | [ ] SKIPPED (trusted) |
+| 15 | Overdue Alerts | [ ] SKIPPED (trusted) |
 | 16 | Settings | [ ] NOT STARTED |
-| 17 | Worker Availability | [ ] NOT STARTED |
+| 17 | Worker Availability | [ ] NEXT |
