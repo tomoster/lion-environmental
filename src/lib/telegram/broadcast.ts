@@ -64,14 +64,25 @@ export async function broadcastJobToWorkers(
 
   const keyboard = acceptJobKeyboard(job.id);
 
-  await Promise.allSettled(
+  const results = await Promise.allSettled(
     workers.map((w) =>
-      sendMessage(w.telegram_chat_id!, text, keyboard)
+      sendMessage(w.telegram_chat_id!, text, keyboard).then((res) =>
+        res ? { chat_id: w.telegram_chat_id!, message_id: res.message_id } : null
+      )
     )
   );
 
+  const dispatchMessageIds = results
+    .filter((r): r is PromiseFulfilledResult<{ chat_id: string; message_id: number } | null> => r.status === "fulfilled")
+    .map((r) => r.value)
+    .filter(Boolean);
+
   await supabase
     .from("jobs")
-    .update({ dispatch_status: "open", updated_at: new Date().toISOString() })
+    .update({
+      dispatch_status: "open",
+      dispatch_message_ids: dispatchMessageIds,
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", jobId);
 }

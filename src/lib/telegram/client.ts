@@ -7,7 +7,7 @@ export async function sendMessage(
   chatId: number | string,
   text: string,
   replyMarkup?: InlineKeyboardMarkup
-) {
+): Promise<{ message_id: number } | null> {
   const body: Record<string, unknown> = {
     chat_id: chatId,
     text,
@@ -25,7 +25,11 @@ export async function sendMessage(
 
   if (!res.ok) {
     console.error("Telegram sendMessage failed:", await res.text());
+    return null;
   }
+
+  const data = await res.json();
+  return { message_id: data.result?.message_id };
 }
 
 export async function answerCallbackQuery(

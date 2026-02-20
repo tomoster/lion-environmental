@@ -153,6 +153,7 @@ export type Database = {
           client_company: string | null
           client_email: string | null
           created_at: string | null
+          dispatch_message_ids: Json | null
           dispatch_status: string
           estimated_end_time: string | null
           has_asbestos: boolean
@@ -179,6 +180,7 @@ export type Database = {
           client_company?: string | null
           client_email?: string | null
           created_at?: string | null
+          dispatch_message_ids?: Json | null
           dispatch_status?: string
           estimated_end_time?: string | null
           has_asbestos?: boolean
@@ -205,6 +207,7 @@ export type Database = {
           client_company?: string | null
           client_email?: string | null
           created_at?: string | null
+          dispatch_message_ids?: Json | null
           dispatch_status?: string
           estimated_end_time?: string | null
           has_asbestos?: boolean

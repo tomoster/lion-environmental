@@ -43,15 +43,21 @@ export async function handleAcceptJob(query: TelegramCallbackQuery) {
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("job_number, client_company, building_address, scan_date")
+    .select("job_number, client_company, building_address, scan_date, dispatch_message_ids")
     .eq("id", jobId)
     .single();
 
   await answerCallbackQuery(query.id, "Job accepted!");
 
-  if (query.message?.message_id) {
-    await deleteMessage(chatId, query.message.message_id);
-  }
+  const msgIds = (job?.dispatch_message_ids ?? []) as Array<{ chat_id: string; message_id: number }>;
+  await Promise.allSettled(
+    msgIds.map((m) => deleteMessage(m.chat_id, m.message_id))
+  );
+
+  await supabase
+    .from("jobs")
+    .update({ dispatch_message_ids: null })
+    .eq("id", jobId);
 
   await sendMessage(
     chatId,
