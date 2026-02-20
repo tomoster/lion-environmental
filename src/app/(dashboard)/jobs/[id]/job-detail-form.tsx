@@ -37,6 +37,7 @@ type JobDetailFormProps = {
     num_wipes: number | null;
     job_status: string;
     report_status: string;
+    dust_swab_status: string;
     notes: string | null;
   };
   defaultPricePerUnit: number | null;
@@ -46,8 +47,9 @@ type JobDetailFormProps = {
     available: { id: string; name: string }[];
     unavailable: { worker: { id: string; name: string }; reason: string }[];
   };
-  dispatchStatusLabels: Record<string, string>;
-  reportStatusLabels: Record<string, string>;
+  jobStatusLabels: Record<string, string>;
+  xrfStatusLabels: Record<string, string>;
+  dustSwabStatusLabels: Record<string, string>;
 };
 
 export function JobDetailForm({
@@ -57,8 +59,9 @@ export function JobDetailForm({
   defaultPricePerCommonSpace,
   workerData,
   availability,
-  dispatchStatusLabels,
-  reportStatusLabels,
+  jobStatusLabels,
+  xrfStatusLabels,
+  dustSwabStatusLabels,
 }: JobDetailFormProps) {
   const [isPending, startTransition] = useTransition();
   const [xrfChecked, setXrfChecked] = useState(job.has_xrf);
@@ -167,7 +170,7 @@ export function JobDetailForm({
             <div className="space-y-1.5">
               <Label>Est. End Time</Label>
               <div className="flex h-10 items-center rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground">
-                {job.estimated_end_time ? formatTime12h(job.estimated_end_time) : "—"}
+                {job.estimated_end_time ? formatTime12h(job.estimated_end_time) : "\u2014"}
               </div>
               <input type="hidden" name="estimated_end_time" value={job.estimated_end_time ?? ""} />
             </div>
@@ -272,7 +275,7 @@ export function JobDetailForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(dispatchStatusLabels).map(([value, label]) => (
+                  {Object.entries(jobStatusLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>
                       {label}
                     </SelectItem>
@@ -282,21 +285,49 @@ export function JobDetailForm({
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="report_status">Report Status</Label>
-            <Select name="report_status" defaultValue={job.report_status}>
-              <SelectTrigger id="report_status" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.entries(reportStatusLabels).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
-                    {label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="grid grid-cols-2 gap-4">
+            {xrfChecked && (
+              <div className="space-y-1.5">
+                <Label htmlFor="report_status">XRF Report Status</Label>
+                <Select name="report_status" defaultValue={job.report_status}>
+                  <SelectTrigger id="report_status" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(xrfStatusLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            {dustSwabChecked && (
+              <div className="space-y-1.5">
+                <Label htmlFor="dust_swab_status">Dust Swab Status</Label>
+                <Select name="dust_swab_status" defaultValue={job.dust_swab_status}>
+                  <SelectTrigger id="dust_swab_status" className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(dustSwabStatusLabels).map(([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
+
+          {!xrfChecked && (
+            <input type="hidden" name="report_status" value={job.report_status} />
+          )}
+          {!dustSwabChecked && (
+            <input type="hidden" name="dust_swab_status" value={job.dust_swab_status} />
+          )}
 
           <div className="space-y-1.5">
             <Label htmlFor="notes">Notes</Label>

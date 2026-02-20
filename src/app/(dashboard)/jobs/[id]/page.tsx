@@ -18,21 +18,27 @@ const DUST_SWAB_REPORT_FEE = 135;
 const DUST_SWAB_WIPE_RATE = 20;
 const TAX_RATE = 0.0888;
 
-const DISPATCH_STATUS_LABELS: Record<string, string> = {
+const JOB_STATUS_LABELS: Record<string, string> = {
   not_dispatched: "Not Dispatched",
   open: "Open",
   assigned: "Assigned",
   completed: "Completed",
 };
 
-const REPORT_STATUS_LABELS: Record<string, string> = {
-  scheduled: "Scheduled",
-  in_progress: "In Progress",
-  field_work_done: "Field Work Done",
-  lab_results_pending: "Lab Results Pending",
-  writing_report: "Writing Report",
-  report_sent: "Report Sent",
-  complete: "Complete",
+const XRF_STATUS_LABELS: Record<string, string> = {
+  not_started: "Not Started",
+  writing: "Writing",
+  uploaded: "Uploaded",
+  sent: "Sent",
+};
+
+const DUST_SWAB_STATUS_LABELS: Record<string, string> = {
+  not_started: "Not Started",
+  sent_to_lab: "Sent to Lab",
+  results_received: "Results Received",
+  writing: "Writing",
+  uploaded: "Uploaded",
+  sent: "Sent",
 };
 
 function dispatchBadgeClass(status: string): string {
@@ -47,13 +53,12 @@ function dispatchBadgeClass(status: string): string {
 
 function reportBadgeClass(status: string): string {
   switch (status) {
-    case "scheduled": return "bg-zinc-100 text-zinc-700 border-zinc-200";
-    case "in_progress": return "bg-blue-100 text-blue-700 border-blue-200";
-    case "field_work_done": return "bg-purple-100 text-purple-700 border-purple-200";
-    case "lab_results_pending": return "bg-yellow-100 text-yellow-700 border-yellow-200";
-    case "writing_report": return "bg-orange-100 text-orange-700 border-orange-200";
-    case "report_sent": return "bg-cyan-100 text-cyan-700 border-cyan-200";
-    case "complete": return "bg-green-100 text-green-700 border-green-200";
+    case "not_started": return "bg-zinc-100 text-zinc-700 border-zinc-200";
+    case "writing": return "bg-orange-100 text-orange-700 border-orange-200";
+    case "uploaded": return "bg-cyan-100 text-cyan-700 border-cyan-200";
+    case "sent": return "bg-green-100 text-green-700 border-green-200";
+    case "sent_to_lab": return "bg-blue-100 text-blue-700 border-blue-200";
+    case "results_received": return "bg-purple-100 text-purple-700 border-purple-200";
     default: return "bg-zinc-100 text-zinc-700 border-zinc-200";
   }
 }
@@ -161,7 +166,10 @@ export default async function JobDetailPage({ params }: PageProps) {
   const sendReportWithId = sendReport.bind(null, id);
 
   const canDispatch = job.job_status === "not_dispatched";
-  const canSendReport = job.report_file_path && job.report_status !== "report_sent" && job.report_status !== "complete" && jobInvoice?.status === "paid";
+
+  const xrfReady = !job.has_xrf || job.report_status === "uploaded";
+  const dustSwabReady = !job.has_dust_swab || job.dust_swab_status === "uploaded";
+  const canSendReport = job.report_file_path && xrfReady && dustSwabReady && jobInvoice?.status === "paid";
 
   return (
     <div className="space-y-6">
@@ -215,11 +223,18 @@ export default async function JobDetailPage({ params }: PageProps) {
           {job.client_company ?? "Unnamed Job"} — Job #{job.job_number}
         </h1>
         <Badge variant="outline" className={dispatchBadgeClass(job.job_status)}>
-          {DISPATCH_STATUS_LABELS[job.job_status] ?? job.job_status}
+          {JOB_STATUS_LABELS[job.job_status] ?? job.job_status}
         </Badge>
-        <Badge variant="outline" className={reportBadgeClass(job.report_status)}>
-          {REPORT_STATUS_LABELS[job.report_status] ?? job.report_status}
-        </Badge>
+        {job.has_xrf && (
+          <Badge variant="outline" className={reportBadgeClass(job.report_status)}>
+            XRF: {XRF_STATUS_LABELS[job.report_status] ?? job.report_status}
+          </Badge>
+        )}
+        {job.has_dust_swab && (
+          <Badge variant="outline" className={reportBadgeClass(job.dust_swab_status)}>
+            Dust Swab: {DUST_SWAB_STATUS_LABELS[job.dust_swab_status] ?? job.dust_swab_status}
+          </Badge>
+        )}
       </div>
 
       <div className="grid grid-cols-3 gap-6">
@@ -232,8 +247,9 @@ export default async function JobDetailPage({ params }: PageProps) {
             defaultPricePerCommonSpace={defaultPricePerCommonSpace}
             workerData={workerData}
             availability={availability}
-            dispatchStatusLabels={DISPATCH_STATUS_LABELS}
-            reportStatusLabels={REPORT_STATUS_LABELS}
+            jobStatusLabels={JOB_STATUS_LABELS}
+            xrfStatusLabels={XRF_STATUS_LABELS}
+            dustSwabStatusLabels={DUST_SWAB_STATUS_LABELS}
           />
 
           <Card>

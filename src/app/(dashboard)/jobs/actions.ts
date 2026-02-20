@@ -28,7 +28,8 @@ export async function createJob(formData: FormData) {
     notes: (formData.get("notes") as string) || null,
     worker_id: (formData.get("worker_id") as string) || null,
     job_status: "not_dispatched",
-    report_status: "scheduled",
+    report_status: "not_started",
+    dust_swab_status: "not_started",
     prospect_id: (formData.get("prospect_id") as string) || null,
   };
 
@@ -111,6 +112,7 @@ export async function updateJob(id: string, formData: FormData) {
     })(),
     job_status: formData.get("job_status") as string,
     report_status: formData.get("report_status") as string,
+    dust_swab_status: (formData.get("dust_swab_status") as string) || "not_started",
     updated_at: new Date().toISOString(),
   };
 
@@ -201,7 +203,8 @@ export async function createJobFromProspect(prospectId: string) {
       client_email: prospect.email,
       building_address: prospect.building_address,
       job_status: "not_dispatched",
-      report_status: "scheduled",
+      report_status: "not_started",
+      dust_swab_status: "not_started",
     })
     .select("id")
     .single();

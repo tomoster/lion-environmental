@@ -59,12 +59,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       senderName: settingsMap["sender_name"] ?? "Avi Bursztyn",
     });
 
+    const reportUpdate: Record<string, unknown> = {
+      report_status: "sent",
+      updated_at: new Date().toISOString(),
+    };
+    if (job.has_dust_swab) {
+      reportUpdate.dust_swab_status = "sent";
+    }
+
     await supabase
       .from("jobs")
-      .update({
-        report_status: "report_sent",
-        updated_at: new Date().toISOString(),
-      })
+      .update(reportUpdate)
       .eq("id", id);
 
     return NextResponse.json({ ok: true });

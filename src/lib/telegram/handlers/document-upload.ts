@@ -44,7 +44,7 @@ export async function handleDocumentUpload(message: TelegramMessage) {
     .from("jobs")
     .select("id, job_number, client_company")
     .eq("worker_id", worker.id)
-    .in("report_status", ["field_work_done", "lab_results_pending", "writing_report"])
+    .in("report_status", ["not_started", "writing"])
     .is("report_file_path", null);
 
   if (!pendingJobs || pendingJobs.length === 0) {
@@ -128,7 +128,7 @@ export async function handleReportUpload(
     .from("jobs")
     .update({
       report_file_path: storagePath,
-      report_status: "writing_report",
+      report_status: "uploaded",
       updated_at: new Date().toISOString(),
     })
     .eq("id", jobId);
@@ -138,15 +138,12 @@ export async function handleReportUpload(
     `Report uploaded for Job #${jobNumber} (${clientCompany ?? "—"}).`
   );
 
-  const { data: aviSetting } = await supabase
-    .from("settings")
-    .select("value")
-    .eq("key", "avi_telegram_chat_id")
-    .single();
+  const { getManagementChatIds } = await import("../get-management-chat-ids");
+  const managementChatIds = await getManagementChatIds(supabase);
 
-  if (aviSetting?.value) {
+  for (const mChatId of managementChatIds) {
     await sendMessage(
-      aviSetting.value,
+      mChatId,
       `New report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "—"}).`,
       sendReportKeyboard(jobId)
     );

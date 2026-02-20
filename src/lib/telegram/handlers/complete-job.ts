@@ -3,6 +3,7 @@ import { sendMessage, answerCallbackQuery } from "../client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendInvoiceKeyboard } from "../keyboard";
 import { generateInvoiceForJob, generateAndStorePdfForInvoice } from "@/lib/invoices/generate";
+import { getManagementChatIds } from "../get-management-chat-ids";
 
 export async function handleCompleteJob(query: TelegramCallbackQuery) {
   const chatId = query.message?.chat.id;
@@ -25,13 +26,25 @@ export async function handleCompleteJob(query: TelegramCallbackQuery) {
     return;
   }
 
+  const { data: job } = await supabase
+    .from("jobs")
+    .select("job_number, client_company, building_address, has_dust_swab")
+    .eq("id", jobId)
+    .single();
+
+  const updateData: Record<string, unknown> = {
+    job_status: "completed",
+    report_status: "not_started",
+    updated_at: new Date().toISOString(),
+  };
+
+  if (job?.has_dust_swab) {
+    updateData.dust_swab_status = "not_started";
+  }
+
   const { error } = await supabase
     .from("jobs")
-    .update({
-      job_status: "completed",
-      report_status: "field_work_done",
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq("id", jobId)
     .eq("worker_id", worker.id);
 
@@ -40,23 +53,13 @@ export async function handleCompleteJob(query: TelegramCallbackQuery) {
     return;
   }
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("job_number, client_company, building_address")
-    .eq("id", jobId)
-    .single();
-
   await answerCallbackQuery(query.id, "Job marked complete!");
   await sendMessage(
     chatId,
     `Job #${job?.job_number} marked as <b>completed</b>. Please send the report document when ready.`
   );
 
-  const { data: aviSetting } = await supabase
-    .from("settings")
-    .select("value")
-    .eq("key", "avi_telegram_chat_id")
-    .single();
+  const managementChatIds = await getManagementChatIds(supabase);
 
   let invoiceInfo = "";
   try {
@@ -70,18 +73,18 @@ export async function handleCompleteJob(query: TelegramCallbackQuery) {
 
     invoiceInfo = `\n\nInvoice #${invoiceNumber} (${formatted}) generated.`;
 
-    if (aviSetting?.value) {
+    for (const mChatId of managementChatIds) {
       await sendMessage(
-        aviSetting.value,
+        mChatId,
         `<b>${worker.name}</b> completed Job #${job?.job_number} (${job?.client_company ?? "\u2014"} \u2014 ${job?.building_address ?? "\u2014"}).${invoiceInfo}`,
         sendInvoiceKeyboard(invoiceId)
       );
     }
   } catch (invoiceError) {
     console.error("Auto-invoice generation failed:", invoiceError);
-    if (aviSetting?.value) {
+    for (const mChatId of managementChatIds) {
       await sendMessage(
-        aviSetting.value,
+        mChatId,
         `<b>${worker.name}</b> completed Job #${job?.job_number} (${job?.client_company ?? "\u2014"} \u2014 ${job?.building_address ?? "\u2014"}).\n\n\u26a0\ufe0f Auto-invoice generation failed. Please generate manually.`
       );
     }

@@ -155,6 +155,7 @@ export type Database = {
           complete_reminder_sent: boolean
           created_at: string | null
           dispatch_message_ids: Json | null
+          dust_swab_status: string
           job_status: string
           estimated_end_time: string | null
           has_asbestos: boolean
@@ -183,6 +184,7 @@ export type Database = {
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
+          dust_swab_status?: string
           job_status?: string
           estimated_end_time?: string | null
           has_asbestos?: boolean
@@ -211,6 +213,7 @@ export type Database = {
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
+          dust_swab_status?: string
           job_status?: string
           estimated_end_time?: string | null
           has_asbestos?: boolean

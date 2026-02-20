@@ -64,12 +64,17 @@ export async function sendReport(jobId: string): Promise<void> {
     senderName: settingsMap["sender_name"] ?? "Avi Bursztyn",
   });
 
+  const updateData: Record<string, unknown> = {
+    report_status: "sent",
+    updated_at: new Date().toISOString(),
+  };
+  if (job.has_dust_swab) {
+    updateData.dust_swab_status = "sent";
+  }
+
   await supabase
     .from("jobs")
-    .update({
-      report_status: "report_sent",
-      updated_at: new Date().toISOString(),
-    })
+    .update(updateData)
     .eq("id", jobId);
 
   revalidatePath(`/jobs/${jobId}`);

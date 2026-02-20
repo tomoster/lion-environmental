@@ -16,7 +16,7 @@ export default async function JobsPage() {
   const [{ data: jobs }, { data: workers }, { data: settings }] = await Promise.all([
     supabase
       .from("jobs")
-      .select("id, job_number, client_company, building_address, has_xrf, has_dust_swab, has_asbestos, scan_date, job_status, report_status, workers(name)")
+      .select("id, job_number, client_company, building_address, has_xrf, has_dust_swab, has_asbestos, scan_date, job_status, report_status, dust_swab_status, workers(name)")
       .order("job_number", { ascending: false }),
     supabase
       .from("workers")
