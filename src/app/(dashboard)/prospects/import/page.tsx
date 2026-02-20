@@ -137,6 +137,27 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
+function parseJSON(text: string): ParsedRow[] {
+  try {
+    const data = JSON.parse(text);
+    const items = Array.isArray(data) ? data : [];
+    return items
+      .filter((item: Record<string, unknown>) => item.title)
+      .map((item: Record<string, unknown>) => ({
+        title: String(item.title || ""),
+        phone: String(item.phone || ""),
+        email: String(item.email || ""),
+        address: String(item.address || ""),
+        website: String(item.website || ""),
+        totalScore:
+          item.totalScore != null ? Number(item.totalScore) || null : null,
+        placeId: String(item.placeId || ""),
+      }));
+  } catch {
+    return [];
+  }
+}
+
 export default function ImportProspectsPage() {
   const router = useRouter();
   const [rows, setRows] = useState<ParsedRow[]>([]);
@@ -144,17 +165,22 @@ export default function ImportProspectsPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [onlyWithEmail, setOnlyWithEmail] = useState(false);
 
   const processFile = useCallback((file: File) => {
     setFileName(file.name);
     setResult(null);
+    setOnlyWithEmail(false);
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const parsed = parseCSV(text);
+      const isJSON = file.name.toLowerCase().endsWith(".json");
+      const parsed = isJSON ? parseJSON(text) : parseCSV(text);
       if (parsed.length === 0) {
         toast.error(
-          'Could not parse CSV. Make sure it has a "title" column header.'
+          isJSON
+            ? 'Could not parse JSON. Expected an array of objects with a "title" field.'
+            : 'Could not parse CSV. Make sure it has a "title" column header.'
         );
         return;
       }
@@ -176,14 +202,16 @@ export default function ImportProspectsPage() {
     if (file) processFile(file);
   }
 
+  const filteredRows = onlyWithEmail ? rows.filter((r) => r.email) : rows;
+
   async function handleImport() {
-    if (rows.length === 0) return;
+    if (filteredRows.length === 0) return;
     setImporting(true);
     try {
       const res = await fetch("/api/prospects/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows }),
+        body: JSON.stringify({ rows: filteredRows }),
       });
       const data = (await res.json()) as ImportResult;
       if (!res.ok) {
@@ -207,17 +235,17 @@ export default function ImportProspectsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Import Leads</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Upload a CSV exported from Apify Google Maps Scraper to bulk-import
-          prospects.
+          Upload a CSV or JSON file exported from Apify Google Maps Scraper to
+          bulk-import prospects.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Upload CSV</CardTitle>
+          <CardTitle>Upload File</CardTitle>
           <CardDescription>
-            Drag and drop or click to select. Expected columns: title, phone,
-            email, address, website, totalScore.
+            Drag and drop or click to select. Accepts CSV or JSON. Expected
+            fields: title, phone, email, address, website.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -236,14 +264,14 @@ export default function ImportProspectsPage() {
           >
             <UploadIcon className="text-muted-foreground mb-3 h-10 w-10" />
             <p className="text-sm font-medium">
-              {fileName || "Drop CSV file here or click to browse"}
+              {fileName || "Drop file here or click to browse"}
             </p>
             <p className="text-muted-foreground mt-1 text-xs">
-              CSV files only
+              CSV or JSON files
             </p>
             <input
               type="file"
-              accept=".csv"
+              accept=".csv,.json"
               className="hidden"
               onChange={handleFileChange}
             />
@@ -261,23 +289,36 @@ export default function ImportProspectsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="flex gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Total: </span>
-                  <span className="font-medium">{rows.length}</span>
+              <div className="flex items-center justify-between">
+                <div className="flex gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Total: </span>
+                    <span className="font-medium">{rows.length}</span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">With email: </span>
+                    <span className="font-medium">
+                      {withEmail} (
+                      {Math.round((withEmail / rows.length) * 100)}%)
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">With phone: </span>
+                    <span className="font-medium">
+                      {withPhone} (
+                      {Math.round((withPhone / rows.length) * 100)}%)
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <span className="text-muted-foreground">With email: </span>
-                  <span className="font-medium">
-                    {withEmail} ({Math.round((withEmail / rows.length) * 100)}%)
-                  </span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">With phone: </span>
-                  <span className="font-medium">
-                    {withPhone} ({Math.round((withPhone / rows.length) * 100)}%)
-                  </span>
-                </div>
+                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={onlyWithEmail}
+                    onChange={(e) => setOnlyWithEmail(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  Only with email
+                </label>
               </div>
 
               <div className="max-h-96 overflow-auto rounded-md border">
@@ -293,7 +334,7 @@ export default function ImportProspectsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {rows.slice(0, 100).map((row, i) => (
+                    {filteredRows.slice(0, 100).map((row, i) => (
                       <TableRow key={i}>
                         <TableCell className="text-muted-foreground text-xs">
                           {i + 1}
@@ -318,15 +359,20 @@ export default function ImportProspectsPage() {
                   </TableBody>
                 </Table>
               </div>
-              {rows.length > 100 && (
+              {filteredRows.length > 100 && (
                 <p className="text-muted-foreground text-xs">
-                  Showing first 100 of {rows.length} rows.
+                  Showing first 100 of {filteredRows.length} rows.
                 </p>
               )}
 
               <div className="flex items-center gap-3 pt-2">
-                <Button onClick={handleImport} disabled={importing}>
-                  {importing ? "Importing..." : `Import ${rows.length} Leads`}
+                <Button
+                  onClick={handleImport}
+                  disabled={importing || filteredRows.length === 0}
+                >
+                  {importing
+                    ? "Importing..."
+                    : `Import ${filteredRows.length} Leads`}
                 </Button>
                 <Button
                   variant="outline"
