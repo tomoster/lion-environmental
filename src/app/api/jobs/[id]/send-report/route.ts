@@ -15,7 +15,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, xrf_report_file_path, dust_swab_report_file_path, has_xrf, has_dust_swab, has_asbestos")
+    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos")
     .eq("id", id)
     .single();
 
@@ -27,24 +27,35 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "No client email on file" }, { status: 400 });
   }
 
-  const filePath = reportType === "xrf" ? job.xrf_report_file_path : job.dust_swab_report_file_path;
-  if (!filePath) {
-    return NextResponse.json({ error: `No ${reportType} report uploaded` }, { status: 400 });
+  const { data: reports } = await supabase
+    .from("job_reports")
+    .select("file_path, original_filename")
+    .eq("job_id", id)
+    .eq("report_type", reportType);
+
+  if (!reports || reports.length === 0) {
+    return NextResponse.json({ error: `No ${reportType} reports uploaded` }, { status: 400 });
   }
 
   try {
-    const { data: fileData } = await supabase.storage
-      .from("reports")
-      .download(filePath);
+    const attachments: { buffer: Buffer; filename: string }[] = [];
 
-    if (!fileData) {
-      return NextResponse.json({ error: "Failed to download report" }, { status: 500 });
+    for (const report of reports) {
+      const { data: fileData } = await supabase.storage
+        .from("reports")
+        .download(report.file_path);
+
+      if (!fileData) continue;
+
+      attachments.push({
+        buffer: Buffer.from(await fileData.arrayBuffer()),
+        filename: report.original_filename,
+      });
     }
 
-    const buffer = Buffer.from(await fileData.arrayBuffer());
-    const ext = filePath.split(".").pop() ?? "pdf";
-    const prefix = reportType === "xrf" ? "xrf-report" : "dust-swab-report";
-    const filename = `${prefix}-job-${job.job_number}.${ext}`;
+    if (attachments.length === 0) {
+      return NextResponse.json({ error: "Failed to download reports" }, { status: 500 });
+    }
 
     const { data: settings } = await supabase
       .from("settings")
@@ -59,8 +70,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       clientCompany: job.client_company ?? "Client",
       buildingAddress: job.building_address ?? "",
       serviceType: reportType,
-      pdfBuffer: buffer,
-      filename,
+      attachments,
       senderName: settingsMap["sender_name"] ?? "Avi Bursztyn",
       subjectTemplate: settingsMap["report_email_subject"],
       bodyTemplate: settingsMap["report_email_body"],

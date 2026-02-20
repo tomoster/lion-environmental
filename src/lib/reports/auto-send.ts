@@ -6,6 +6,16 @@ type AutoSendResult = {
   pending: string[];
 };
 
+function getExpectedCount(
+  reportType: "xrf" | "dust_swab",
+  job: { num_units: number | null; num_common_spaces: number | null; num_wipes: number | null }
+): number {
+  if (reportType === "xrf") {
+    return (job.num_units ?? 0) + (job.num_common_spaces ?? 0);
+  }
+  return job.num_wipes ?? 0;
+}
+
 export async function autoSendReports(
   supabase: SupabaseClient,
   jobId: string
@@ -15,7 +25,7 @@ export async function autoSendReports(
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, xrf_report_file_path, dust_swab_report_file_path, report_status, dust_swab_status")
+    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, report_status, dust_swab_status, num_units, num_common_spaces, num_wipes")
     .eq("id", jobId)
     .single();
 
@@ -39,12 +49,21 @@ export async function autoSendReports(
   );
   const senderName = settingsMap["sender_name"] ?? "Avi Bursztyn";
 
+  const { data: allReports } = await supabase
+    .from("job_reports")
+    .select("id, report_type, file_path, original_filename")
+    .eq("job_id", jobId);
+
+  const reportsByType = {
+    xrf: (allReports ?? []).filter((r) => r.report_type === "xrf"),
+    dust_swab: (allReports ?? []).filter((r) => r.report_type === "dust_swab"),
+  };
+
   const reportTypes = [
     {
       label: "XRF",
       type: "xrf" as const,
       has: job.has_xrf,
-      filePath: job.xrf_report_file_path,
       status: job.report_status,
       statusColumn: "report_status",
     },
@@ -52,20 +71,22 @@ export async function autoSendReports(
       label: "Dust Swab",
       type: "dust_swab" as const,
       has: job.has_dust_swab,
-      filePath: job.dust_swab_report_file_path,
       status: job.dust_swab_status,
       statusColumn: "dust_swab_status",
     },
   ];
 
   const required = reportTypes.filter((rt) => rt.has);
-  const ready = required.filter((rt) => rt.filePath && rt.status === "uploaded");
+  const ready = required.filter((rt) => {
+    const reports = reportsByType[rt.type];
+    const expected = getExpectedCount(rt.type, job);
+    return rt.status === "uploaded" && reports.length > 0 && (expected === 0 || reports.length >= expected);
+  });
   const alreadySent = required.filter((rt) => rt.status === "sent");
 
-  // Only send when ALL required reports are uploaded (or already sent)
   if (ready.length + alreadySent.length < required.length) {
     for (const rt of required) {
-      if (rt.status !== "sent" && (!rt.filePath || rt.status !== "uploaded")) {
+      if (rt.status !== "sent" && rt.status !== "uploaded") {
         pending.push(rt.label);
       }
     }
@@ -73,19 +94,26 @@ export async function autoSendReports(
   }
 
   for (const rt of ready) {
-    const { data: fileData } = await supabase.storage
-      .from("reports")
-      .download(rt.filePath!);
+    const reports = reportsByType[rt.type];
+    const attachments: { buffer: Buffer; filename: string }[] = [];
 
-    if (!fileData) {
+    for (const report of reports) {
+      const { data: fileData } = await supabase.storage
+        .from("reports")
+        .download(report.file_path);
+
+      if (!fileData) continue;
+
+      attachments.push({
+        buffer: Buffer.from(await fileData.arrayBuffer()),
+        filename: report.original_filename,
+      });
+    }
+
+    if (attachments.length === 0) {
       pending.push(rt.label);
       continue;
     }
-
-    const buffer = Buffer.from(await fileData.arrayBuffer());
-    const ext = rt.filePath!.split(".").pop() ?? "pdf";
-    const prefix = rt.type === "xrf" ? "xrf-report" : "dust-swab-report";
-    const filename = `${prefix}-job-${job.job_number}.${ext}`;
 
     await sendReportEmail({
       to: job.client_email,
@@ -93,8 +121,7 @@ export async function autoSendReports(
       clientCompany: job.client_company ?? "Client",
       buildingAddress: job.building_address ?? "",
       serviceType: rt.type,
-      pdfBuffer: buffer,
-      filename,
+      attachments,
       senderName,
       subjectTemplate: settingsMap["report_email_subject"],
       bodyTemplate: settingsMap["report_email_body"],

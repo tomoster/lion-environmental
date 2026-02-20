@@ -181,20 +181,42 @@ export async function uploadReport(jobId: string, reportType: "xrf" | "dust_swab
     throw new Error(uploadError.message);
   }
 
-  const fileColumn = reportType === "xrf" ? "xrf_report_file_path" : "dust_swab_report_file_path";
-  const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
+  const { error: insertError } = await supabase.from("job_reports").insert({
+    job_id: jobId,
+    report_type: reportType,
+    file_path: path,
+    original_filename: file.name,
+  });
 
-  const { error: updateError } = await supabase
+  if (insertError) {
+    throw new Error(insertError.message);
+  }
+
+  const { data: job } = await supabase
     .from("jobs")
-    .update({
-      [fileColumn]: path,
-      [statusColumn]: "uploaded",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", jobId);
+    .select("num_units, num_common_spaces, num_wipes")
+    .eq("id", jobId)
+    .single();
 
-  if (updateError) {
-    throw new Error(updateError.message);
+  const expected = reportType === "xrf"
+    ? (job?.num_units ?? 0) + (job?.num_common_spaces ?? 0)
+    : (job?.num_wipes ?? 0);
+
+  const { count: uploadedCount } = await supabase
+    .from("job_reports")
+    .select("id", { count: "exact", head: true })
+    .eq("job_id", jobId)
+    .eq("report_type", reportType);
+
+  if (expected > 0 && (uploadedCount ?? 0) >= expected) {
+    const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
+    await supabase
+      .from("jobs")
+      .update({
+        [statusColumn]: "uploaded",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", jobId);
   }
 
   const adminClient = createAdminClient();

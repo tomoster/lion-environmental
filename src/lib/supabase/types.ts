@@ -147,6 +147,41 @@ export type Database = {
           },
         ]
       }
+      job_reports: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          id: string
+          job_id: string
+          original_filename: string
+          report_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          id?: string
+          job_id: string
+          original_filename: string
+          report_type: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          job_id?: string
+          original_filename?: string
+          report_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_reports_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       jobs: {
         Row: {
           building_address: string | null
@@ -155,7 +190,6 @@ export type Database = {
           complete_reminder_sent: boolean
           created_at: string | null
           dispatch_message_ids: Json | null
-          dust_swab_report_file_path: string | null
           dust_swab_status: string | null
           estimated_end_time: string | null
           has_asbestos: boolean
@@ -176,7 +210,6 @@ export type Database = {
           start_time: string | null
           updated_at: string | null
           worker_id: string | null
-          xrf_report_file_path: string | null
         }
         Insert: {
           building_address?: string | null
@@ -185,7 +218,6 @@ export type Database = {
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
-          dust_swab_report_file_path?: string | null
           dust_swab_status?: string | null
           estimated_end_time?: string | null
           has_asbestos?: boolean
@@ -206,7 +238,6 @@ export type Database = {
           start_time?: string | null
           updated_at?: string | null
           worker_id?: string | null
-          xrf_report_file_path?: string | null
         }
         Update: {
           building_address?: string | null
@@ -215,7 +246,6 @@ export type Database = {
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
-          dust_swab_report_file_path?: string | null
           dust_swab_status?: string | null
           estimated_end_time?: string | null
           has_asbestos?: boolean
@@ -236,7 +266,6 @@ export type Database = {
           start_time?: string | null
           updated_at?: string | null
           worker_id?: string | null
-          xrf_report_file_path?: string | null
         }
         Relationships: [
           {

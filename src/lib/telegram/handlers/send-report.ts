@@ -25,7 +25,7 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, xrf_report_file_path, dust_swab_report_file_path, has_xrf, has_dust_swab, has_asbestos")
+    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos")
     .eq("id", jobId)
     .single();
 
@@ -40,12 +40,17 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
     return;
   }
 
-  const filePath = reportType === "xrf" ? job.xrf_report_file_path : job.dust_swab_report_file_path;
+  const { data: reports } = await supabase
+    .from("job_reports")
+    .select("file_path, original_filename")
+    .eq("job_id", jobId)
+    .eq("report_type", reportType);
+
   const typeLabel = reportType === "xrf" ? "XRF" : "Dust Swab";
 
-  if (!filePath) {
+  if (!reports || reports.length === 0) {
     await answerCallbackQuery(query.id, `No ${typeLabel} report uploaded.`);
-    await sendMessage(chatId, `Can't send report \u2014 no ${typeLabel} report file uploaded for this job.`);
+    await sendMessage(chatId, `Can't send report \u2014 no ${typeLabel} report files uploaded for this job.`);
     return;
   }
 
@@ -63,18 +68,24 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
   }
 
   try {
-    const { data: fileData } = await supabase.storage
-      .from("reports")
-      .download(filePath);
+    const attachments: { buffer: Buffer; filename: string }[] = [];
 
-    if (!fileData) {
-      throw new Error("Failed to download report from storage");
+    for (const report of reports) {
+      const { data: fileData } = await supabase.storage
+        .from("reports")
+        .download(report.file_path);
+
+      if (!fileData) continue;
+
+      attachments.push({
+        buffer: Buffer.from(await fileData.arrayBuffer()),
+        filename: report.original_filename,
+      });
     }
 
-    const buffer = Buffer.from(await fileData.arrayBuffer());
-    const ext = filePath.split(".").pop() ?? "pdf";
-    const prefix = reportType === "xrf" ? "xrf-report" : "dust-swab-report";
-    const filename = `${prefix}-job-${job.job_number}.${ext}`;
+    if (attachments.length === 0) {
+      throw new Error("Failed to download reports from storage");
+    }
 
     const { data: settings } = await supabase
       .from("settings")
@@ -90,8 +101,7 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
       clientCompany: job.client_company ?? "Client",
       buildingAddress: job.building_address ?? "",
       serviceType: reportType,
-      pdfBuffer: buffer,
-      filename,
+      attachments,
       senderName,
       subjectTemplate: settingsMap["report_email_subject"],
       bodyTemplate: settingsMap["report_email_body"],
@@ -106,10 +116,10 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
       })
       .eq("id", jobId);
 
-    await answerCallbackQuery(query.id, `${typeLabel} report sent!`);
+    await answerCallbackQuery(query.id, `${typeLabel} report${attachments.length > 1 ? "s" : ""} sent!`);
     await sendMessage(
       chatId,
-      `${typeLabel} report for Job #${job.job_number} sent to <b>${job.client_email}</b>.`
+      `${attachments.length} ${typeLabel} report${attachments.length > 1 ? "s" : ""} for Job #${job.job_number} sent to <b>${job.client_email}</b>.`
     );
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";

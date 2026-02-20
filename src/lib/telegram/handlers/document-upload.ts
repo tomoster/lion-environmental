@@ -5,6 +5,16 @@ import { reportForJobKeyboard, reportTypeKeyboard } from "../keyboard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { autoSendReports } from "@/lib/reports/auto-send";
 
+function getExpectedCount(
+  reportType: "xrf" | "dust_swab",
+  job: { num_units: number | null; num_common_spaces: number | null; num_wipes: number | null }
+): number {
+  if (reportType === "xrf") {
+    return (job.num_units ?? 0) + (job.num_common_spaces ?? 0);
+  }
+  return job.num_wipes ?? 0;
+}
+
 export async function handleDocumentUpload(message: TelegramMessage) {
   const chatId = message.chat.id;
   const doc = message.document!;
@@ -49,17 +59,17 @@ export async function handleDocumentUpload(message: TelegramMessage) {
     .select("id, job_number, client_company, has_xrf, has_dust_swab")
     .eq("worker_id", worker.id)
     .or(
-      "and(has_xrf.eq.true,xrf_report_file_path.is.null,report_status.in.(not_started,writing))," +
-      "and(has_dust_swab.eq.true,dust_swab_report_file_path.is.null,dust_swab_status.in.(not_started,writing))"
+      "and(has_xrf.eq.true,report_status.in.(not_started,writing))," +
+      "and(has_dust_swab.eq.true,dust_swab_status.in.(not_started,writing))"
     );
 
   if (!pendingJobs || pendingJobs.length === 0) {
     const { data: allPendingJobs } = await supabase
       .from("jobs")
-      .select("id, job_number, client_company, has_xrf, has_dust_swab, report_status, dust_swab_status, xrf_report_file_path, dust_swab_report_file_path")
+      .select("id, job_number, client_company, has_xrf, has_dust_swab, report_status, dust_swab_status")
       .or(
-        "and(has_xrf.eq.true,xrf_report_file_path.is.null,report_status.in.(not_started,writing))," +
-        "and(has_dust_swab.eq.true,dust_swab_report_file_path.is.null,dust_swab_status.in.(not_started,writing))"
+        "and(has_xrf.eq.true,report_status.in.(not_started,writing))," +
+        "and(has_dust_swab.eq.true,dust_swab_status.in.(not_started,writing))"
       )
       .order("created_at", { ascending: false })
       .limit(10);
@@ -81,7 +91,7 @@ export async function handleDocumentUpload(message: TelegramMessage) {
         allPendingJobs.map((j) => ({
           id: j.id,
           jobNumber: j.job_number,
-          client: j.client_company ?? "—",
+          client: j.client_company ?? "\u2014",
         }))
       )
     );
@@ -189,37 +199,64 @@ export async function handleReportUpload(
     return;
   }
 
-  const fileColumn = reportType === "xrf" ? "xrf_report_file_path" : "dust_swab_report_file_path";
-  const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
   const typeLabel = reportType === "xrf" ? "XRF" : "Dust Swab";
 
-  await supabase
-    .from("jobs")
-    .update({
-      [fileColumn]: storagePath,
-      [statusColumn]: "uploaded",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("id", jobId);
+  await supabase.from("job_reports").insert({
+    job_id: jobId,
+    report_type: reportType,
+    file_path: storagePath,
+    original_filename: fileName,
+  });
 
-  const { data: jobForEmail } = await supabase
+  const { data: job } = await supabase
     .from("jobs")
-    .select("client_email")
+    .select("num_units, num_common_spaces, num_wipes, client_email")
     .eq("id", jobId)
     .single();
+
+  const { count: uploadedCount } = await supabase
+    .from("job_reports")
+    .select("id", { count: "exact", head: true })
+    .eq("job_id", jobId)
+    .eq("report_type", reportType);
+
+  const expected = job ? getExpectedCount(reportType, job) : 0;
+  const uploaded = uploadedCount ?? 0;
+  const allIn = expected > 0 && uploaded >= expected;
+
+  const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
+
+  if (allIn) {
+    await supabase
+      .from("jobs")
+      .update({
+        [statusColumn]: "uploaded",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", jobId);
+  }
 
   const { sent } = await autoSendReports(supabase, jobId);
   const wasSent = sent.includes(typeLabel);
 
+  let progressMsg: string;
+  if (allIn) {
+    progressMsg = `All ${expected} ${typeLabel} report${expected !== 1 ? "s" : ""} received!`;
+  } else if (expected > 0) {
+    progressMsg = `${uploaded} of ${expected} ${typeLabel} reports uploaded.`;
+  } else {
+    progressMsg = `${typeLabel} report uploaded.`;
+  }
+
   if (wasSent) {
     await sendMessage(
       chatId,
-      `${typeLabel} report uploaded and sent to ${jobForEmail?.client_email ?? "client"} for Job #${jobNumber} (${clientCompany ?? "\u2014"}).`
+      `${progressMsg} Reports sent to ${job?.client_email ?? "client"} for Job #${jobNumber} (${clientCompany ?? "\u2014"}).`
     );
   } else {
     await sendMessage(
       chatId,
-      `${typeLabel} report uploaded for Job #${jobNumber} (${clientCompany ?? "\u2014"}).`
+      `${progressMsg} Job #${jobNumber} (${clientCompany ?? "\u2014"}).`
     );
   }
 
@@ -230,12 +267,12 @@ export async function handleReportUpload(
     if (wasSent) {
       await sendMessage(
         mChatId,
-        `New <b>${typeLabel}</b> report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "\u2014"}) — auto-sent to ${jobForEmail?.client_email ?? "client"}.`
+        `New <b>${typeLabel}</b> report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "\u2014"}) \u2014 ${progressMsg} Auto-sent to ${job?.client_email ?? "client"}.`
       );
     } else {
       await sendMessage(
         mChatId,
-        `New <b>${typeLabel}</b> report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "\u2014"}).`
+        `New <b>${typeLabel}</b> report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "\u2014"}) \u2014 ${progressMsg}`
       );
     }
   }

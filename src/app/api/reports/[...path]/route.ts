@@ -9,9 +9,19 @@ export async function GET(
   const storagePath = path.join("/");
 
   const supabase = createAdminClient();
+
+  const { data: report } = await supabase
+    .from("job_reports")
+    .select("original_filename")
+    .eq("file_path", storagePath)
+    .limit(1)
+    .maybeSingle();
+
   const { data, error } = await supabase.storage
     .from("reports")
-    .createSignedUrl(storagePath, 60);
+    .createSignedUrl(storagePath, 60, {
+      download: report?.original_filename || undefined,
+    });
 
   if (error || !data?.signedUrl) {
     return NextResponse.json({ error: "Report not found" }, { status: 404 });

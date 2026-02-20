@@ -96,7 +96,7 @@ export default async function JobDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: job }, { data: jobInvoice }] = await Promise.all([
+  const [{ data: job }, { data: jobInvoice }, { data: jobReports }] = await Promise.all([
     supabase
       .from("jobs")
       .select("*, workers(id, name)")
@@ -108,6 +108,11 @@ export default async function JobDetailPage({ params }: PageProps) {
       .eq("job_id", id)
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from("job_reports")
+      .select("id, report_type, file_path, original_filename, created_at")
+      .eq("job_id", id)
+      .order("created_at", { ascending: true }),
   ]);
 
   if (!job) notFound();
@@ -246,65 +251,91 @@ export default async function JobDetailPage({ params }: PageProps) {
             dustSwabStatusLabels={DUST_SWAB_STATUS_LABELS}
           />
 
-          {job.has_xrf && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">XRF Report File</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {job.xrf_report_file_path ? (
-                  <a
-                    href={`/api/reports/${job.xrf_report_file_path}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
-                  >
-                    View Report (PDF)
-                  </a>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No XRF report uploaded yet.</p>
-                )}
-                <form action={uploadXrfReport}>
-                  <div className="flex items-center gap-3">
-                    <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                    <Button type="submit" variant="outline" size="sm">
-                      Upload
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
+          {job.has_xrf && (() => {
+            const xrfReports = (jobReports ?? []).filter((r) => r.report_type === "xrf");
+            const expectedXrf = (job.num_units ?? 0) + (job.num_common_spaces ?? 0);
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    XRF Reports{expectedXrf > 0 ? ` (${xrfReports.length} of ${expectedXrf} uploaded)` : ` (${xrfReports.length} uploaded)`}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {xrfReports.length > 0 ? (
+                    <ul className="space-y-1.5">
+                      {xrfReports.map((r) => (
+                        <li key={r.id} className="flex items-center gap-2 text-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+                          <a
+                            href={`/api/reports/${r.file_path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline truncate"
+                          >
+                            {r.original_filename}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No XRF reports uploaded yet.</p>
+                  )}
+                  <form action={uploadXrfReport}>
+                    <div className="flex items-center gap-3">
+                      <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                      <Button type="submit" variant="outline" size="sm">
+                        Upload
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            );
+          })()}
 
-          {job.has_dust_swab && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Dust Swab Report File</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {job.dust_swab_report_file_path ? (
-                  <a
-                    href={`/api/reports/${job.dust_swab_report_file_path}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
-                  >
-                    View Report (PDF)
-                  </a>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No dust swab report uploaded yet.</p>
-                )}
-                <form action={uploadDustSwabReport}>
-                  <div className="flex items-center gap-3">
-                    <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                    <Button type="submit" variant="outline" size="sm">
-                      Upload
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
-          )}
+          {job.has_dust_swab && (() => {
+            const dsReports = (jobReports ?? []).filter((r) => r.report_type === "dust_swab");
+            const expectedDs = job.num_wipes ?? 0;
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    Dust Swab Reports{expectedDs > 0 ? ` (${dsReports.length} of ${expectedDs} uploaded)` : ` (${dsReports.length} uploaded)`}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {dsReports.length > 0 ? (
+                    <ul className="space-y-1.5">
+                      {dsReports.map((r) => (
+                        <li key={r.id} className="flex items-center gap-2 text-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+                          <a
+                            href={`/api/reports/${r.file_path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline truncate"
+                          >
+                            {r.original_filename}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No dust swab reports uploaded yet.</p>
+                  )}
+                  <form action={uploadDustSwabReport}>
+                    <div className="flex items-center gap-3">
+                      <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                      <Button type="submit" variant="outline" size="sm">
+                        Upload
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            );
+          })()}
         </div>
 
         <div className="space-y-6">

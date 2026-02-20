@@ -18,14 +18,18 @@ If you have any questions about this report, please don't hesitate to reach out.
 
 Thank you for choosing Lion Environmental!`;
 
+type ReportAttachment = {
+  buffer: Buffer;
+  filename: string;
+};
+
 type SendReportParams = {
   to: string;
   jobNumber: number;
   clientCompany: string;
   buildingAddress: string;
   serviceType: "xrf" | "dust_swab" | "asbestos";
-  pdfBuffer: Buffer;
-  filename: string;
+  attachments: ReportAttachment[];
   senderName: string;
   subjectTemplate?: string;
   bodyTemplate?: string;
@@ -63,8 +67,7 @@ export async function sendReportEmail({
   clientCompany,
   buildingAddress,
   serviceType,
-  pdfBuffer,
-  filename,
+  attachments,
   senderName,
   subjectTemplate,
   bodyTemplate,
@@ -117,12 +120,10 @@ export async function sendReportEmail({
         </p>
       </div>
     `,
-    attachments: [
-      {
-        filename,
-        content: pdfBuffer,
-      },
-    ],
+    attachments: attachments.map((a) => ({
+      filename: a.filename,
+      content: a.buffer,
+    })),
   });
 
   return { id: info.messageId };
