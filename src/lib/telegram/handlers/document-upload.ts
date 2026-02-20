@@ -54,13 +54,36 @@ export async function handleDocumentUpload(message: TelegramMessage) {
     );
 
   if (!pendingJobs || pendingJobs.length === 0) {
-    await setState(supabase, String(chatId), "awaiting_job_number", {
+    const { data: allPendingJobs } = await supabase
+      .from("jobs")
+      .select("id, job_number, client_company, has_xrf, has_dust_swab, report_status, dust_swab_status, xrf_report_file_path, dust_swab_report_file_path")
+      .or(
+        "and(has_xrf.eq.true,xrf_report_file_path.is.null,report_status.in.(not_started,writing))," +
+        "and(has_dust_swab.eq.true,dust_swab_report_file_path.is.null,dust_swab_status.in.(not_started,writing))"
+      )
+      .order("created_at", { ascending: false })
+      .limit(10);
+
+    if (!allPendingJobs || allPendingJobs.length === 0) {
+      await sendMessage(chatId, "No jobs are currently waiting for a report.");
+      return;
+    }
+
+    await setState(supabase, String(chatId), "awaiting_report_pick", {
       file_id: doc.file_id,
       file_name: doc.file_name ?? "report.pdf",
     });
+
     await sendMessage(
       chatId,
-      "Which job is this report for? Please enter the job number."
+      "Which job is this report for?",
+      reportForJobKeyboard(
+        allPendingJobs.map((j) => ({
+          id: j.id,
+          jobNumber: j.job_number,
+          client: j.client_company ?? "—",
+        }))
+      )
     );
     return;
   }
