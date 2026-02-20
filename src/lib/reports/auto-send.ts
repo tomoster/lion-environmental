@@ -89,6 +89,8 @@ export async function autoSendReports(
       pdfBuffer: buffer,
       filename,
       senderName,
+      subjectTemplate: settingsMap["report_email_subject"],
+      bodyTemplate: settingsMap["report_email_body"],
     });
 
     await supabase

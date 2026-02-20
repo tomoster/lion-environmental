@@ -8,6 +8,16 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const DEFAULT_REPORT_SUBJECT = "{{service_type}} Report — {{address}}";
+
+const DEFAULT_REPORT_BODY = `Dear {{company}},
+
+Please find attached the {{service_type}} report for the property at {{address}}.
+
+If you have any questions about this report, please don't hesitate to reach out.
+
+Thank you for choosing Lion Environmental!`;
+
 type SendReportParams = {
   to: string;
   jobNumber: number;
@@ -17,6 +27,8 @@ type SendReportParams = {
   pdfBuffer: Buffer;
   filename: string;
   senderName: string;
+  subjectTemplate?: string;
+  bodyTemplate?: string;
 };
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -24,6 +36,26 @@ const SERVICE_LABELS: Record<string, string> = {
   dust_swab: "Dust Wipe Sampling",
   asbestos: "Asbestos Testing",
 };
+
+function replaceVars(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
+}
+
+function textToHtml(text: string): string {
+  return text
+    .split(/\n\n+/)
+    .map((block) => {
+      const lines = block.split("\n");
+      if (lines.every((l) => l.trimStart().startsWith("- "))) {
+        const items = lines
+          .map((l) => `<li>${l.replace(/^\s*-\s*/, "")}</li>`)
+          .join("");
+        return `<ul style="color: #555;">${items}</ul>`;
+      }
+      return `<p>${block.replace(/\n/g, "<br/>")}</p>`;
+    })
+    .join("\n");
+}
 
 export async function sendReportEmail({
   to,
@@ -34,18 +66,33 @@ export async function sendReportEmail({
   pdfBuffer,
   filename,
   senderName,
+  subjectTemplate,
+  bodyTemplate,
 }: SendReportParams) {
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Inspection";
+
+  const vars: Record<string, string> = {
+    job_number: String(jobNumber),
+    company: clientCompany,
+    address: buildingAddress || `Job #${jobNumber}`,
+    service_type: serviceLabel,
+  };
+
+  const subject = replaceVars(
+    subjectTemplate || DEFAULT_REPORT_SUBJECT,
+    vars
+  );
+  const bodyHtml = textToHtml(
+    replaceVars(bodyTemplate || DEFAULT_REPORT_BODY, vars)
+  );
 
   const info = await transporter.sendMail({
     from: `${senderName} <${process.env.GMAIL_USER}>`,
     to,
-    subject: `${serviceLabel} Report — ${buildingAddress || `Job #${jobNumber}`}`,
+    subject,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">${serviceLabel} Report</h2>
-        <p>Dear ${clientCompany},</p>
-        <p>Please find attached the ${serviceLabel.toLowerCase()} report for the property at <b>${buildingAddress}</b>.</p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr>
             <td style="padding: 8px 0; color: #666;">Job Number:</td>
@@ -60,8 +107,7 @@ export async function sendReportEmail({
             <td style="padding: 8px 0; font-weight: bold;">${buildingAddress}</td>
           </tr>
         </table>
-        <p>If you have any questions about this report, please don't hesitate to reach out.</p>
-        <p>Thank you for choosing Lion Environmental!</p>
+        ${bodyHtml}
         <p style="color: #666; margin-top: 20px;">
           Best regards,<br/>
           ${senderName}<br/>

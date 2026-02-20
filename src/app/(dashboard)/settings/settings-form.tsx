@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
   CardContent,
@@ -15,6 +16,32 @@ import {
 } from "@/components/ui/card";
 import { updateSettings } from "./actions";
 
+const DEFAULT_INVOICE_SUBJECT =
+  "Invoice #{{invoice_number}} from Lion Environmental LLC";
+
+const DEFAULT_INVOICE_BODY = `Dear {{company}},
+
+Please find attached your invoice from Lion Environmental LLC.
+
+Payment Options:
+- Zelle: 2013752797
+- Check payable to: Lion Environmental LLC
+- Mail to: 1500 Teaneck Rd #448, Teaneck, NJ 07666
+
+If you have any questions, please don't hesitate to reach out.
+
+Thank you for your business!`;
+
+const DEFAULT_REPORT_SUBJECT = "{{service_type}} Report — {{address}}";
+
+const DEFAULT_REPORT_BODY = `Dear {{company}},
+
+Please find attached the {{service_type}} report for the property at {{address}}.
+
+If you have any questions about this report, please don't hesitate to reach out.
+
+Thank you for choosing Lion Environmental!`;
+
 interface SettingsFormProps {
   settings: Record<string, string>;
 }
@@ -24,6 +51,9 @@ export function SettingsForm({ settings }: SettingsFormProps) {
   const [isXrfPending, startXrfTransition] = useTransition();
   const [isDustSwabPending, startDustSwabTransition] = useTransition();
   const [isAsbestosPending, startAsbestosTransition] = useTransition();
+  const [isInvoiceTplPending, startInvoiceTplTransition] = useTransition();
+  const [isReportTplPending, startReportTplTransition] = useTransition();
+  const [isColdEmailPending, startColdEmailTransition] = useTransition();
 
   function handleBusinessSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -73,6 +103,45 @@ export function SettingsForm({ settings }: SettingsFormProps) {
         toast.error(result.error);
       } else {
         toast.success("Asbestos testing settings saved.");
+      }
+    });
+  }
+
+  function handleInvoiceTplSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startInvoiceTplTransition(async () => {
+      const result = await updateSettings(formData);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Invoice email template saved.");
+      }
+    });
+  }
+
+  function handleReportTplSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startReportTplTransition(async () => {
+      const result = await updateSettings(formData);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Report email template saved.");
+      }
+    });
+  }
+
+  function handleColdEmailSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formData = new FormData(e.currentTarget);
+    startColdEmailTransition(async () => {
+      const result = await updateSettings(formData);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Cold email templates saved.");
       }
     });
   }
@@ -352,6 +421,152 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           <CardFooter>
             <Button type="submit" disabled={isAsbestosPending}>
               {isAsbestosPending ? "Saving..." : "Save Asbestos Settings"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+
+      <div className="pt-4">
+        <h2 className="text-lg font-semibold">Email Templates</h2>
+        <p className="text-sm text-muted-foreground">
+          Customize the emails sent with invoices and reports. Use{" "}
+          {"{{variable}}"} placeholders for dynamic content.
+        </p>
+      </div>
+
+      <form onSubmit={handleInvoiceTplSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Invoice Email</CardTitle>
+            <CardDescription>
+              Sent when an invoice is emailed to a client. Available variables:{" "}
+              <code className="text-xs">{"{{invoice_number}}"}</code>,{" "}
+              <code className="text-xs">{"{{company}}"}</code>,{" "}
+              <code className="text-xs">{"{{amount}}"}</code>,{" "}
+              <code className="text-xs">{"{{due_date}}"}</code>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="invoice_email_subject">Subject Line</Label>
+              <Input
+                id="invoice_email_subject"
+                name="invoice_email_subject"
+                defaultValue={
+                  settings.invoice_email_subject ?? DEFAULT_INVOICE_SUBJECT
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="invoice_email_body">Body</Label>
+              <Textarea
+                id="invoice_email_body"
+                name="invoice_email_body"
+                rows={10}
+                defaultValue={
+                  settings.invoice_email_body ?? DEFAULT_INVOICE_BODY
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                The invoice details table and signature are added automatically.
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isInvoiceTplPending}>
+              {isInvoiceTplPending ? "Saving..." : "Save Invoice Template"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+
+      <form onSubmit={handleReportTplSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Report Email</CardTitle>
+            <CardDescription>
+              Sent when a report is emailed to a client. Available variables:{" "}
+              <code className="text-xs">{"{{job_number}}"}</code>,{" "}
+              <code className="text-xs">{"{{company}}"}</code>,{" "}
+              <code className="text-xs">{"{{address}}"}</code>,{" "}
+              <code className="text-xs">{"{{service_type}}"}</code>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="report_email_subject">Subject Line</Label>
+              <Input
+                id="report_email_subject"
+                name="report_email_subject"
+                defaultValue={
+                  settings.report_email_subject ?? DEFAULT_REPORT_SUBJECT
+                }
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="report_email_body">Body</Label>
+              <Textarea
+                id="report_email_body"
+                name="report_email_body"
+                rows={8}
+                defaultValue={
+                  settings.report_email_body ?? DEFAULT_REPORT_BODY
+                }
+              />
+              <p className="text-xs text-muted-foreground">
+                The report details table and signature are added automatically.
+              </p>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isReportTplPending}>
+              {isReportTplPending ? "Saving..." : "Save Report Template"}
+            </Button>
+          </CardFooter>
+        </Card>
+      </form>
+
+      <form onSubmit={handleColdEmailSubmit}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Cold Email Sequence</CardTitle>
+            <CardDescription>
+              4-step outreach sequence for new prospects. Available variables:{" "}
+              <code className="text-xs">{"{{company}}"}</code>,{" "}
+              <code className="text-xs">{"{{first_name}}"}</code>
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+              Cold email engine coming soon — save your templates now.
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="cold_email_subject">
+                Subject Line (shared across all steps)
+              </Label>
+              <Input
+                id="cold_email_subject"
+                name="cold_email_subject"
+                defaultValue={settings.cold_email_subject ?? ""}
+                placeholder="e.g., Lead paint inspection services for {{company}}"
+              />
+            </div>
+            {[1, 2, 3, 4].map((step) => (
+              <div key={step} className="space-y-1.5">
+                <Label htmlFor={`cold_email_step_${step}`}>Step {step}</Label>
+                <Textarea
+                  id={`cold_email_step_${step}`}
+                  name={`cold_email_step_${step}`}
+                  rows={5}
+                  defaultValue={settings[`cold_email_step_${step}`] ?? ""}
+                  placeholder={`Email body for step ${step}...`}
+                />
+              </div>
+            ))}
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" disabled={isColdEmailPending}>
+              {isColdEmailPending ? "Saving..." : "Save Cold Email Templates"}
             </Button>
           </CardFooter>
         </Card>

@@ -93,6 +93,8 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
       pdfBuffer: buffer,
       filename,
       senderName,
+      subjectTemplate: settingsMap["report_email_subject"],
+      bodyTemplate: settingsMap["report_email_body"],
     });
 
     const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";

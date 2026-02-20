@@ -9,6 +9,42 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const DEFAULT_INVOICE_SUBJECT =
+  "Invoice #{{invoice_number}} from Lion Environmental LLC";
+
+const DEFAULT_INVOICE_BODY = `Dear {{company}},
+
+Please find attached your invoice from Lion Environmental LLC.
+
+Payment Options:
+- Zelle: 2013752797
+- Check payable to: Lion Environmental LLC
+- Mail to: 1500 Teaneck Rd #448, Teaneck, NJ 07666
+
+If you have any questions, please don't hesitate to reach out.
+
+Thank you for your business!`;
+
+function replaceVars(template: string, vars: Record<string, string>): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
+}
+
+function textToHtml(text: string): string {
+  return text
+    .split(/\n\n+/)
+    .map((block) => {
+      const lines = block.split("\n");
+      if (lines.every((l) => l.trimStart().startsWith("- "))) {
+        const items = lines
+          .map((l) => `<li>${l.replace(/^\s*-\s*/, "")}</li>`)
+          .join("");
+        return `<ul style="color: #555;">${items}</ul>`;
+      }
+      return `<p>${block.replace(/\n/g, "<br/>")}</p>`;
+    })
+    .join("\n");
+}
+
 type SendInvoiceParams = {
   to: string;
   invoiceNumber: number;
@@ -17,6 +53,8 @@ type SendInvoiceParams = {
   dueDate: string;
   pdfBuffer: Buffer;
   senderName: string;
+  subjectTemplate?: string;
+  bodyTemplate?: string;
 };
 
 export async function sendInvoiceEmail({
@@ -27,6 +65,8 @@ export async function sendInvoiceEmail({
   dueDate,
   pdfBuffer,
   senderName,
+  subjectTemplate,
+  bodyTemplate,
 }: SendInvoiceParams) {
   const formattedTotal = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -38,15 +78,28 @@ export async function sendInvoiceEmail({
     { month: "long", day: "numeric", year: "numeric" }
   );
 
+  const vars: Record<string, string> = {
+    invoice_number: String(invoiceNumber),
+    company: clientCompany,
+    amount: formattedTotal,
+    due_date: formattedDue,
+  };
+
+  const subject = replaceVars(
+    subjectTemplate || DEFAULT_INVOICE_SUBJECT,
+    vars
+  );
+  const bodyHtml = textToHtml(
+    replaceVars(bodyTemplate || DEFAULT_INVOICE_BODY, vars)
+  );
+
   const info = await transporter.sendMail({
     from: `${senderName} <${process.env.GMAIL_USER}>`,
     to,
-    subject: `Invoice #${invoiceNumber} from Lion Environmental LLC`,
+    subject,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">Invoice #${invoiceNumber}</h2>
-        <p>Dear ${clientCompany},</p>
-        <p>Please find attached your invoice from Lion Environmental LLC.</p>
         <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
           <tr>
             <td style="padding: 8px 0; color: #666;">Invoice Number:</td>
@@ -61,14 +114,7 @@ export async function sendInvoiceEmail({
             <td style="padding: 8px 0; font-weight: bold;">${formattedDue}</td>
           </tr>
         </table>
-        <p><strong>Payment Options:</strong></p>
-        <ul style="color: #555;">
-          <li>Zelle: 2013752797</li>
-          <li>Check payable to: Lion Environmental LLC</li>
-          <li>Mail to: 1500 Teaneck Rd #448, Teaneck, NJ 07666</li>
-        </ul>
-        <p>If you have any questions, please don't hesitate to reach out.</p>
-        <p>Thank you for your business!</p>
+        ${bodyHtml}
         <p style="color: #666; margin-top: 20px;">
           Best regards,<br/>
           ${senderName}<br/>
@@ -164,6 +210,8 @@ export async function sendInvoiceForId(
     dueDate: invoice.due_date ?? "",
     pdfBuffer: Buffer.from(pdfBuffer),
     senderName,
+    subjectTemplate: settingsMap["invoice_email_subject"],
+    bodyTemplate: settingsMap["invoice_email_body"],
   });
 
   const pdfPath = `invoices/${invoiceId}/invoice-${invoice.invoice_number}.pdf`;
