@@ -11,13 +11,13 @@ const styles = StyleSheet.create({
   page: {
     fontFamily: "Helvetica",
     fontSize: 10,
-    padding: 48,
+    padding: 40,
     color: "#111",
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 32,
+    marginBottom: 20,
   },
   businessName: {
     fontSize: 16,
@@ -47,10 +47,10 @@ const styles = StyleSheet.create({
   divider: {
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
-    marginBottom: 24,
+    marginBottom: 16,
   },
   billToSection: {
-    marginBottom: 28,
+    marginBottom: 16,
   },
   sectionLabel: {
     fontSize: 8,
@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     lineHeight: 1.5,
   },
   lineItemsTable: {
-    marginBottom: 20,
+    marginBottom: 12,
   },
   tableHeader: {
     flexDirection: "row",
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   totalsSection: {
     marginLeft: "auto",
     width: 240,
-    marginBottom: 28,
+    marginBottom: 16,
   },
   totalRow: {
     flexDirection: "row",
@@ -133,15 +133,15 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   paymentSection: {
-    marginTop: 20,
-    padding: 16,
+    marginTop: 8,
+    padding: 12,
     backgroundColor: "#f8fafc",
     borderRadius: 4,
-    marginBottom: 24,
+    marginBottom: 12,
   },
   paymentTitle: {
     fontFamily: "Helvetica-Bold",
-    marginBottom: 8,
+    marginBottom: 4,
   },
   paymentLine: {
     color: "#444",
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
   footer: {
     borderTopWidth: 1,
     borderTopColor: "#e2e8f0",
-    paddingTop: 16,
+    paddingTop: 10,
     textAlign: "center",
     color: "#888",
     fontSize: 9,
