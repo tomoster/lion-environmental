@@ -86,7 +86,21 @@ export async function GET(request: NextRequest) {
       .single()
       .then((r) => r.data?.value)) ?? "Avi Bursztyn";
 
-  const dailyLimit = parseInt(settings["cold_email_daily_limit"] ?? "10", 10);
+  const baseDailyLimit = parseInt(settings["cold_email_daily_limit"] ?? "10", 10);
+  const rampStart = settings["cold_email_ramp_start"];
+  const rampIncrement = parseInt(settings["cold_email_ramp_increment"] ?? "0", 10);
+
+  let dailyLimit = baseDailyLimit;
+  if (rampStart && rampIncrement > 0) {
+    const startDate = new Date(rampStart + "T00:00:00");
+    const daysSinceStart = Math.floor(
+      (new Date().getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
+    );
+    if (daysSinceStart > 0) {
+      dailyLimit = baseDailyLimit + daysSinceStart * rampIncrement;
+    }
+  }
+
   const subjectTemplate = settings["cold_email_subject"] ?? "Hello from Lion Environmental";
   const unsubscribeFooter = settings["cold_email_unsubscribe_footer"] ?? "";
 
@@ -102,6 +116,7 @@ export async function GET(request: NextRequest) {
   if (remaining <= 0) {
     return NextResponse.json({
       message: "Daily limit reached",
+      daily_limit: dailyLimit,
       sent_today: sentToday,
     });
   }
@@ -237,6 +252,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     message: `Sent ${sentCount} emails`,
     sent_count: sentCount,
+    daily_limit: dailyLimit,
     sent_today: (sentToday ?? 0) + sentCount,
     errors: errors.length > 0 ? errors : undefined,
   });
