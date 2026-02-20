@@ -107,6 +107,19 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   if (!job) notFound();
 
+  const { data: settings } = await supabase
+    .from("settings")
+    .select("key, value")
+    .in("key", ["lpt_price_per_unit", "lpt_price_per_common_space"]);
+
+  const settingsMap: Record<string, string> = {};
+  for (const s of settings ?? []) {
+    settingsMap[s.key] = s.value;
+  }
+
+  const defaultPricePerUnit = job.price_per_unit ?? (settingsMap.lpt_price_per_unit ? Number(settingsMap.lpt_price_per_unit) : null);
+  const defaultPricePerCommonSpace = job.price_per_common_space ?? (settingsMap.lpt_price_per_common_space ? Number(settingsMap.lpt_price_per_common_space) : null);
+
   let availability = { available: [] as { id: string; name: string }[], unavailable: [] as { worker: { id: string; name: string }; reason: string }[] };
 
   if (job.scan_date) {
@@ -126,8 +139,8 @@ export default async function JobDetailPage({ params }: PageProps) {
   }
 
   const lptSubtotal = hasLpt(job.service_type)
-    ? (job.num_units ?? 0) * (job.price_per_unit ?? 0) +
-      (job.num_common_spaces ?? 0) * (job.price_per_common_space ?? 0)
+    ? (job.num_units ?? 0) * (defaultPricePerUnit ?? 0) +
+      (job.num_common_spaces ?? 0) * (defaultPricePerCommonSpace ?? 0)
     : 0;
 
   const dustSwabSubtotal = hasDustSwab(job.service_type)
@@ -299,7 +312,7 @@ export default async function JobDetailPage({ params }: PageProps) {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="num_units">Units</Label>
+                      <Label htmlFor="num_units"># Units</Label>
                       <Input
                         id="num_units"
                         name="num_units"
@@ -309,18 +322,18 @@ export default async function JobDetailPage({ params }: PageProps) {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="price_per_unit">Price / Unit ($)</Label>
+                      <Label htmlFor="price_per_unit">$/Unit</Label>
                       <Input
                         id="price_per_unit"
                         name="price_per_unit"
                         type="number"
                         min="0"
                         step="0.01"
-                        defaultValue={job.price_per_unit ?? ""}
+                        defaultValue={defaultPricePerUnit ?? ""}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="num_common_spaces">Common Spaces</Label>
+                      <Label htmlFor="num_common_spaces"># Common Spaces</Label>
                       <Input
                         id="num_common_spaces"
                         name="num_common_spaces"
@@ -330,21 +343,21 @@ export default async function JobDetailPage({ params }: PageProps) {
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="price_per_common_space">Price / Common Space ($)</Label>
+                      <Label htmlFor="price_per_common_space">$/Common Space</Label>
                       <Input
                         id="price_per_common_space"
                         name="price_per_common_space"
                         type="number"
                         min="0"
                         step="0.01"
-                        defaultValue={job.price_per_common_space ?? ""}
+                        defaultValue={defaultPricePerCommonSpace ?? ""}
                       />
                     </div>
                   </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <Label htmlFor="num_wipes">Number of Wipes</Label>
+                      <Label htmlFor="num_wipes"># Wipes</Label>
                       <Input
                         id="num_wipes"
                         name="num_wipes"
@@ -471,21 +484,21 @@ export default async function JobDetailPage({ params }: PageProps) {
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Units</span>
-                      <span>{job.num_units ?? 0} x {formatCurrency(job.price_per_unit ?? 0)}</span>
+                      <span>{job.num_units ?? 0} x {formatCurrency(defaultPricePerUnit ?? 0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span></span>
-                      <span>{formatCurrency((job.num_units ?? 0) * (job.price_per_unit ?? 0))}</span>
+                      <span>{formatCurrency((job.num_units ?? 0) * (defaultPricePerUnit ?? 0))}</span>
                     </div>
                   </div>
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-muted-foreground">
                       <span>Common spaces</span>
-                      <span>{job.num_common_spaces ?? 0} x {formatCurrency(job.price_per_common_space ?? 0)}</span>
+                      <span>{job.num_common_spaces ?? 0} x {formatCurrency(defaultPricePerCommonSpace ?? 0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span></span>
-                      <span>{formatCurrency((job.num_common_spaces ?? 0) * (job.price_per_common_space ?? 0))}</span>
+                      <span>{formatCurrency((job.num_common_spaces ?? 0) * (defaultPricePerCommonSpace ?? 0))}</span>
                     </div>
                   </div>
                 </>
