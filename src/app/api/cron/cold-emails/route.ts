@@ -90,6 +90,8 @@ export async function GET(request: NextRequest) {
   const rampStart = settings["cold_email_ramp_start"];
   const rampIncrement = parseInt(settings["cold_email_ramp_increment"] ?? "0", 10);
 
+  const dailyMax = parseInt(settings["cold_email_daily_max"] ?? "30", 10);
+
   let dailyLimit = baseDailyLimit;
   if (rampStart && rampIncrement > 0) {
     const startDate = new Date(rampStart + "T00:00:00");
@@ -97,7 +99,8 @@ export async function GET(request: NextRequest) {
       (new Date().getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
     );
     if (daysSinceStart > 0) {
-      dailyLimit = baseDailyLimit + daysSinceStart * rampIncrement;
+      const rampSteps = Math.floor(daysSinceStart / 2);
+      dailyLimit = Math.min(baseDailyLimit + rampSteps * rampIncrement, dailyMax);
     }
   }
 
