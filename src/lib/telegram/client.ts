@@ -44,6 +44,18 @@ export async function answerCallbackQuery(
   });
 }
 
+export async function deleteMessage(chatId: number | string, messageId: number) {
+  const res = await fetch(`${API}/deleteMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, message_id: messageId }),
+  });
+
+  if (!res.ok) {
+    console.error("Telegram deleteMessage failed:", await res.text());
+  }
+}
+
 export async function getFileUrl(fileId: string): Promise<string | null> {
   const res = await fetch(`${API}/getFile`, {
     method: "POST",

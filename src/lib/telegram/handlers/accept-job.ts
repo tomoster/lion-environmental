@@ -1,5 +1,5 @@
 import type { TelegramCallbackQuery } from "../types";
-import { sendMessage, answerCallbackQuery } from "../client";
+import { sendMessage, answerCallbackQuery, deleteMessage } from "../client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getManagementChatIds } from "../get-management-chat-ids";
 
@@ -48,6 +48,11 @@ export async function handleAcceptJob(query: TelegramCallbackQuery) {
     .single();
 
   await answerCallbackQuery(query.id, "Job accepted!");
+
+  if (query.message?.message_id) {
+    await deleteMessage(chatId, query.message.message_id);
+  }
+
   await sendMessage(
     chatId,
     `You've accepted <b>Job #${job?.job_number}</b>!\n\n` +
