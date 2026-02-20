@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendMessage } from "@/lib/telegram/client";
+import { completeJobKeyboard } from "@/lib/telegram/keyboard";
 import { getManagementChatIds } from "@/lib/telegram/get-management-chat-ids";
 
 export async function GET(request: NextRequest) {
@@ -23,13 +24,13 @@ export async function GET(request: NextRequest) {
 
   const { data: todayJobs } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, building_address, scan_date, start_time, worker_id, workers(name, telegram_chat_id)")
+    .select("id, job_number, client_company, building_address, scan_date, start_time, job_status, worker_id, workers(name, telegram_chat_id)")
     .eq("scan_date", today)
     .in("job_status", ["assigned", "open"]);
 
   const { data: tomorrowJobs } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, building_address, scan_date, start_time, worker_id, workers(name, telegram_chat_id)")
+    .select("id, job_number, client_company, building_address, scan_date, start_time, job_status, worker_id, workers(name, telegram_chat_id)")
     .eq("scan_date", tomorrowStr)
     .in("job_status", ["assigned", "open"]);
 
@@ -56,7 +57,8 @@ export async function GET(request: NextRequest) {
       `Client: ${job.client_company ?? "\u2014"}\n` +
       `Address: ${job.building_address ?? "\u2014"}`;
 
-    await sendMessage(worker.telegram_chat_id, text);
+    const keyboard = isToday && job.job_status === "assigned" ? completeJobKeyboard(job.id) : undefined;
+    await sendMessage(worker.telegram_chat_id, text, keyboard);
   }
 
   const mgmtChatIds = await getManagementChatIds(supabase);
