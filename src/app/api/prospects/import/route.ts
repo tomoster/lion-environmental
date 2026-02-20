@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 interface ApifyRow {
   title?: string;
@@ -28,7 +28,7 @@ function normalizeCompany(name: string): string {
 }
 
 export async function POST(request: NextRequest) {
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   const { rows } = (await request.json()) as { rows: ApifyRow[] };
 
