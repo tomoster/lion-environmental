@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calculateEndTime } from "@/lib/scheduling-utils";
 import { broadcastJobToWorkers } from "@/lib/telegram/broadcast";
+import { autoSendReports } from "@/lib/reports/auto-send";
 
 export async function createJob(formData: FormData) {
   const supabase = await createClient();
@@ -185,6 +186,9 @@ export async function uploadReport(jobId: string, reportType: "xrf" | "dust_swab
   if (updateError) {
     throw new Error(updateError.message);
   }
+
+  const adminClient = createAdminClient();
+  await autoSendReports(adminClient, jobId);
 
   revalidatePath(`/jobs/${jobId}`);
 }

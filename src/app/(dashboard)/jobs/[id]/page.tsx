@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { updateJob, deleteJob, uploadReport } from "../actions";
-import { dispatchJob, sendReport } from "./automation-actions";
+import { dispatchJob, markClientPaid } from "./automation-actions";
 import { DeleteJobButton } from "./delete-job-button";
 import { JobDetailForm } from "./job-detail-form";
 import { getAvailableWorkers } from "@/lib/scheduling";
@@ -165,14 +165,10 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   const uploadXrfReport = uploadReport.bind(null, id, "xrf");
   const uploadDustSwabReport = uploadReport.bind(null, id, "dust_swab");
-  const sendXrfReport = sendReport.bind(null, id, "xrf");
-  const sendDustSwabReport = sendReport.bind(null, id, "dust_swab");
+  const markClientPaidWithId = markClientPaid.bind(null, id);
 
   const canDispatch = job.job_status === "not_dispatched";
-  const invoicePaid = jobInvoice?.status === "paid";
-
-  const canSendXrf = job.has_xrf && job.xrf_report_file_path && job.report_status === "uploaded" && invoicePaid;
-  const canSendDustSwab = job.has_dust_swab && job.dust_swab_report_file_path && job.dust_swab_status === "uploaded" && invoicePaid;
+  const canMarkPaid = jobInvoice && jobInvoice.status !== "paid";
 
   return (
     <div className="space-y-6">
@@ -204,6 +200,13 @@ export default async function JobDetailPage({ params }: PageProps) {
             <form action={dispatchJobWithId}>
               <Button type="submit" variant="outline">
                 Dispatch to Workers
+              </Button>
+            </form>
+          )}
+          {canMarkPaid && (
+            <form action={markClientPaidWithId}>
+              <Button type="submit">
+                Client Paid
               </Button>
             </form>
           )}
@@ -269,13 +272,6 @@ export default async function JobDetailPage({ params }: PageProps) {
                     </Button>
                   </div>
                 </form>
-                {canSendXrf && (
-                  <form action={sendXrfReport}>
-                    <Button type="submit" variant="outline" size="sm">
-                      Send XRF Report to Client
-                    </Button>
-                  </form>
-                )}
               </CardContent>
             </Card>
           )}
@@ -301,13 +297,6 @@ export default async function JobDetailPage({ params }: PageProps) {
                     </Button>
                   </div>
                 </form>
-                {canSendDustSwab && (
-                  <form action={sendDustSwabReport}>
-                    <Button type="submit" variant="outline" size="sm">
-                      Send Dust Swab Report to Client
-                    </Button>
-                  </form>
-                )}
               </CardContent>
             </Card>
           )}

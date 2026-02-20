@@ -3,6 +3,7 @@ import { sendMessage, getFileUrl } from "../client";
 import { setState } from "../state";
 import { reportForJobKeyboard, reportTypeKeyboard } from "../keyboard";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { autoSendReports } from "@/lib/reports/auto-send";
 
 export async function handleDocumentUpload(message: TelegramMessage) {
   const chatId = message.chat.id;
@@ -178,18 +179,41 @@ export async function handleReportUpload(
     })
     .eq("id", jobId);
 
-  await sendMessage(
-    chatId,
-    `${typeLabel} report uploaded for Job #${jobNumber} (${clientCompany ?? "\u2014"}).`
-  );
+  const { data: jobForEmail } = await supabase
+    .from("jobs")
+    .select("client_email")
+    .eq("id", jobId)
+    .single();
+
+  const { sent } = await autoSendReports(supabase, jobId);
+  const wasSent = sent.includes(typeLabel);
+
+  if (wasSent) {
+    await sendMessage(
+      chatId,
+      `${typeLabel} report uploaded and sent to ${jobForEmail?.client_email ?? "client"} for Job #${jobNumber} (${clientCompany ?? "\u2014"}).`
+    );
+  } else {
+    await sendMessage(
+      chatId,
+      `${typeLabel} report uploaded for Job #${jobNumber} (${clientCompany ?? "\u2014"}).`
+    );
+  }
 
   const { getManagementChatIds } = await import("../get-management-chat-ids");
   const managementChatIds = await getManagementChatIds(supabase);
 
   for (const mChatId of managementChatIds) {
-    await sendMessage(
-      mChatId,
-      `New <b>${typeLabel}</b> report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "\u2014"}).`
-    );
+    if (wasSent) {
+      await sendMessage(
+        mChatId,
+        `New <b>${typeLabel}</b> report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "\u2014"}) — auto-sent to ${jobForEmail?.client_email ?? "client"}.`
+      );
+    } else {
+      await sendMessage(
+        mChatId,
+        `New <b>${typeLabel}</b> report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "\u2014"}).`
+      );
+    }
   }
 }
