@@ -9,20 +9,29 @@ export async function broadcastJobToWorkers(
 ) {
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, building_address, scan_date, start_time, has_xrf, has_dust_swab, has_asbestos, num_units, notes")
+    .select("id, job_number, client_company, building_address, scan_date, start_time, has_xrf, has_dust_swab, has_asbestos, num_units, num_common_spaces, num_wipes, notes")
     .eq("id", jobId)
     .single();
 
   if (!job) throw new Error("Job not found");
 
-  const { data: workers } = await supabase
+  const { data: allWorkers } = await supabase
     .from("workers")
-    .select("id, name, telegram_chat_id")
+    .select("id, name, telegram_chat_id, has_xrf, has_dust_swab, has_asbestos")
     .eq("active", true)
     .eq("role", "field")
     .not("telegram_chat_id", "is", null);
 
-  if (!workers || workers.length === 0) return;
+  if (!allWorkers || allWorkers.length === 0) return;
+
+  const workers = allWorkers.filter((w) => {
+    if (job.has_xrf && w.has_xrf) return true;
+    if (job.has_dust_swab && w.has_dust_swab) return true;
+    if (job.has_asbestos && w.has_asbestos) return true;
+    return false;
+  });
+
+  if (workers.length === 0) return;
 
   const serviceLabel = formatServiceTypes(job);
 
@@ -49,6 +58,8 @@ export async function broadcastJobToWorkers(
     `Address: ${job.building_address ?? "—"}\n` +
     `Date: ${scanDate}${timeStr}\n` +
     (job.num_units ? `Units: ${job.num_units}\n` : "") +
+    (job.has_xrf && job.num_common_spaces ? `Common Spaces: ${job.num_common_spaces}\n` : "") +
+    (job.has_dust_swab && job.num_wipes ? `Wipes: ${job.num_wipes}\n` : "") +
     (job.notes ? `Notes: ${job.notes}\n` : "");
 
   const keyboard = acceptJobKeyboard(job.id);

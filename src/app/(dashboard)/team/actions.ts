@@ -9,6 +9,8 @@ export async function createWorker(formData: FormData) {
   const ratePerUnitRaw = formData.get("rate_per_unit") as string;
   const ratePerCommonSpaceRaw = formData.get("rate_per_common_space") as string;
 
+  const role = (formData.get("role") as string) || "field";
+
   const { error } = await supabase.from("workers").insert({
     name: formData.get("name") as string,
     phone: (formData.get("phone") as string) || null,
@@ -16,8 +18,11 @@ export async function createWorker(formData: FormData) {
     zelle: (formData.get("zelle") as string) || null,
     rate_per_unit: ratePerUnitRaw ? parseFloat(ratePerUnitRaw) : null,
     rate_per_common_space: ratePerCommonSpaceRaw ? parseFloat(ratePerCommonSpaceRaw) : null,
-    role: (formData.get("role") as string) || "field",
+    role,
     active: true,
+    has_xrf: formData.get("has_xrf") === "true",
+    has_dust_swab: formData.get("has_dust_swab") === "true",
+    has_asbestos: formData.get("has_asbestos") === "true",
   });
 
   if (error) {
@@ -44,6 +49,9 @@ export async function updateWorker(id: string, formData: FormData) {
       rate_per_unit: ratePerUnitRaw ? parseFloat(ratePerUnitRaw) : null,
       rate_per_common_space: ratePerCommonSpaceRaw ? parseFloat(ratePerCommonSpaceRaw) : null,
       role: (formData.get("role") as string) || "field",
+      has_xrf: formData.get("has_xrf") === "true",
+      has_dust_swab: formData.get("has_dust_swab") === "true",
+      has_asbestos: formData.get("has_asbestos") === "true",
     })
     .eq("id", id);
 

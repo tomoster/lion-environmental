@@ -147,6 +147,25 @@ export default async function MemberDetailPage({
                 )}
               </dd>
             </div>
+            {worker.role === "field" && (
+              <div>
+                <dt className="text-xs text-muted-foreground">Specialties</dt>
+                <dd className="mt-1 flex flex-wrap gap-1">
+                  {worker.has_xrf && (
+                    <Badge variant="outline" className="text-xs">XRF</Badge>
+                  )}
+                  {worker.has_dust_swab && (
+                    <Badge variant="outline" className="text-xs">Dust Swab</Badge>
+                  )}
+                  {worker.has_asbestos && (
+                    <Badge variant="outline" className="text-xs">Asbestos</Badge>
+                  )}
+                  {!worker.has_xrf && !worker.has_dust_swab && !worker.has_asbestos && (
+                    <span className="text-sm text-muted-foreground">None</span>
+                  )}
+                </dd>
+              </div>
+            )}
             {worker.role !== "management" && (
               <>
                 <div>

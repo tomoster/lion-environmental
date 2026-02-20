@@ -33,6 +33,9 @@ type Member = {
   rate_per_common_space: number | null;
   role: string;
   telegram_chat_id: string | null;
+  has_xrf: boolean;
+  has_dust_swab: boolean;
+  has_asbestos: boolean;
 };
 
 type MemberFormProps =
@@ -154,6 +157,49 @@ export function MemberForm(props: MemberFormProps) {
                 defaultValue={worker?.email ?? ""}
               />
             </div>
+            {role === "field" && (
+              <div className="grid gap-2">
+                <Label>Specialties</Label>
+                <div className="flex flex-wrap gap-4">
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="has_xrf"
+                      defaultChecked={worker?.has_xrf ?? true}
+                      onCheckedChange={(checked) => {
+                        const input = document.getElementById("has_xrf_input") as HTMLInputElement;
+                        if (input) input.value = checked === true ? "true" : "false";
+                      }}
+                    />
+                    <Label htmlFor="has_xrf" className="text-sm font-normal">XRF</Label>
+                    <input type="hidden" id="has_xrf_input" name="has_xrf" defaultValue={worker?.has_xrf !== false ? "true" : "false"} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="has_dust_swab"
+                      defaultChecked={worker?.has_dust_swab ?? false}
+                      onCheckedChange={(checked) => {
+                        const input = document.getElementById("has_dust_swab_input") as HTMLInputElement;
+                        if (input) input.value = checked === true ? "true" : "false";
+                      }}
+                    />
+                    <Label htmlFor="has_dust_swab" className="text-sm font-normal">Dust Swab</Label>
+                    <input type="hidden" id="has_dust_swab_input" name="has_dust_swab" defaultValue={worker?.has_dust_swab ? "true" : "false"} />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="has_asbestos"
+                      defaultChecked={worker?.has_asbestos ?? false}
+                      onCheckedChange={(checked) => {
+                        const input = document.getElementById("has_asbestos_input") as HTMLInputElement;
+                        if (input) input.value = checked === true ? "true" : "false";
+                      }}
+                    />
+                    <Label htmlFor="has_asbestos" className="text-sm font-normal">Asbestos</Label>
+                    <input type="hidden" id="has_asbestos_input" name="has_asbestos" defaultValue={worker?.has_asbestos ? "true" : "false"} />
+                  </div>
+                </div>
+              </div>
+            )}
             {showRates && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">

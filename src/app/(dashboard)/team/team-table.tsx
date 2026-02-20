@@ -35,6 +35,9 @@ type MemberRow = {
   rate_per_common_space: number | null;
   role: string;
   telegram_chat_id: string | null;
+  has_xrf: boolean;
+  has_dust_swab: boolean;
+  has_asbestos: boolean;
   jobsDone: number;
 };
 
@@ -73,6 +76,7 @@ export function TeamTable({ members }: { members: MemberRow[] }) {
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
                   <TableHead>Email</TableHead>
+                  <TableHead>Specialties</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead className="text-right">Jobs Done</TableHead>
                   <TableHead className="w-10" />
@@ -138,6 +142,23 @@ function MemberTableRow({ member }: { member: MemberRow }) {
       </TableCell>
       <TableCell className="text-muted-foreground">
         {member.email ?? "\u2014"}
+      </TableCell>
+      <TableCell>
+        {member.role === "field" ? (
+          <div className="flex flex-wrap gap-1">
+            {member.has_xrf && (
+              <Badge variant="outline" className="text-xs">XRF</Badge>
+            )}
+            {member.has_dust_swab && (
+              <Badge variant="outline" className="text-xs">Dust Swab</Badge>
+            )}
+            {member.has_asbestos && (
+              <Badge variant="outline" className="text-xs">Asbestos</Badge>
+            )}
+          </div>
+        ) : (
+          <span className="text-muted-foreground">{"\u2014"}</span>
+        )}
       </TableCell>
       <TableCell>
         {member.active ? (

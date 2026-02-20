@@ -14,17 +14,26 @@ export async function handleAcceptJob(query: TelegramCallbackQuery) {
     .from("workers")
     .select("id, name")
     .eq("telegram_chat_id", String(chatId))
-    .single();
+    .eq("role", "field")
+    .limit(1)
+    .maybeSingle();
 
   if (!worker) {
-    await answerCallbackQuery(query.id, "You're not registered. Send /start first.");
+    await answerCallbackQuery(query.id, "You're not registered as a field worker.");
+    await sendMessage(chatId, "You're not registered as a field worker. Send /start first to register.");
     return;
   }
 
-  const { data: accepted } = await supabase.rpc("accept_job", {
+  const { data: accepted, error: rpcError } = await supabase.rpc("accept_job", {
     p_job_id: jobId,
     p_worker_id: worker.id,
   });
+
+  if (rpcError) {
+    console.error("accept_job RPC error:", rpcError);
+    await answerCallbackQuery(query.id, "Something went wrong. Try again.");
+    return;
+  }
 
   if (!accepted) {
     await answerCallbackQuery(query.id, "Sorry, this job has already been taken!");

@@ -427,13 +427,15 @@ export type Database = {
           active: boolean | null
           created_at: string | null
           email: string | null
+          has_asbestos: boolean
+          has_dust_swab: boolean
+          has_xrf: boolean
           id: string
           name: string
           phone: string | null
           rate_per_common_space: number | null
           rate_per_unit: number | null
           role: string
-          specialization: string | null
           telegram_chat_id: string | null
           zelle: string | null
         }
@@ -441,13 +443,15 @@ export type Database = {
           active?: boolean | null
           created_at?: string | null
           email?: string | null
+          has_asbestos?: boolean
+          has_dust_swab?: boolean
+          has_xrf?: boolean
           id?: string
           name: string
           phone?: string | null
           rate_per_common_space?: number | null
           rate_per_unit?: number | null
           role?: string
-          specialization?: string | null
           telegram_chat_id?: string | null
           zelle?: string | null
         }
@@ -455,13 +459,15 @@ export type Database = {
           active?: boolean | null
           created_at?: string | null
           email?: string | null
+          has_asbestos?: boolean
+          has_dust_swab?: boolean
+          has_xrf?: boolean
           id?: string
           name?: string
           phone?: string | null
           rate_per_common_space?: number | null
           rate_per_unit?: number | null
           role?: string
-          specialization?: string | null
           telegram_chat_id?: string | null
           zelle?: string | null
         }
