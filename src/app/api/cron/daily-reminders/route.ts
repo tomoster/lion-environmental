@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendMessage } from "@/lib/telegram/client";
-import { completeJobKeyboard } from "@/lib/telegram/keyboard";
 import { getManagementChatIds } from "@/lib/telegram/get-management-chat-ids";
 
 export async function GET(request: NextRequest) {
@@ -57,8 +56,7 @@ export async function GET(request: NextRequest) {
       `Client: ${job.client_company ?? "\u2014"}\n` +
       `Address: ${job.building_address ?? "\u2014"}`;
 
-    const keyboard = isToday ? completeJobKeyboard(job.id) : undefined;
-    await sendMessage(worker.telegram_chat_id, text, keyboard);
+    await sendMessage(worker.telegram_chat_id, text);
   }
 
   const mgmtChatIds = await getManagementChatIds(supabase);

@@ -152,6 +152,7 @@ export type Database = {
           building_address: string | null
           client_company: string | null
           client_email: string | null
+          complete_reminder_sent: boolean
           created_at: string | null
           dispatch_message_ids: Json | null
           job_status: string
@@ -179,6 +180,7 @@ export type Database = {
           building_address?: string | null
           client_company?: string | null
           client_email?: string | null
+          complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
           job_status?: string
@@ -206,6 +208,7 @@ export type Database = {
           building_address?: string | null
           client_company?: string | null
           client_email?: string | null
+          complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
           job_status?: string

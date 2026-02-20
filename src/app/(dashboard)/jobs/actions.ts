@@ -116,6 +116,7 @@ export async function updateJob(id: string, formData: FormData) {
 
   if (wasNotDispatched) {
     data.job_status = "open";
+    (data as Record<string, unknown>).complete_reminder_sent = false;
   }
 
   const { error } = await supabase.from("jobs").update(data).eq("id", id);
