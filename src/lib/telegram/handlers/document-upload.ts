@@ -13,7 +13,9 @@ export async function handleDocumentUpload(message: TelegramMessage) {
     .from("workers")
     .select("id")
     .eq("telegram_chat_id", String(chatId))
-    .single();
+    .in("role", ["field", "office"])
+    .limit(1)
+    .maybeSingle();
 
   if (!worker) {
     await sendMessage(chatId, "You're not registered. Send /start first.");
