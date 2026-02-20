@@ -49,12 +49,12 @@ export async function markClientPaid(jobId: string): Promise<void> {
   const email = job?.client_email ?? "unknown";
 
   let telegramMessage: string;
-  if (sent.length > 0 && pending.length === 0) {
+  if (sent.length > 0) {
     telegramMessage = `Client paid for ${jobLabel}. ${sent.join(" and ")} report${sent.length > 1 ? "s" : ""} sent to ${email}.`;
-  } else if (sent.length > 0 && pending.length > 0) {
-    telegramMessage = `Client paid for ${jobLabel}. ${sent.join(" and ")} report${sent.length > 1 ? "s" : ""} sent to ${email}. ${pending.join(" and ")} report${pending.length > 1 ? "s" : ""} not ready yet — will send automatically when uploaded.`;
+  } else if (pending.length > 0) {
+    telegramMessage = `Client paid for ${jobLabel}. Waiting on ${pending.join(" and ")} report${pending.length > 1 ? "s" : ""} — will send all reports automatically once everything is uploaded.`;
   } else {
-    telegramMessage = `Client paid for ${jobLabel}. No reports ready yet — will send automatically when uploaded.`;
+    telegramMessage = `Client paid for ${jobLabel}.`;
   }
 
   for (const chatId of managementChatIds) {

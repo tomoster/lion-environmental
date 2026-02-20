@@ -58,17 +58,24 @@ export async function autoSendReports(
     },
   ];
 
-  for (const rt of reportTypes) {
-    if (!rt.has) continue;
+  const required = reportTypes.filter((rt) => rt.has);
+  const ready = required.filter((rt) => rt.filePath && rt.status === "uploaded");
+  const alreadySent = required.filter((rt) => rt.status === "sent");
 
-    if (!rt.filePath || rt.status !== "uploaded") {
-      if (rt.status !== "sent") pending.push(rt.label);
-      continue;
+  // Only send when ALL required reports are uploaded (or already sent)
+  if (ready.length + alreadySent.length < required.length) {
+    for (const rt of required) {
+      if (rt.status !== "sent" && (!rt.filePath || rt.status !== "uploaded")) {
+        pending.push(rt.label);
+      }
     }
+    return { sent, pending };
+  }
 
+  for (const rt of ready) {
     const { data: fileData } = await supabase.storage
       .from("reports")
-      .download(rt.filePath);
+      .download(rt.filePath!);
 
     if (!fileData) {
       pending.push(rt.label);
@@ -76,7 +83,7 @@ export async function autoSendReports(
     }
 
     const buffer = Buffer.from(await fileData.arrayBuffer());
-    const ext = rt.filePath.split(".").pop() ?? "pdf";
+    const ext = rt.filePath!.split(".").pop() ?? "pdf";
     const prefix = rt.type === "xrf" ? "xrf-report" : "dust-swab-report";
     const filename = `${prefix}-job-${job.job_number}.${ext}`;
 
