@@ -6,6 +6,14 @@ This file tells the full story of Lion Environmental's operations system: what t
 
 - **Always push after every commit.** Don't wait for the user to ask — commit and push together every time.
 
+## Current Focus (Temporary)
+
+We're running a full end-to-end walkthrough of every feature. The master checklist is `reference/full-walkthrough.md`.
+
+**How it works:** At the start of every session (or after context clears), read `reference/full-walkthrough.md` to find the current step. When the user says "done" or "next step": mark the current step as DONE in the doc, then walk them through the next step — tell them exactly what to do and what to look for. Fix any issues that come up along the way. The doc is the source of truth, not the conversation.
+
+Remove this section when testing is complete.
+
 ---
 
 ## The Business
