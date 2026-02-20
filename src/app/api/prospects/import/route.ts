@@ -18,6 +18,17 @@ interface ImportResult {
   duplicates: string[];
 }
 
+function nextBusinessDaySend(): string {
+  const now = new Date();
+  const next = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  // Set to ~9am ET (14:00 UTC) + random 0-60 min
+  next.setUTCHours(14, Math.floor(Math.random() * 60), 0, 0);
+  const day = next.getUTCDay();
+  if (day === 6) next.setDate(next.getDate() + 2);
+  if (day === 0) next.setDate(next.getDate() + 1);
+  return next.toISOString();
+}
+
 function normalizePhone(phone: string | null | undefined): string | null {
   if (!phone) return null;
   return phone.replace(/[^\d+]/g, "");
@@ -71,6 +82,9 @@ export async function POST(request: NextRequest) {
     google_rating: number | null;
     status: string;
     source: string;
+    seq_status: string;
+    seq_step: number;
+    next_send: string | null;
   }> = [];
   const duplicates: string[] = [];
 
@@ -101,6 +115,7 @@ export async function POST(request: NextRequest) {
     if (phone) existingPhones.add(phone);
     if (email) existingEmails.add(email);
 
+    const hasEmail = !!email;
     toInsert.push({
       company,
       phone: row.phone?.trim() || null,
@@ -110,6 +125,9 @@ export async function POST(request: NextRequest) {
       google_rating: row.totalScore ?? null,
       status: "new",
       source: "apify",
+      seq_status: hasEmail ? "active" : "not_started",
+      seq_step: hasEmail ? 1 : 0,
+      next_send: hasEmail ? nextBusinessDaySend() : null,
     });
   }
 

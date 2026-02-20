@@ -14,6 +14,50 @@ export type Database = {
   }
   public: {
     Tables: {
+      email_log: {
+        Row: {
+          company: string | null
+          created_at: string
+          email: string
+          error: string | null
+          id: string
+          prospect_id: string | null
+          status: string
+          step: number
+          subject: string
+        }
+        Insert: {
+          company?: string | null
+          created_at?: string
+          email: string
+          error?: string | null
+          id?: string
+          prospect_id?: string | null
+          status?: string
+          step: number
+          subject: string
+        }
+        Update: {
+          company?: string | null
+          created_at?: string
+          email?: string
+          error?: string | null
+          id?: string
+          prospect_id?: string | null
+          status?: string
+          step?: number
+          subject?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_log_prospect_id_fkey"
+            columns: ["prospect_id"]
+            isOneToOne: false
+            referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expenses: {
         Row: {
           amount: number
@@ -304,8 +348,11 @@ export type Database = {
           google_rating: number | null
           id: string
           next_followup: string | null
+          next_send: string | null
           notes: string | null
           phone: string | null
+          seq_status: string
+          seq_step: number
           source: string | null
           status: string
           updated_at: string | null
@@ -320,8 +367,11 @@ export type Database = {
           google_rating?: number | null
           id?: string
           next_followup?: string | null
+          next_send?: string | null
           notes?: string | null
           phone?: string | null
+          seq_status?: string
+          seq_step?: number
           source?: string | null
           status?: string
           updated_at?: string | null
@@ -336,8 +386,11 @@ export type Database = {
           google_rating?: number | null
           id?: string
           next_followup?: string | null
+          next_send?: string | null
           notes?: string | null
           phone?: string | null
+          seq_status?: string
+          seq_step?: number
           source?: string | null
           status?: string
           updated_at?: string | null
@@ -360,6 +413,27 @@ export type Database = {
           key?: string
           updated_at?: string | null
           value?: string
+        }
+        Relationships: []
+      }
+      suppression_list: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          reason: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          reason: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          reason?: string
         }
         Relationships: []
       }
