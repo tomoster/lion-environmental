@@ -48,6 +48,9 @@ interface ProspectsTableProps {
   prospects: Prospect[];
   search: string;
   statusFilter: string;
+  page: number;
+  totalCount: number;
+  pageSize: number;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -171,40 +174,48 @@ export function ProspectsTable({
   prospects,
   search,
   statusFilter,
+  page,
+  totalCount,
+  pageSize,
 }: ProspectsTableProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [addOpen, setAddOpen] = useState(false);
 
-  function updateParam(key: string, value: string) {
+  const totalPages = Math.ceil(totalCount / pageSize);
+  const showingFrom = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const showingTo = Math.min(page * pageSize, totalCount);
+
+  function navigateWithParams(updates: Record<string, string | null>) {
     const params = new URLSearchParams(searchParams.toString());
-    if (value && value !== "all") {
-      params.set(key, value);
-    } else {
-      params.delete(key);
+    for (const [key, value] of Object.entries(updates)) {
+      if (value === null || value === "" || value === "all") {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
     }
-    if (key !== "search") params.delete("search");
     router.push(`/prospects?${params.toString()}`);
   }
 
   function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (e.target.value) {
-      params.set("search", e.target.value);
-    } else {
-      params.delete("search");
-    }
-    router.push(`/prospects?${params.toString()}`);
+    navigateWithParams({
+      search: e.target.value || null,
+      page: null,
+    });
   }
 
   function handleStatusChange(value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    if (value && value !== "all") {
-      params.set("status", value);
-    } else {
-      params.delete("status");
-    }
-    router.push(`/prospects?${params.toString()}`);
+    navigateWithParams({
+      status: value === "all" ? null : value,
+      page: null,
+    });
+  }
+
+  function handlePageChange(newPage: number) {
+    navigateWithParams({
+      page: newPage === 1 ? null : String(newPage),
+    });
   }
 
   return (
@@ -293,9 +304,36 @@ export function ProspectsTable({
         </Table>
       </div>
 
-      <p className="text-muted-foreground text-sm">
-        {prospects.length} prospect{prospects.length !== 1 ? "s" : ""}
-      </p>
+      <div className="flex items-center justify-between">
+        <p className="text-muted-foreground text-sm">
+          {totalCount === 0
+            ? "No prospects"
+            : `Showing ${showingFrom}-${showingTo} of ${totalCount.toLocaleString()} prospects`}
+        </p>
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => handlePageChange(page - 1)}
+            >
+              Previous
+            </Button>
+            <span className="text-muted-foreground text-sm">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => handlePageChange(page + 1)}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
