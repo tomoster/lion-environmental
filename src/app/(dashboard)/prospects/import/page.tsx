@@ -143,16 +143,19 @@ function parseJSON(text: string): ParsedRow[] {
     const items = Array.isArray(data) ? data : [];
     return items
       .filter((item: Record<string, unknown>) => item.title)
-      .map((item: Record<string, unknown>) => ({
-        title: String(item.title || ""),
-        phone: String(item.phone || ""),
-        email: String(item.email || ""),
-        address: String(item.address || ""),
-        website: String(item.website || ""),
-        totalScore:
-          item.totalScore != null ? Number(item.totalScore) || null : null,
-        placeId: String(item.placeId || ""),
-      }));
+      .map((item: Record<string, unknown>) => {
+        const emails = item.emails as string[] | undefined;
+        return {
+          title: String(item.title || ""),
+          phone: String(item.phone || ""),
+          email: emails?.[0] || String(item.email || ""),
+          address: String(item.address || ""),
+          website: String(item.website || ""),
+          totalScore:
+            item.totalScore != null ? Number(item.totalScore) || null : null,
+          placeId: String(item.placeId || ""),
+        };
+      });
   } catch {
     return [];
   }
