@@ -114,6 +114,10 @@ export async function updateJob(id: string, formData: FormData) {
     updated_at: new Date().toISOString(),
   };
 
+  if (wasNotDispatched) {
+    data.dispatch_status = "open";
+  }
+
   const { error } = await supabase.from("jobs").update(data).eq("id", id);
 
   if (error) {

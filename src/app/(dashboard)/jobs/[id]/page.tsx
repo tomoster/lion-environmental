@@ -217,6 +217,7 @@ export default async function JobDetailPage({ params }: PageProps) {
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 space-y-6">
           <JobDetailForm
+            key={job.updated_at}
             action={updateJobWithId}
             job={job}
             defaultPricePerUnit={defaultPricePerUnit}
