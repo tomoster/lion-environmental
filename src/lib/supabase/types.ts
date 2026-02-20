@@ -262,6 +262,7 @@ export type Database = {
           contact_name: string | null
           created_at: string | null
           email: string | null
+          google_rating: number | null
           id: string
           next_followup: string | null
           notes: string | null
@@ -269,6 +270,7 @@ export type Database = {
           source: string | null
           status: string
           updated_at: string | null
+          website: string | null
         }
         Insert: {
           building_address?: string | null
@@ -276,6 +278,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           email?: string | null
+          google_rating?: number | null
           id?: string
           next_followup?: string | null
           notes?: string | null
@@ -283,6 +286,7 @@ export type Database = {
           source?: string | null
           status?: string
           updated_at?: string | null
+          website?: string | null
         }
         Update: {
           building_address?: string | null
@@ -290,6 +294,7 @@ export type Database = {
           contact_name?: string | null
           created_at?: string | null
           email?: string | null
+          google_rating?: number | null
           id?: string
           next_followup?: string | null
           notes?: string | null
@@ -297,6 +302,7 @@ export type Database = {
           source?: string | null
           status?: string
           updated_at?: string | null
+          website?: string | null
         }
         Relationships: []
       }

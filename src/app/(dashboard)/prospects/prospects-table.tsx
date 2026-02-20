@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
+import Link from "next/link";
+import { MoreHorizontalIcon, PlusIcon, UploadIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -236,13 +237,20 @@ export function ProspectsTable({
           </Select>
         </div>
 
-        <Dialog open={addOpen} onOpenChange={setAddOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <PlusIcon className="mr-1.5 h-4 w-4" />
-              Add Prospect
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/prospects/import">
+              <UploadIcon className="mr-1.5 h-4 w-4" />
+              Import Leads
+            </Link>
+          </Button>
+          <Dialog open={addOpen} onOpenChange={setAddOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusIcon className="mr-1.5 h-4 w-4" />
+                Add Prospect
+              </Button>
+            </DialogTrigger>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle>Add Prospect</DialogTitle>
@@ -250,6 +258,7 @@ export function ProspectsTable({
             <ProspectForm onSuccess={() => setAddOpen(false)} />
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="rounded-md border">
