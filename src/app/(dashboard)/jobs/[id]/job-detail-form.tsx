@@ -38,6 +38,7 @@ type JobDetailFormProps = {
     job_status: string;
     report_status: string;
     dust_swab_status: string | null;
+    report_writer_id: string | null;
     notes: string | null;
   };
   defaultPricePerUnit: number | null;
@@ -47,6 +48,7 @@ type JobDetailFormProps = {
     available: { id: string; name: string }[];
     unavailable: { worker: { id: string; name: string }; reason: string }[];
   };
+  officeWorkers: { id: string; name: string }[];
   jobStatusLabels: Record<string, string>;
   xrfStatusLabels: Record<string, string>;
   dustSwabStatusLabels: Record<string, string>;
@@ -59,6 +61,7 @@ export function JobDetailForm({
   defaultPricePerCommonSpace,
   workerData,
   availability,
+  officeWorkers,
   jobStatusLabels,
   xrfStatusLabels,
   dustSwabStatusLabels,
@@ -278,6 +281,28 @@ export function JobDetailForm({
                   {Object.entries(jobStatusLabels).map(([value, label]) => (
                     <SelectItem key={value} value={value}>
                       {label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="report_writer_id">Report Writer</Label>
+              <Select
+                name="report_writer_id"
+                defaultValue={job.report_writer_id ?? "unassigned"}
+              >
+                <SelectTrigger id="report_writer_id" className="w-full">
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {officeWorkers.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

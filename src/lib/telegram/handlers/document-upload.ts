@@ -60,7 +60,7 @@ export async function handleDocumentUpload(message: TelegramMessage) {
     .eq("worker_id", worker.id)
     .or(
       "and(has_xrf.eq.true,report_status.in.(not_started,writing))," +
-      "and(has_dust_swab.eq.true,dust_swab_status.in.(not_started,writing))"
+      "and(has_dust_swab.eq.true,dust_swab_status.in.(not_started,sent_to_lab,results_received,writing))"
     );
 
   if (!pendingJobs || pendingJobs.length === 0) {
@@ -69,7 +69,7 @@ export async function handleDocumentUpload(message: TelegramMessage) {
       .select("id, job_number, client_company, has_xrf, has_dust_swab, report_status, dust_swab_status")
       .or(
         "and(has_xrf.eq.true,report_status.in.(not_started,writing))," +
-        "and(has_dust_swab.eq.true,dust_swab_status.in.(not_started,writing))"
+        "and(has_dust_swab.eq.true,dust_swab_status.in.(not_started,sent_to_lab,results_received,writing))"
       )
       .order("created_at", { ascending: false })
       .limit(10);

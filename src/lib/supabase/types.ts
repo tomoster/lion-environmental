@@ -206,6 +206,7 @@ export type Database = {
           price_per_unit: number | null
           prospect_id: string | null
           report_status: string
+          report_writer_id: string | null
           scan_date: string | null
           start_time: string | null
           updated_at: string | null
@@ -234,6 +235,7 @@ export type Database = {
           price_per_unit?: number | null
           prospect_id?: string | null
           report_status?: string
+          report_writer_id?: string | null
           scan_date?: string | null
           start_time?: string | null
           updated_at?: string | null
@@ -262,6 +264,7 @@ export type Database = {
           price_per_unit?: number | null
           prospect_id?: string | null
           report_status?: string
+          report_writer_id?: string | null
           scan_date?: string | null
           start_time?: string | null
           updated_at?: string | null
@@ -273,6 +276,13 @@ export type Database = {
             columns: ["prospect_id"]
             isOneToOne: false
             referencedRelation: "prospects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "jobs_report_writer_id_fkey"
+            columns: ["report_writer_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
             referencedColumns: ["id"]
           },
           {

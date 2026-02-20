@@ -34,7 +34,7 @@ export default async function FinancesPage() {
     { data: expensesThisMonth },
     { data: allExpenses },
     { data: jobs },
-    { data: workersWithJobs },
+    { data: fieldWorkersWithJobs },
     { data: revenueByMonth },
     { data: expensesByMonth },
     { data: paymentsByMonth },
@@ -67,11 +67,12 @@ export default async function FinancesPage() {
     supabase
       .from("workers")
       .select(`
-        id, name, rate_per_unit, rate_per_common_space,
-        jobs(id, num_units, num_common_spaces, job_status),
+        id, name, role, rate_per_unit, rate_per_common_space,
+        jobs!jobs_worker_id_fkey(id, num_units, num_common_spaces, job_status),
         worker_payments(amount)
       `)
-      .eq("active", true),
+      .eq("active", true)
+      .eq("role", "field"),
     supabase
       .from("invoices")
       .select("total, date_paid")
@@ -107,16 +108,17 @@ export default async function FinancesPage() {
     0
   );
 
-  // Worker payables
+  // Worker payables (field workers: rate × units/spaces)
   type WorkerPayable = {
     name: string;
+    role: string;
     expected: number;
     paid: number;
     owed: number;
   };
   const workerPayables: WorkerPayable[] = [];
 
-  for (const w of workersWithJobs ?? []) {
+  for (const w of fieldWorkersWithJobs ?? []) {
     const workerJobs = Array.isArray(w.jobs) ? w.jobs : [];
     const workerPayments = Array.isArray(w.worker_payments)
       ? w.worker_payments
@@ -140,7 +142,40 @@ export default async function FinancesPage() {
 
     const owed = expected - paid;
     if (owed > 0) {
-      workerPayables.push({ name: w.name, expected, paid, owed });
+      workerPayables.push({ name: w.name, role: "field", expected, paid, owed });
+    }
+  }
+
+  // Office staff payables (report writers: rate_per_unit × number of report PDFs)
+  const { data: officeWorkers } = await supabase
+    .from("workers")
+    .select("id, name, rate_per_unit, worker_payments(amount)")
+    .eq("active", true)
+    .eq("role", "office");
+
+  for (const w of officeWorkers ?? []) {
+    const { count: reportCount } = await supabase
+      .from("job_reports")
+      .select("id", { count: "exact", head: true })
+      .in(
+        "job_id",
+        await supabase
+          .from("jobs")
+          .select("id")
+          .eq("report_writer_id", w.id)
+          .in("job_status", ["assigned", "completed"])
+          .then((r) => (r.data ?? []).map((j) => j.id))
+      );
+
+    const expected = (reportCount ?? 0) * (w.rate_per_unit ?? 0);
+    const workerPayments = Array.isArray(w.worker_payments) ? w.worker_payments : [];
+    const paid = workerPayments.reduce(
+      (sum: number, p: { amount: number }) => sum + p.amount,
+      0
+    );
+    const owed = expected - paid;
+    if (owed > 0) {
+      workerPayables.push({ name: w.name, role: "office", expected, paid, owed });
     }
   }
 
@@ -257,7 +292,12 @@ export default async function FinancesPage() {
                 <TableBody>
                   {workerPayables.map((w) => (
                     <TableRow key={w.name}>
-                      <TableCell className="font-medium">{w.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {w.name}
+                        <span className="ml-2 text-xs text-muted-foreground">
+                          {w.role === "office" ? "Report Writer" : "Field"}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-right tabular-nums text-sm">
                         {formatCurrency(w.expected)}
                       </TableCell>

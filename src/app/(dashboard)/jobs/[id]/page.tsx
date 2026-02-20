@@ -96,10 +96,10 @@ export default async function JobDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: job }, { data: jobInvoice }, { data: jobReports }] = await Promise.all([
+  const [{ data: job }, { data: jobInvoice }, { data: jobReports }, { data: officeWorkers }] = await Promise.all([
     supabase
       .from("jobs")
-      .select("*, workers(id, name)")
+      .select("*, workers!jobs_worker_id_fkey(id, name)")
       .eq("id", id)
       .single(),
     supabase
@@ -113,6 +113,12 @@ export default async function JobDetailPage({ params }: PageProps) {
       .select("id, report_type, file_path, original_filename, created_at")
       .eq("job_id", id)
       .order("created_at", { ascending: true }),
+    supabase
+      .from("workers")
+      .select("id, name")
+      .eq("role", "office")
+      .eq("active", true)
+      .order("name"),
   ]);
 
   if (!job) notFound();
@@ -246,6 +252,7 @@ export default async function JobDetailPage({ params }: PageProps) {
             defaultPricePerCommonSpace={defaultPricePerCommonSpace}
             workerData={workerData}
             availability={availability}
+            officeWorkers={officeWorkers ?? []}
             jobStatusLabels={JOB_STATUS_LABELS}
             xrfStatusLabels={XRF_STATUS_LABELS}
             dustSwabStatusLabels={DUST_SWAB_STATUS_LABELS}

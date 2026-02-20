@@ -28,6 +28,10 @@ export async function createJob(formData: FormData) {
     estimated_end_time: (formData.get("estimated_end_time") as string) || null,
     notes: (formData.get("notes") as string) || null,
     worker_id: (formData.get("worker_id") as string) || null,
+    report_writer_id: (() => {
+      const v = formData.get("report_writer_id") as string;
+      return v && v !== "unassigned" ? v : null;
+    })(),
     job_status: "not_dispatched",
     report_status: "not_started",
     dust_swab_status: "not_started",
@@ -109,6 +113,10 @@ export async function updateJob(id: string, formData: FormData) {
     notes: (formData.get("notes") as string) || null,
     worker_id: (() => {
       const v = formData.get("worker_id") as string;
+      return v && v !== "unassigned" ? v : null;
+    })(),
+    report_writer_id: (() => {
+      const v = formData.get("report_writer_id") as string;
       return v && v !== "unassigned" ? v : null;
     })(),
     job_status: formData.get("job_status") as string,

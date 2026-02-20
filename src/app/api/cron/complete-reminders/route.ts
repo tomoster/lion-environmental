@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   const { data: jobs } = await supabase
     .from("jobs")
     .select(
-      "id, job_number, client_company, building_address, start_time, worker_id, workers(name, telegram_chat_id)"
+      "id, job_number, client_company, building_address, start_time, worker_id, workers!jobs_worker_id_fkey(name, telegram_chat_id)"
     )
     .eq("job_status", "assigned")
     .eq("scan_date", today)
