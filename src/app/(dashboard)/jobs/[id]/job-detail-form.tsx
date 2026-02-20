@@ -266,7 +266,7 @@ export function JobDetailForm({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="job_status">Dispatch Status</Label>
+              <Label htmlFor="job_status">Job Status</Label>
               <Select
                 name="job_status"
                 defaultValue={job.job_status}

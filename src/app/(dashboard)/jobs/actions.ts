@@ -51,7 +51,7 @@ export async function updateJob(id: string, formData: FormData) {
 
   const { data: currentJob } = await supabase
     .from("jobs")
-    .select("job_status")
+    .select("job_status, start_time")
     .eq("id", id)
     .single();
   const wasNotDispatched = currentJob?.job_status === "not_dispatched";
@@ -116,6 +116,8 @@ export async function updateJob(id: string, formData: FormData) {
 
   if (wasNotDispatched) {
     data.job_status = "open";
+    (data as Record<string, unknown>).complete_reminder_sent = false;
+  } else if (startTime !== currentJob?.start_time) {
     (data as Record<string, unknown>).complete_reminder_sent = false;
   }
 

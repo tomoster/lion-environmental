@@ -116,10 +116,10 @@ export function JobsTable({ jobs }: JobsTableProps) {
       <div className="flex gap-3">
         <Select value={dispatchFilter} onValueChange={setDispatchFilter}>
           <SelectTrigger className="w-48">
-            <SelectValue placeholder="Dispatch status" />
+            <SelectValue placeholder="Job status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All dispatch statuses</SelectItem>
+            <SelectItem value="all">All job statuses</SelectItem>
             {Object.entries(DISPATCH_STATUS_LABELS).map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
@@ -165,7 +165,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
               <TableHead className="w-28">Type</TableHead>
               <TableHead className="w-32">Scan Date</TableHead>
               <TableHead className="w-36">Worker</TableHead>
-              <TableHead className="w-36">Dispatch</TableHead>
+              <TableHead className="w-36">Status</TableHead>
               <TableHead className="w-40">Report</TableHead>
             </TableRow>
           </TableHeader>
