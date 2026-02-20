@@ -260,9 +260,14 @@ export default async function JobDetailPage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="space-y-3">
                 {job.xrf_report_file_path ? (
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {job.xrf_report_file_path}
-                  </p>
+                  <a
+                    href={`/api/reports/${job.xrf_report_file_path}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
+                  >
+                    View Report (PDF)
+                  </a>
                 ) : (
                   <p className="text-sm text-muted-foreground">No XRF report uploaded yet.</p>
                 )}
@@ -285,9 +290,14 @@ export default async function JobDetailPage({ params }: PageProps) {
               </CardHeader>
               <CardContent className="space-y-3">
                 {job.dust_swab_report_file_path ? (
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {job.dust_swab_report_file_path}
-                  </p>
+                  <a
+                    href={`/api/reports/${job.dust_swab_report_file_path}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1"
+                  >
+                    View Report (PDF)
+                  </a>
                 ) : (
                   <p className="text-sm text-muted-foreground">No dust swab report uploaded yet.</p>
                 )}
