@@ -56,7 +56,7 @@ export function calculateEndTime(
   const startMinutes = timeToMinutes(startTime);
   const endMinutes = startMinutes + totalMinutes;
 
-  const endH = Math.floor(endMinutes / 60);
+  const endH = Math.floor(endMinutes / 60) % 24;
   const endM = endMinutes % 60;
 
   return `${endH.toString().padStart(2, "0")}:${endM.toString().padStart(2, "0")}`;

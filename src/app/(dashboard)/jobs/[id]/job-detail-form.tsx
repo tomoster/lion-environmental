@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { formatTime12h } from "@/lib/scheduling-utils";
 
 type JobDetailFormProps = {
   action: (formData: FormData) => Promise<void>;
@@ -164,15 +165,11 @@ export function JobDetailForm({
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="estimated_end_time">Est. End Time</Label>
-              <Input
-                id="estimated_end_time"
-                type="time"
-                step="300"
-                defaultValue={job.estimated_end_time ?? ""}
-                readOnly
-                className="bg-muted/40 cursor-not-allowed"
-              />
+              <Label>Est. End Time</Label>
+              <div className="flex h-10 items-center rounded-md border bg-muted/40 px-3 text-sm text-muted-foreground">
+                {job.estimated_end_time ? formatTime12h(job.estimated_end_time) : "—"}
+              </div>
+              <input type="hidden" name="estimated_end_time" value={job.estimated_end_time ?? ""} />
             </div>
           </div>
 
