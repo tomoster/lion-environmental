@@ -120,10 +120,10 @@ _None_
 
 **Status:** [x] DONE
 
-> **Note:** There's auto-dispatch on first save behavior. In `src/app/(dashboard)/jobs/actions.ts:112-114`, any time a job is saved while its status is "not_dispatched", `broadcastJobToWorkers()` fires automatically. If you already edited and saved the job in Step 5, dispatch may have already triggered. Check the job's dispatch_status before manually dispatching.
+> **Note:** There's auto-dispatch on first save behavior. In `src/app/(dashboard)/jobs/actions.ts:112-114`, any time a job is saved while its status is "not_dispatched", `broadcastJobToWorkers()` fires automatically. If you already edited and saved the job in Step 5, dispatch may have already triggered. Check the job's job_status before manually dispatching.
 
 **What to do:**
-- Check the job's current dispatch_status
+- Check the job's current job_status
 - If still "not_dispatched": click "Dispatch to Workers" from job detail
 - If already "open" from auto-dispatch: skip the button click, just verify the Telegram message
 
@@ -150,7 +150,7 @@ _None_
 
 **What to verify:**
 - Job assigned to the accepting worker
-- Job dispatch_status changes to "assigned"
+- Job job_status changes to "assigned"
 - Assigned worker field updates on the job detail page
 - Second worker trying to accept gets an error message
 - Management notified of acceptance (if applicable)
@@ -168,13 +168,18 @@ _None_
 **Status:** [ ] NEXT
 
 **What to do:**
-- Worker taps "Complete" on the job reminder or changes status
+- Worker taps "Mark Complete" button (shown on accept confirmation or daily reminder)
 - Verify from both Telegram and UI
 
 **What to verify:**
-- Job dispatch_status changes to "completed"
+- Job job_status changes to "completed"
+- Job report_status changes to "field_work_done"
+- Worker gets confirmation message: "Job #X marked as completed. Please send the report document when ready."
+- Invoice auto-generated with correct line items and amounts
+- Invoice PDF auto-generated and stored in Supabase Storage
+- Avi gets Telegram message with worker name, job details, invoice summary, and "Approve & Send Invoice" button
+- "Mark Complete" button appears on accept confirmation (not just daily reminder)
 - Job detail page reflects the completion
-- Management receives notification with "Send Invoice" and "Send Report" buttons
 
 **Issues found:**
 
@@ -196,47 +201,28 @@ _None_
 - Report file path appears on job detail page
 - Upload with no assigned jobs shows appropriate error
 - Can upload a replacement report (path updates)
+- Report is NOT sent to client at this point (just stored)
 
 **Issues found:**
 
 
 ---
 
-## Step 10: Send Report
+## Step 10: Invoice Auto-Generated on Completion
 
 **Status:** [ ] NOT STARTED
 
 **What to do:**
-- From job detail, click "Send Report to Client"
-- Also test via Telegram "Send Report" button
+- Verify the invoice that was auto-generated when the worker marked complete (Step 8)
+- Navigate to the invoice from the Invoices page
 
 **What to verify:**
-- Email arrives at client email with report PDF attached
-- Email includes job number, service type, property address
-- Job report_status updates after sending
-- "Send Report" button only appears when a report file exists
-- Sending with no report file uploaded shows appropriate error
-- Telegram callback produces same result as UI
-
-**Issues found:**
-
-
----
-
-## Step 11: Generate Invoice
-
-**Status:** [ ] NOT STARTED
-
-**What to do:**
-- From job detail, click "Generate Invoice"
-- Verify the invoice form pre-fills from job data
-
-**What to verify:**
-- Company, address, and line items pre-fill correctly
+- Company, address, and line items pre-fill correctly from the job
 - **LPT line items:** units x price/unit + common spaces x price/common space
 - **Dust Swab line items:** site visit ($375) + report ($135) + wipes (qty x $20)
 - Subtotal, tax (8.88%), and total calculations correct
-- Invoice saved and appears on Invoices page
+- Invoice status is "draft"
+- Invoice PDF exists in Supabase Storage
 - Invoice linked to the job
 
 **Issues found:**
@@ -244,20 +230,17 @@ _None_
 
 ---
 
-## Step 12: Send Invoice
+## Step 11: Send Invoice
 
 **Status:** [ ] NOT STARTED
 
 **What to do:**
-- From the invoice, generate a PDF and download it
-- Click "Send Invoice to Client"
-- Also test via Telegram "Send Invoice" button
+- Avi taps "Approve & Send Invoice" button in Telegram
+- Also test from the UI: navigate to invoice, click "Send Invoice to Client"
 
 **What to verify:**
-- PDF downloads with all fields populated correctly
 - Email arrives at client with PDF attachment
 - Invoice status changes to "sent"
-- PDF uploaded to Supabase Storage
 - Telegram callback produces same result as UI
 
 **Issues found:**
@@ -265,7 +248,7 @@ _None_
 
 ---
 
-## Step 13: Mark as Paid
+## Step 12: Mark as Paid
 
 **Status:** [ ] NOT STARTED
 
@@ -276,6 +259,27 @@ _None_
 - Invoice status changes to "paid"
 - `date_paid` field is set to today
 - Invoice appears correctly in the Invoices table with paid status
+
+**Issues found:**
+
+
+---
+
+## Step 13: Send Report (After Payment)
+
+**Status:** [ ] NOT STARTED
+
+**What to do:**
+- Try sending report BEFORE marking invoice as paid — should be blocked
+- Mark invoice as paid (Step 12), then send the report
+- Test via both UI ("Send Report to Client" button) and Telegram
+
+**What to verify:**
+- "Send Report to Client" button only appears when invoice is paid
+- Telegram send report blocked with "Invoice hasn't been paid yet" message if not paid
+- After payment: email arrives at client with report PDF attached
+- Email includes job number, service type, property address
+- Job report_status updates to "report_sent" after sending
 
 **Issues found:**
 
@@ -384,10 +388,10 @@ _None_
 | 7 | Worker Accepts Job | [x] DONE |
 | 8 | Worker Completes Job | [ ] NEXT |
 | 9 | Report Upload | [ ] NOT STARTED |
-| 10 | Send Report | [ ] NOT STARTED |
-| 11 | Generate Invoice | [ ] NOT STARTED |
-| 12 | Send Invoice | [ ] NOT STARTED |
-| 13 | Mark as Paid | [ ] NOT STARTED |
+| 10 | Invoice Auto-Generated on Completion | [ ] NOT STARTED |
+| 11 | Send Invoice | [ ] NOT STARTED |
+| 12 | Mark as Paid | [ ] NOT STARTED |
+| 13 | Send Report (After Payment) | [ ] NOT STARTED |
 | 14 | Daily Reminders | [ ] NOT STARTED |
 | 15 | Overdue Alerts | [ ] NOT STARTED |
 | 16 | Settings | [ ] NOT STARTED |

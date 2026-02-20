@@ -25,6 +25,17 @@ export async function sendReport(jobId: string): Promise<void> {
   if (!job.client_email) throw new Error("No client email on file");
   if (!job.report_file_path) throw new Error("No report uploaded");
 
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("status")
+    .eq("job_id", jobId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!invoice || invoice.status !== "paid") {
+    throw new Error("Invoice hasn't been paid yet. Report can only be sent after payment.");
+  }
+
   const { data: fileData } = await supabase.storage
     .from("reports")
     .download(job.report_file_path);

@@ -68,7 +68,7 @@ export default async function FinancesPage() {
       .from("workers")
       .select(`
         id, name, rate_per_unit, rate_per_common_space,
-        jobs(id, num_units, num_common_spaces, dispatch_status),
+        jobs(id, num_units, num_common_spaces, job_status),
         worker_payments(amount)
       `)
       .eq("active", true),
@@ -124,8 +124,8 @@ export default async function FinancesPage() {
 
     const expected = workerJobs
       .filter(
-        (j: { dispatch_status: string }) =>
-          j.dispatch_status === "assigned" || j.dispatch_status === "completed"
+        (j: { job_status: string }) =>
+          j.job_status === "assigned" || j.job_status === "completed"
       )
       .reduce((sum: number, j: { num_units: number | null; num_common_spaces: number | null }) => {
         const unitPay = (j.num_units ?? 0) * (w.rate_per_unit ?? 0);

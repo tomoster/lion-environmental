@@ -1,6 +1,8 @@
 import type { TelegramCallbackQuery } from "../types";
 import { sendMessage, answerCallbackQuery } from "../client";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendInvoiceKeyboard } from "../keyboard";
+import { generateInvoiceForJob, generateAndStorePdfForInvoice } from "@/lib/invoices/generate";
 
 export async function handleCompleteJob(query: TelegramCallbackQuery) {
   const chatId = query.message?.chat.id;
@@ -13,17 +15,20 @@ export async function handleCompleteJob(query: TelegramCallbackQuery) {
     .from("workers")
     .select("id, name")
     .eq("telegram_chat_id", String(chatId))
-    .single();
+    .eq("role", "field")
+    .limit(1)
+    .maybeSingle();
 
   if (!worker) {
-    await answerCallbackQuery(query.id, "You're not registered.");
+    await answerCallbackQuery(query.id, "You're not registered as a field worker.");
+    await sendMessage(chatId, "You're not registered as a field worker. Send /start first to register.");
     return;
   }
 
   const { error } = await supabase
     .from("jobs")
     .update({
-      dispatch_status: "completed",
+      job_status: "completed",
       report_status: "field_work_done",
       updated_at: new Date().toISOString(),
     })
@@ -53,10 +58,32 @@ export async function handleCompleteJob(query: TelegramCallbackQuery) {
     .eq("key", "avi_telegram_chat_id")
     .single();
 
-  if (aviSetting?.value) {
-    await sendMessage(
-      aviSetting.value,
-      `<b>${worker.name}</b> completed Job #${job?.job_number} (${job?.client_company ?? "—"} — ${job?.building_address ?? "—"}).`
-    );
+  let invoiceInfo = "";
+  try {
+    const { invoiceId, invoiceNumber, total } = await generateInvoiceForJob(supabase, jobId);
+    await generateAndStorePdfForInvoice(supabase, invoiceId);
+
+    const formatted = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    }).format(total);
+
+    invoiceInfo = `\n\nInvoice #${invoiceNumber} (${formatted}) generated.`;
+
+    if (aviSetting?.value) {
+      await sendMessage(
+        aviSetting.value,
+        `<b>${worker.name}</b> completed Job #${job?.job_number} (${job?.client_company ?? "\u2014"} \u2014 ${job?.building_address ?? "\u2014"}).${invoiceInfo}`,
+        sendInvoiceKeyboard(invoiceId)
+      );
+    }
+  } catch (invoiceError) {
+    console.error("Auto-invoice generation failed:", invoiceError);
+    if (aviSetting?.value) {
+      await sendMessage(
+        aviSetting.value,
+        `<b>${worker.name}</b> completed Job #${job?.job_number} (${job?.client_company ?? "\u2014"} \u2014 ${job?.building_address ?? "\u2014"}).\n\n\u26a0\ufe0f Auto-invoice generation failed. Please generate manually.`
+      );
+    }
   }
 }

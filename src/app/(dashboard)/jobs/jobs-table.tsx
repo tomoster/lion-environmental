@@ -29,7 +29,7 @@ type Job = {
   has_dust_swab: boolean;
   has_asbestos: boolean;
   scan_date: string | null;
-  dispatch_status: string;
+  job_status: string;
   report_status: string;
   workers: { name: string } | null;
 };
@@ -106,7 +106,7 @@ export function JobsTable({ jobs }: JobsTableProps) {
   const [reportFilter, setReportFilter] = useState("all");
 
   const filtered = jobs.filter((job) => {
-    if (dispatchFilter !== "all" && job.dispatch_status !== dispatchFilter) return false;
+    if (dispatchFilter !== "all" && job.job_status !== dispatchFilter) return false;
     if (reportFilter !== "all" && job.report_status !== reportFilter) return false;
     return true;
   });
@@ -202,9 +202,9 @@ export function JobsTable({ jobs }: JobsTableProps) {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={dispatchBadgeClass(job.dispatch_status)}
+                      className={dispatchBadgeClass(job.job_status)}
                     >
-                      {DISPATCH_STATUS_LABELS[job.dispatch_status] ?? job.dispatch_status}
+                      {DISPATCH_STATUS_LABELS[job.job_status] ?? job.job_status}
                     </Badge>
                   </TableCell>
                   <TableCell>

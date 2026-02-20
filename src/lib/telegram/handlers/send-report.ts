@@ -33,6 +33,19 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
     return;
   }
 
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("status")
+    .eq("job_id", jobId)
+    .limit(1)
+    .maybeSingle();
+
+  if (!invoice || invoice.status !== "paid") {
+    await answerCallbackQuery(query.id, "Invoice not paid yet.");
+    await sendMessage(chatId, "Invoice hasn't been paid yet. Report can only be sent after payment.");
+    return;
+  }
+
   try {
     const { data: fileData } = await supabase.storage
       .from("reports")

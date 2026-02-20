@@ -131,7 +131,7 @@ export default async function DashboardPage() {
       .in("status", PIPELINE_STATUSES),
     supabase
       .from("jobs")
-      .select("id, job_number, client_company, building_address, scan_date, dispatch_status")
+      .select("id, job_number, client_company, building_address, scan_date, job_status")
       .gte("scan_date", todayIso)
       .order("scan_date", { ascending: true })
       .limit(5),
@@ -365,8 +365,8 @@ export default async function DashboardPage() {
                         {formatDate(job.scan_date)}
                       </TableCell>
                       <TableCell className="pr-6">
-                        <Badge variant="outline" className={dispatchBadgeClass(job.dispatch_status)}>
-                          {DISPATCH_STATUS_LABELS[job.dispatch_status] ?? job.dispatch_status}
+                        <Badge variant="outline" className={dispatchBadgeClass(job.job_status)}>
+                          {DISPATCH_STATUS_LABELS[job.job_status] ?? job.job_status}
                         </Badge>
                       </TableCell>
                     </TableRow>

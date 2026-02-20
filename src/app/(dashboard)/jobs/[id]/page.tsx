@@ -90,11 +90,19 @@ export default async function JobDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("*, workers(id, name)")
-    .eq("id", id)
-    .single();
+  const [{ data: job }, { data: jobInvoice }] = await Promise.all([
+    supabase
+      .from("jobs")
+      .select("*, workers(id, name)")
+      .eq("id", id)
+      .single(),
+    supabase
+      .from("invoices")
+      .select("id, status")
+      .eq("job_id", id)
+      .limit(1)
+      .maybeSingle(),
+  ]);
 
   if (!job) notFound();
 
@@ -152,8 +160,8 @@ export default async function JobDetailPage({ params }: PageProps) {
   const dispatchJobWithId = dispatchJob.bind(null, id);
   const sendReportWithId = sendReport.bind(null, id);
 
-  const canDispatch = job.dispatch_status === "not_dispatched";
-  const canSendReport = job.report_file_path && job.report_status !== "report_sent" && job.report_status !== "complete";
+  const canDispatch = job.job_status === "not_dispatched";
+  const canSendReport = job.report_file_path && job.report_status !== "report_sent" && job.report_status !== "complete" && jobInvoice?.status === "paid";
 
   return (
     <div className="space-y-6">
@@ -206,8 +214,8 @@ export default async function JobDetailPage({ params }: PageProps) {
         <h1 className="text-2xl font-semibold">
           {job.client_company ?? "Unnamed Job"} — Job #{job.job_number}
         </h1>
-        <Badge variant="outline" className={dispatchBadgeClass(job.dispatch_status)}>
-          {DISPATCH_STATUS_LABELS[job.dispatch_status] ?? job.dispatch_status}
+        <Badge variant="outline" className={dispatchBadgeClass(job.job_status)}>
+          {DISPATCH_STATUS_LABELS[job.job_status] ?? job.job_status}
         </Badge>
         <Badge variant="outline" className={reportBadgeClass(job.report_status)}>
           {REPORT_STATUS_LABELS[job.report_status] ?? job.report_status}

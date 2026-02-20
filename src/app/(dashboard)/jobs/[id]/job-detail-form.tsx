@@ -34,7 +34,7 @@ type JobDetailFormProps = {
     num_units: number | null;
     num_common_spaces: number | null;
     num_wipes: number | null;
-    dispatch_status: string;
+    job_status: string;
     report_status: string;
     notes: string | null;
   };
@@ -266,12 +266,12 @@ export function JobDetailForm({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="dispatch_status">Dispatch Status</Label>
+              <Label htmlFor="job_status">Dispatch Status</Label>
               <Select
-                name="dispatch_status"
-                defaultValue={job.dispatch_status}
+                name="job_status"
+                defaultValue={job.job_status}
               >
-                <SelectTrigger id="dispatch_status" className="w-full">
+                <SelectTrigger id="job_status" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -19,7 +19,7 @@ export default async function TeamPage() {
         .from("jobs")
         .select("id", { count: "exact", head: true })
         .eq("worker_id", worker.id)
-        .eq("dispatch_status", "completed");
+        .eq("job_status", "completed");
       return { id: worker.id, count: count ?? 0 };
     })
   );

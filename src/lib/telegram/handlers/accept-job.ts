@@ -2,6 +2,7 @@ import type { TelegramCallbackQuery } from "../types";
 import { sendMessage, answerCallbackQuery, deleteMessage } from "../client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getManagementChatIds } from "../get-management-chat-ids";
+import { completeJobKeyboard } from "../keyboard";
 
 export async function handleAcceptJob(query: TelegramCallbackQuery) {
   const chatId = query.message?.chat.id;
@@ -64,7 +65,8 @@ export async function handleAcceptJob(query: TelegramCallbackQuery) {
     `You've accepted <b>Job #${job?.job_number}</b>!\n\n` +
       `Client: ${job?.client_company ?? "\u2014"}\n` +
       `Address: ${job?.building_address ?? "\u2014"}\n` +
-      `Date: ${job?.scan_date ?? "TBD"}`
+      `Date: ${job?.scan_date ?? "TBD"}`,
+    completeJobKeyboard(jobId)
   );
 
   const mgmtChatIds = await getManagementChatIds(supabase);

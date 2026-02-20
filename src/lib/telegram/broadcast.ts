@@ -80,7 +80,7 @@ export async function broadcastJobToWorkers(
   await supabase
     .from("jobs")
     .update({
-      dispatch_status: "open",
+      job_status: "open",
       dispatch_message_ids: dispatchMessageIds,
       updated_at: new Date().toISOString(),
     })

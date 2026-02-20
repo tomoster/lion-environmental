@@ -154,7 +154,7 @@ export type Database = {
           client_email: string | null
           created_at: string | null
           dispatch_message_ids: Json | null
-          dispatch_status: string
+          job_status: string
           estimated_end_time: string | null
           has_asbestos: boolean
           has_dust_swab: boolean
@@ -181,7 +181,7 @@ export type Database = {
           client_email?: string | null
           created_at?: string | null
           dispatch_message_ids?: Json | null
-          dispatch_status?: string
+          job_status?: string
           estimated_end_time?: string | null
           has_asbestos?: boolean
           has_dust_swab?: boolean
@@ -208,7 +208,7 @@ export type Database = {
           client_email?: string | null
           created_at?: string | null
           dispatch_message_ids?: Json | null
-          dispatch_status?: string
+          job_status?: string
           estimated_end_time?: string | null
           has_asbestos?: boolean
           has_dust_swab?: boolean

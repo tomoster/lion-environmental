@@ -27,7 +27,7 @@ export async function createJob(formData: FormData) {
     estimated_end_time: (formData.get("estimated_end_time") as string) || null,
     notes: (formData.get("notes") as string) || null,
     worker_id: (formData.get("worker_id") as string) || null,
-    dispatch_status: "not_dispatched",
+    job_status: "not_dispatched",
     report_status: "scheduled",
     prospect_id: (formData.get("prospect_id") as string) || null,
   };
@@ -51,10 +51,10 @@ export async function updateJob(id: string, formData: FormData) {
 
   const { data: currentJob } = await supabase
     .from("jobs")
-    .select("dispatch_status")
+    .select("job_status")
     .eq("id", id)
     .single();
-  const wasNotDispatched = currentJob?.dispatch_status === "not_dispatched";
+  const wasNotDispatched = currentJob?.job_status === "not_dispatched";
 
   const startTime = (formData.get("start_time") as string) || null;
   const hasXrf = formData.get("has_xrf") === "true";
@@ -109,13 +109,13 @@ export async function updateJob(id: string, formData: FormData) {
       const v = formData.get("worker_id") as string;
       return v && v !== "unassigned" ? v : null;
     })(),
-    dispatch_status: formData.get("dispatch_status") as string,
+    job_status: formData.get("job_status") as string,
     report_status: formData.get("report_status") as string,
     updated_at: new Date().toISOString(),
   };
 
   if (wasNotDispatched) {
-    data.dispatch_status = "open";
+    data.job_status = "open";
   }
 
   const { error } = await supabase.from("jobs").update(data).eq("id", id);
@@ -197,7 +197,7 @@ export async function createJobFromProspect(prospectId: string) {
       client_company: prospect.company,
       client_email: prospect.email,
       building_address: prospect.building_address,
-      dispatch_status: "not_dispatched",
+      job_status: "not_dispatched",
       report_status: "scheduled",
     })
     .select("id")
