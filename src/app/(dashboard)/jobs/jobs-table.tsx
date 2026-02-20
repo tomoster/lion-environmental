@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { formatServiceType } from "@/lib/service-type-utils";
 
 type Job = {
   id: string;
@@ -86,13 +87,6 @@ function reportBadgeClass(status: string): string {
     default:
       return "bg-zinc-100 text-zinc-700 border-zinc-200";
   }
-}
-
-function formatServiceType(type: string | null): string {
-  if (!type) return "—";
-  if (type === "lpt") return "LPT";
-  if (type === "dust_swab") return "Dust Swab";
-  return type;
 }
 
 function formatDate(date: string | null): string {

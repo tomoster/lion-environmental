@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { createJob } from "./actions";
 import { calculateEndTime } from "@/lib/scheduling-utils";
 
@@ -57,11 +58,20 @@ type JobFormProps = {
 export function JobForm({ workers, pricingDefaults, durationDefaults, defaultValues, onSuccess }: JobFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [serviceType, setServiceType] = useState("lpt");
+  const [lptChecked, setLptChecked] = useState(true);
+  const [dustSwabChecked, setDustSwabChecked] = useState(false);
   const [numWipes, setNumWipes] = useState(0);
   const [numUnits, setNumUnits] = useState(0);
   const [numCommonSpaces, setNumCommonSpaces] = useState(0);
   const [startTime, setStartTime] = useState("");
+
+  const serviceType = lptChecked && dustSwabChecked
+    ? "both"
+    : lptChecked
+    ? "lpt"
+    : dustSwabChecked
+    ? "dust_swab"
+    : "";
 
   const pricing = {
     lpt_price_per_unit: pricingDefaults?.lpt_price_per_unit ?? 0,
@@ -78,7 +88,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
   };
 
   const estimatedEndTime = useMemo(() => {
-    if (!startTime) return "";
+    if (!startTime || !serviceType) return "";
     return calculateEndTime(startTime, serviceType, numUnits, numCommonSpaces, duration);
   }, [startTime, serviceType, numUnits, numCommonSpaces, duration]);
 
@@ -105,6 +115,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
       {defaultValues?.prospect_id && (
         <input type="hidden" name="prospect_id" value={defaultValues.prospect_id} />
       )}
+      <input type="hidden" name="service_type" value={serviceType} />
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
@@ -139,21 +150,24 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="service_type">Service Type</Label>
-          <Select
-            name="service_type"
-            value={serviceType}
-            onValueChange={setServiceType}
-          >
-            <SelectTrigger id="service_type" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="lpt">LPT</SelectItem>
-              <SelectItem value="dust_swab">Dust Swab</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="space-y-2.5">
+          <Label>Service Type</Label>
+          <div className="flex items-center gap-4">
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={lptChecked}
+                onCheckedChange={(checked) => setLptChecked(checked === true)}
+              />
+              <span className="text-sm">LPT</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <Checkbox
+                checked={dustSwabChecked}
+                onCheckedChange={(checked) => setDustSwabChecked(checked === true)}
+              />
+              <span className="text-sm">Dust Swab</span>
+            </label>
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="scan_date">Scan Date</Label>
@@ -168,6 +182,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
             id="start_time"
             name="start_time"
             type="time"
+            step="300"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
           />
@@ -176,14 +191,14 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
           <Label htmlFor="estimated_end_time_display">Est. End Time</Label>
           <Input
             id="estimated_end_time_display"
-            value={estimatedEndTime || "—"}
+            value={estimatedEndTime || "\u2014"}
             readOnly
             className="bg-muted/40 cursor-not-allowed"
           />
         </div>
       </div>
 
-      {serviceType === "lpt" && (
+      {lptChecked && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="num_units">Units</Label>
@@ -236,7 +251,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
         </div>
       )}
 
-      {serviceType === "dust_swab" && (
+      {dustSwabChecked && (
         <div className="space-y-3">
           <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
             <div className="flex justify-between">
@@ -298,7 +313,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
       </div>
 
       <div className="flex justify-end gap-2 pt-2">
-        <Button type="submit" disabled={isPending}>
+        <Button type="submit" disabled={isPending || !serviceType}>
           {isPending ? "Creating..." : "Create Job"}
         </Button>
       </div>

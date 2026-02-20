@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendMessage } from "./client";
 import { acceptJobKeyboard } from "./keyboard";
+import { formatServiceType } from "@/lib/service-type-utils";
 
 export async function broadcastJobToWorkers(
   supabase: SupabaseClient,
@@ -23,9 +24,7 @@ export async function broadcastJobToWorkers(
 
   if (!workers || workers.length === 0) return;
 
-  const serviceLabel =
-    job.service_type === "lpt" ? "LPT" :
-    job.service_type === "dust_swab" ? "Dust Swab" : "Inspection";
+  const serviceLabel = job.service_type ? formatServiceType(job.service_type) : "Inspection";
 
   const scanDate = job.scan_date
     ? new Date(job.scan_date + "T00:00:00").toLocaleDateString("en-US", {

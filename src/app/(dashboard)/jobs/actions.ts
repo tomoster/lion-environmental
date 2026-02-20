@@ -50,6 +50,7 @@ export async function updateJob(id: string, formData: FormData) {
     client_company: (formData.get("client_company") as string) || null,
     client_email: (formData.get("client_email") as string) || null,
     building_address: (formData.get("building_address") as string) || null,
+    service_type: (formData.get("service_type") as string) || null,
     num_units: formData.get("num_units") ? Number(formData.get("num_units")) : null,
     price_per_unit: formData.get("price_per_unit") ? Number(formData.get("price_per_unit")) : null,
     num_common_spaces: formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : null,

@@ -34,14 +34,16 @@ export function calculateEndTime(
     dust_swab_duration: number;
   }
 ): string {
-  let totalMinutes: number;
+  let totalMinutes = 0;
 
-  if (serviceType === "lpt") {
-    totalMinutes =
+  if (serviceType === "lpt" || serviceType === "both") {
+    totalMinutes +=
       numUnits * durationSettings.lpt_duration_per_unit +
       numCommonSpaces * durationSettings.lpt_duration_per_common_space;
-  } else {
-    totalMinutes = durationSettings.dust_swab_duration;
+  }
+
+  if (serviceType === "dust_swab" || serviceType === "both") {
+    totalMinutes += durationSettings.dust_swab_duration;
   }
 
   if (totalMinutes === 0) totalMinutes = 60;

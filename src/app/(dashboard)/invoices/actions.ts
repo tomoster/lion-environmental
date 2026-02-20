@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { hasLpt, hasDustSwab } from "@/lib/service-type-utils";
 
 export async function generateInvoice(jobId: string) {
   const supabase = await createClient();
@@ -31,11 +32,13 @@ export async function generateInvoice(jobId: string) {
 
   let subtotal = 0;
 
-  if (job.service_type === "lpt") {
-    subtotal =
+  if (hasLpt(job.service_type)) {
+    subtotal +=
       (job.num_units ?? 0) * (job.price_per_unit ?? 0) +
       (job.num_common_spaces ?? 0) * (job.price_per_common_space ?? 0);
-  } else if (job.service_type === "dust_swab") {
+  }
+
+  if (hasDustSwab(job.service_type)) {
     const siteVisit = parseFloat(
       settingsMap["dust_swab_site_visit"] ?? "375"
     );
@@ -45,7 +48,7 @@ export async function generateInvoice(jobId: string) {
     const wipeRate = parseFloat(
       settingsMap["dust_swab_wipe_rate"] ?? "20"
     );
-    subtotal = siteVisit + reportFee + (job.num_wipes ?? 0) * wipeRate;
+    subtotal += siteVisit + reportFee + (job.num_wipes ?? 0) * wipeRate;
   }
 
   const taxAmount = subtotal * (taxRate / 100);

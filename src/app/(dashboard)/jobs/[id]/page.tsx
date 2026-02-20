@@ -18,6 +18,7 @@ import {
 import { updateJob, deleteJob, uploadReport } from "../actions";
 import { dispatchJob, sendReport } from "./automation-actions";
 import { getAvailableWorkers } from "@/lib/scheduling";
+import { hasLpt, hasDustSwab, formatServiceType } from "@/lib/service-type-utils";
 
 const DUST_SWAB_SITE_VISIT = 375;
 const DUST_SWAB_REPORT_FEE = 135;
@@ -122,20 +123,18 @@ export default async function JobDetailPage({ params }: PageProps) {
     availability = { available: workers ?? [], unavailable: [] };
   }
 
-  const lptSubtotal =
-    job.service_type === "lpt"
-      ? (job.num_units ?? 0) * (job.price_per_unit ?? 0) +
-        (job.num_common_spaces ?? 0) * (job.price_per_common_space ?? 0)
-      : null;
+  const lptSubtotal = hasLpt(job.service_type)
+    ? (job.num_units ?? 0) * (job.price_per_unit ?? 0) +
+      (job.num_common_spaces ?? 0) * (job.price_per_common_space ?? 0)
+    : 0;
 
-  const dustSwabSubtotal =
-    job.service_type === "dust_swab"
-      ? DUST_SWAB_SITE_VISIT +
-        DUST_SWAB_REPORT_FEE +
-        (job.num_wipes ?? 0) * DUST_SWAB_WIPE_RATE
-      : null;
+  const dustSwabSubtotal = hasDustSwab(job.service_type)
+    ? DUST_SWAB_SITE_VISIT +
+      DUST_SWAB_REPORT_FEE +
+      (job.num_wipes ?? 0) * DUST_SWAB_WIPE_RATE
+    : 0;
 
-  const subtotal = lptSubtotal ?? dustSwabSubtotal ?? 0;
+  const subtotal = lptSubtotal + dustSwabSubtotal;
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
@@ -265,18 +264,20 @@ export default async function JobDetailPage({ params }: PageProps) {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label>Service Type</Label>
-                    <Input
-                      value={
-                        job.service_type === "lpt"
-                          ? "LPT"
-                          : job.service_type === "dust_swab"
-                          ? "Dust Swab"
-                          : job.service_type ?? "\u2014"
-                      }
-                      readOnly
-                      className="bg-muted/40 cursor-not-allowed"
-                    />
+                    <Label htmlFor="service_type">Service Type</Label>
+                    <Select
+                      name="service_type"
+                      defaultValue={job.service_type ?? "lpt"}
+                    >
+                      <SelectTrigger id="service_type" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="lpt">LPT</SelectItem>
+                        <SelectItem value="dust_swab">Dust Swab</SelectItem>
+                        <SelectItem value="both">LPT + Dust Swab</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
@@ -287,6 +288,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                       id="start_time"
                       name="start_time"
                       type="time"
+                      step="300"
                       defaultValue={job.start_time ?? ""}
                     />
                   </div>
@@ -296,6 +298,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                       id="estimated_end_time"
                       name="estimated_end_time"
                       type="time"
+                      step="300"
                       defaultValue={job.estimated_end_time ?? ""}
                     />
                   </div>
@@ -412,7 +415,7 @@ export default async function JobDetailPage({ params }: PageProps) {
               <CardTitle className="text-base">Pricing Summary</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
-              {job.service_type === "lpt" && (
+              {hasLpt(job.service_type) && (
                 <>
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-muted-foreground">
@@ -437,7 +440,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                 </>
               )}
 
-              {job.service_type === "dust_swab" && (
+              {hasDustSwab(job.service_type) && (
                 <>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Site visit</span>
@@ -487,13 +490,7 @@ export default async function JobDetailPage({ params }: PageProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service</span>
-                <span>
-                  {job.service_type === "lpt"
-                    ? "LPT"
-                    : job.service_type === "dust_swab"
-                    ? "Dust Swab"
-                    : "\u2014"}
-                </span>
+                <span>{formatServiceType(job.service_type)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Scan date</span>

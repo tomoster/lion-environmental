@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { markAsPaid, updateInvoiceStatus, generateAndStorePdf, sendInvoiceToClient } from "../actions";
+import { hasLpt, hasDustSwab, formatServiceType } from "@/lib/service-type-utils";
 
 type PageProps = {
   params: Promise<{ id: string }>;
@@ -222,7 +223,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {job?.service_type === "lpt" && (
+                    {job && hasLpt(job.service_type) && (
                       <>
                         <tr>
                           <td className="px-4 py-3">
@@ -254,7 +255,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                       </>
                     )}
 
-                    {job?.service_type === "dust_swab" && (
+                    {job && hasDustSwab(job.service_type) && (
                       <>
                         <tr>
                           <td className="px-4 py-3">Site Visit</td>
@@ -401,13 +402,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Service</span>
-                  <span>
-                    {job.service_type === "lpt"
-                      ? "LPT"
-                      : job.service_type === "dust_swab"
-                      ? "Dust Swab"
-                      : "—"}
-                  </span>
+                  <span>{formatServiceType(job.service_type)}</span>
                 </div>
                 {job.client_email && (
                   <div className="flex justify-between">
