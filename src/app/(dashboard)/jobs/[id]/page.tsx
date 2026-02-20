@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { TimeInput } from "@/components/ui/time-input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -17,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { updateJob, deleteJob, uploadReport } from "../actions";
 import { dispatchJob, sendReport } from "./automation-actions";
+import { DeleteJobButton } from "./delete-job-button";
 import { getAvailableWorkers } from "@/lib/scheduling";
 import { hasLpt, hasDustSwab, formatServiceType } from "@/lib/service-type-utils";
 
@@ -192,15 +194,7 @@ export default async function JobDetailPage({ params }: PageProps) {
           <Link href={`/invoices/new?job_id=${id}`}>
             <Button variant="outline">Generate Invoice</Button>
           </Link>
-          <form action={deleteJobWithId}>
-            <Button
-              type="submit"
-              variant="destructive"
-              size="sm"
-            >
-              Delete Job
-            </Button>
-          </form>
+          <DeleteJobButton action={deleteJobWithId} />
         </div>
       </div>
 
@@ -284,11 +278,9 @@ export default async function JobDetailPage({ params }: PageProps) {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <Label htmlFor="start_time">Start Time</Label>
-                    <Input
+                    <TimeInput
                       id="start_time"
                       name="start_time"
-                      type="time"
-                      step="300"
                       defaultValue={job.start_time ?? ""}
                     />
                   </div>
@@ -304,6 +296,68 @@ export default async function JobDetailPage({ params }: PageProps) {
                     />
                   </div>
                 </div>
+
+                {hasLpt(job.service_type) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="num_units">Units</Label>
+                      <Input
+                        id="num_units"
+                        name="num_units"
+                        type="number"
+                        min="0"
+                        defaultValue={job.num_units ?? ""}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="price_per_unit">Price / Unit ($)</Label>
+                      <Input
+                        id="price_per_unit"
+                        name="price_per_unit"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={job.price_per_unit ?? ""}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="num_common_spaces">Common Spaces</Label>
+                      <Input
+                        id="num_common_spaces"
+                        name="num_common_spaces"
+                        type="number"
+                        min="0"
+                        defaultValue={job.num_common_spaces ?? ""}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="price_per_common_space">Price / Common Space ($)</Label>
+                      <Input
+                        id="price_per_common_space"
+                        name="price_per_common_space"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        defaultValue={job.price_per_common_space ?? ""}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {hasDustSwab(job.service_type) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="num_wipes">Number of Wipes</Label>
+                      <Input
+                        id="num_wipes"
+                        name="num_wipes"
+                        type="number"
+                        min="0"
+                        defaultValue={job.num_wipes ?? ""}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <Separator />
 

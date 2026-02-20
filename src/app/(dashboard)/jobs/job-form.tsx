@@ -4,6 +4,7 @@ import { useState, useTransition, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TimeInput } from "@/components/ui/time-input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -178,11 +179,9 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
           <Label htmlFor="start_time">Start Time</Label>
-          <Input
+          <TimeInput
             id="start_time"
             name="start_time"
-            type="time"
-            step="300"
             value={startTime}
             onChange={(e) => setStartTime(e.target.value)}
           />
