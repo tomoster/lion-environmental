@@ -3,7 +3,7 @@ import { sendMessage, answerCallbackQuery } from "../client";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendInvoiceKeyboard } from "../keyboard";
 import { generateInvoiceForJob, generateAndStorePdfForInvoice } from "@/lib/invoices/generate";
-import { getManagementChatIds } from "../get-management-chat-ids";
+import { getManagementChatIds, getOfficeChatIds } from "../get-management-chat-ids";
 
 export async function handleCompleteJob(query: TelegramCallbackQuery) {
   const chatId = query.message?.chat.id;
@@ -88,5 +88,13 @@ export async function handleCompleteJob(query: TelegramCallbackQuery) {
         `<b>${worker.name}</b> completed Job #${job?.job_number} (${job?.client_company ?? "\u2014"} \u2014 ${job?.building_address ?? "\u2014"}).\n\n\u26a0\ufe0f Auto-invoice generation failed. Please generate manually.`
       );
     }
+  }
+
+  const officeChatIds = await getOfficeChatIds(supabase);
+  for (const oChatId of officeChatIds) {
+    await sendMessage(
+      oChatId,
+      `<b>${worker.name}</b> completed Job #${job?.job_number} (${job?.client_company ?? "\u2014"} \u2014 ${job?.building_address ?? "\u2014"}). Please coordinate with them about the report.`
+    );
   }
 }
