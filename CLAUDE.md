@@ -2,6 +2,10 @@
 
 This file tells the full story of Lion Environmental's operations system: what the business does, what was built (v1), why it's being replaced, and what the new system needs to handle. A new session with just this file should give complete context.
 
+## Workflow
+
+- **Always push after every commit.** Don't wait for the user to ask — commit and push together every time.
+
 ---
 
 ## The Business
