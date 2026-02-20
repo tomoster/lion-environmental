@@ -1,4 +1,12 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 type SendReportParams = {
   to: string;
@@ -27,11 +35,10 @@ export async function sendReportEmail({
   filename,
   senderName,
 }: SendReportParams) {
-  const resend = new Resend(process.env.RESEND_API_KEY);
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Inspection";
 
-  const { data, error } = await resend.emails.send({
-    from: `${senderName} <reports@lionenvironmental.com>`,
+  const info = await transporter.sendMail({
+    from: `${senderName} <${process.env.GMAIL_USER}>`,
     to,
     subject: `${serviceLabel} Report — ${buildingAddress || `Job #${jobNumber}`}`,
     html: `
@@ -72,9 +79,5 @@ export async function sendReportEmail({
     ],
   });
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
+  return { id: info.messageId };
 }

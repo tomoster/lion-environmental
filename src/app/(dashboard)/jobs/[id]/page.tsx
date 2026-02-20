@@ -210,9 +210,11 @@ export default async function JobDetailPage({ params }: PageProps) {
               </Button>
             </form>
           )}
-          <Link href={`/invoices/new?job_id=${id}`}>
-            <Button variant="outline">Generate Invoice</Button>
-          </Link>
+          {!jobInvoice && (
+            <Link href={`/invoices/new?job_id=${id}`}>
+              <Button variant="outline">Generate Invoice</Button>
+            </Link>
+          )}
           <DeleteJobButton action={deleteJobWithId} />
         </div>
       </div>

@@ -1,5 +1,13 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 type SendInvoiceParams = {
   to: string;
@@ -20,7 +28,6 @@ export async function sendInvoiceEmail({
   pdfBuffer,
   senderName,
 }: SendInvoiceParams) {
-  const resend = new Resend(process.env.RESEND_API_KEY);
   const formattedTotal = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -31,8 +38,8 @@ export async function sendInvoiceEmail({
     { month: "long", day: "numeric", year: "numeric" }
   );
 
-  const { data, error } = await resend.emails.send({
-    from: `${senderName} <invoices@lionenvironmental.com>`,
+  const info = await transporter.sendMail({
+    from: `${senderName} <${process.env.GMAIL_USER}>`,
     to,
     subject: `Invoice #${invoiceNumber} from Lion Environmental LLC`,
     html: `
@@ -79,11 +86,7 @@ export async function sendInvoiceEmail({
     ],
   });
 
-  if (error) {
-    throw new Error(error.message);
-  }
-
-  return data;
+  return { id: info.messageId };
 }
 
 export async function sendInvoiceForId(

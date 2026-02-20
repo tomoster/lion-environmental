@@ -165,7 +165,7 @@ _None_
 
 ## Step 8: Worker Completes Job
 
-**Status:** [ ] NEXT
+**Status:** [x] DONE
 
 **What to do:**
 - Worker taps "Mark Complete" button (shown on accept confirmation or daily reminder)
@@ -182,6 +182,8 @@ _None_
 - Job detail page reflects the completion
 
 **Issues found:**
+- "Approve & Send Invoice" button failed due to missing Resend API key — key added, but domain verification pending (Register.com DNS records needed). Will retest in Step 11.
+- Added office worker notification on job completion (Nazish gets "Please coordinate with them about the report" message). All three notifications confirmed working.
 
 
 ---
@@ -386,8 +388,8 @@ _None_
 | 5 | Job Detail Page | [x] DONE |
 | 6 | Dispatch | [x] DONE |
 | 7 | Worker Accepts Job | [x] DONE |
-| 8 | Worker Completes Job | [ ] NEXT |
-| 9 | Report Upload | [ ] NOT STARTED |
+| 8 | Worker Completes Job | [x] DONE |
+| 9 | Report Upload | [ ] NEXT |
 | 10 | Invoice Auto-Generated on Completion | [ ] NOT STARTED |
 | 11 | Send Invoice | [ ] NOT STARTED |
 | 12 | Mark as Paid | [ ] NOT STARTED |
