@@ -29,13 +29,15 @@ export function sendInvoiceKeyboard(invoiceId: string): InlineKeyboardMarkup {
   };
 }
 
-export function sendReportKeyboard(jobId: string): InlineKeyboardMarkup {
+export function sendReportKeyboard(jobId: string, reportType: "xrf" | "dust_swab"): InlineKeyboardMarkup {
+  const prefix = reportType === "xrf" ? "sendreport_xrf_" : "sendreport_ds_";
+  const label = reportType === "xrf" ? "Approve & Send XRF Report" : "Approve & Send Dust Swab Report";
   return {
     inline_keyboard: [
       [
         {
-          text: "Approve & Send Report",
-          callback_data: `sendreport_${jobId}`,
+          text: label,
+          callback_data: `${prefix}${jobId}`,
         },
       ],
     ],
@@ -52,5 +54,16 @@ export function reportForJobKeyboard(
         callback_data: `reportfor_${j.id}`,
       },
     ]),
+  };
+}
+
+export function reportTypeKeyboard(jobId: string): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [
+        { text: "XRF Report", callback_data: `rtype_xrf_${jobId}` },
+        { text: "Dust Swab Report", callback_data: `rtype_ds_${jobId}` },
+      ],
+    ],
   };
 }

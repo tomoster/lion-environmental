@@ -151,7 +151,7 @@ export async function deleteJob(id: string) {
   redirect("/jobs");
 }
 
-export async function uploadReport(jobId: string, formData: FormData) {
+export async function uploadReport(jobId: string, reportType: "xrf" | "dust_swab", formData: FormData) {
   const supabase = await createClient();
 
   const file = formData.get("file") as File;
@@ -170,9 +170,16 @@ export async function uploadReport(jobId: string, formData: FormData) {
     throw new Error(uploadError.message);
   }
 
+  const fileColumn = reportType === "xrf" ? "xrf_report_file_path" : "dust_swab_report_file_path";
+  const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
+
   const { error: updateError } = await supabase
     .from("jobs")
-    .update({ report_file_path: path, updated_at: new Date().toISOString() })
+    .update({
+      [fileColumn]: path,
+      [statusColumn]: "uploaded",
+      updated_at: new Date().toISOString(),
+    })
     .eq("id", jobId);
 
   if (updateError) {

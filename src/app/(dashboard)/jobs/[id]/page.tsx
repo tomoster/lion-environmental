@@ -161,15 +161,18 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   const updateJobWithId = updateJob.bind(null, id);
   const deleteJobWithId = deleteJob.bind(null, id);
-  const uploadReportWithId = uploadReport.bind(null, id);
   const dispatchJobWithId = dispatchJob.bind(null, id);
-  const sendReportWithId = sendReport.bind(null, id);
+
+  const uploadXrfReport = uploadReport.bind(null, id, "xrf");
+  const uploadDustSwabReport = uploadReport.bind(null, id, "dust_swab");
+  const sendXrfReport = sendReport.bind(null, id, "xrf");
+  const sendDustSwabReport = sendReport.bind(null, id, "dust_swab");
 
   const canDispatch = job.job_status === "not_dispatched";
+  const invoicePaid = jobInvoice?.status === "paid";
 
-  const xrfReady = !job.has_xrf || job.report_status === "uploaded";
-  const dustSwabReady = !job.has_dust_swab || job.dust_swab_status === "uploaded";
-  const canSendReport = job.report_file_path && xrfReady && dustSwabReady && jobInvoice?.status === "paid";
+  const canSendXrf = job.has_xrf && job.xrf_report_file_path && job.report_status === "uploaded" && invoicePaid;
+  const canSendDustSwab = job.has_dust_swab && job.dust_swab_report_file_path && job.dust_swab_status === "uploaded" && invoicePaid;
 
   return (
     <div className="space-y-6">
@@ -204,13 +207,6 @@ export default async function JobDetailPage({ params }: PageProps) {
               </Button>
             </form>
           )}
-          {canSendReport && (
-            <form action={sendReportWithId}>
-              <Button type="submit" variant="outline">
-                Send Report to Client
-              </Button>
-            </form>
-          )}
           <Link href={`/invoices/new?job_id=${id}`}>
             <Button variant="outline">Generate Invoice</Button>
           </Link>
@@ -231,8 +227,8 @@ export default async function JobDetailPage({ params }: PageProps) {
           </Badge>
         )}
         {job.has_dust_swab && (
-          <Badge variant="outline" className={reportBadgeClass(job.dust_swab_status)}>
-            Dust Swab: {DUST_SWAB_STATUS_LABELS[job.dust_swab_status] ?? job.dust_swab_status}
+          <Badge variant="outline" className={reportBadgeClass(job.dust_swab_status ?? "not_started")}>
+            Dust Swab: {DUST_SWAB_STATUS_LABELS[job.dust_swab_status ?? "not_started"] ?? job.dust_swab_status}
           </Badge>
         )}
       </div>
@@ -252,28 +248,69 @@ export default async function JobDetailPage({ params }: PageProps) {
             dustSwabStatusLabels={DUST_SWAB_STATUS_LABELS}
           />
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Report File</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {job.report_file_path ? (
-                <p className="text-sm text-muted-foreground font-mono">
-                  {job.report_file_path}
-                </p>
-              ) : (
-                <p className="text-sm text-muted-foreground">No report uploaded yet.</p>
-              )}
-              <form action={uploadReportWithId}>
-                <div className="flex items-center gap-3">
-                  <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                  <Button type="submit" variant="outline" size="sm">
-                    Upload
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
+          {job.has_xrf && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">XRF Report File</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {job.xrf_report_file_path ? (
+                  <p className="text-sm text-muted-foreground font-mono">
+                    {job.xrf_report_file_path}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No XRF report uploaded yet.</p>
+                )}
+                <form action={uploadXrfReport}>
+                  <div className="flex items-center gap-3">
+                    <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                    <Button type="submit" variant="outline" size="sm">
+                      Upload
+                    </Button>
+                  </div>
+                </form>
+                {canSendXrf && (
+                  <form action={sendXrfReport}>
+                    <Button type="submit" variant="outline" size="sm">
+                      Send XRF Report to Client
+                    </Button>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {job.has_dust_swab && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Dust Swab Report File</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {job.dust_swab_report_file_path ? (
+                  <p className="text-sm text-muted-foreground font-mono">
+                    {job.dust_swab_report_file_path}
+                  </p>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No dust swab report uploaded yet.</p>
+                )}
+                <form action={uploadDustSwabReport}>
+                  <div className="flex items-center gap-3">
+                    <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                    <Button type="submit" variant="outline" size="sm">
+                      Upload
+                    </Button>
+                  </div>
+                </form>
+                {canSendDustSwab && (
+                  <form action={sendDustSwabReport}>
+                    <Button type="submit" variant="outline" size="sm">
+                      Send Dust Swab Report to Client
+                    </Button>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-6">

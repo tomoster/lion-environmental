@@ -1,6 +1,7 @@
 import type { TelegramMessage } from "../types";
 import { sendMessage } from "../client";
-import { getState, clearState } from "../state";
+import { getState, setState, clearState } from "../state";
+import { reportTypeKeyboard } from "../keyboard";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function handleTextMessage(message: TelegramMessage) {
@@ -76,7 +77,7 @@ async function handleJobNumberInput(
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company")
+    .select("id, job_number, client_company, has_xrf, has_dust_swab")
     .eq("job_number", jobNumber)
     .single();
 
@@ -95,6 +96,28 @@ async function handleJobNumberInput(
   }
 
   const { handleReportUpload } = await import("./document-upload");
-  await handleReportUpload(supabase, chatId, fileId, fileName, job.id, job.job_number, job.client_company);
-  await clearState(supabase, String(chatId));
+
+  if (job.has_xrf && !job.has_dust_swab) {
+    await handleReportUpload(supabase, chatId, fileId, fileName, job.id, job.job_number, job.client_company, "xrf");
+    await clearState(supabase, String(chatId));
+    return;
+  }
+  if (job.has_dust_swab && !job.has_xrf) {
+    await handleReportUpload(supabase, chatId, fileId, fileName, job.id, job.job_number, job.client_company, "dust_swab");
+    await clearState(supabase, String(chatId));
+    return;
+  }
+
+  await setState(supabase, String(chatId), "awaiting_report_type", {
+    file_id: fileId,
+    file_name: fileName,
+    job_id: job.id,
+    job_number: job.job_number,
+    client_company: job.client_company,
+  });
+  await sendMessage(
+    chatId,
+    `Is this the XRF or Dust Swab report for Job #${job.job_number}?`,
+    reportTypeKeyboard(job.id)
+  );
 }

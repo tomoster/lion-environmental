@@ -37,7 +37,7 @@ type JobDetailFormProps = {
     num_wipes: number | null;
     job_status: string;
     report_status: string;
-    dust_swab_status: string;
+    dust_swab_status: string | null;
     notes: string | null;
   };
   defaultPricePerUnit: number | null;
@@ -306,7 +306,7 @@ export function JobDetailForm({
             {dustSwabChecked && (
               <div className="space-y-1.5">
                 <Label htmlFor="dust_swab_status">Dust Swab Status</Label>
-                <Select name="dust_swab_status" defaultValue={job.dust_swab_status}>
+                <Select name="dust_swab_status" defaultValue={job.dust_swab_status ?? "not_started"}>
                   <SelectTrigger id="dust_swab_status" className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -326,7 +326,7 @@ export function JobDetailForm({
             <input type="hidden" name="report_status" value={job.report_status} />
           )}
           {!dustSwabChecked && (
-            <input type="hidden" name="dust_swab_status" value={job.dust_swab_status} />
+            <input type="hidden" name="dust_swab_status" value={job.dust_swab_status ?? "not_started"} />
           )}
 
           <div className="space-y-1.5">

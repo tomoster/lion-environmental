@@ -155,14 +155,15 @@ export type Database = {
           complete_reminder_sent: boolean
           created_at: string | null
           dispatch_message_ids: Json | null
-          dust_swab_status: string
-          job_status: string
+          dust_swab_report_file_path: string | null
+          dust_swab_status: string | null
           estimated_end_time: string | null
           has_asbestos: boolean
           has_dust_swab: boolean
           has_xrf: boolean
           id: string
           job_number: number
+          job_status: string
           notes: string | null
           num_common_spaces: number | null
           num_units: number | null
@@ -170,12 +171,12 @@ export type Database = {
           price_per_common_space: number | null
           price_per_unit: number | null
           prospect_id: string | null
-          report_file_path: string | null
           report_status: string
           scan_date: string | null
           start_time: string | null
           updated_at: string | null
           worker_id: string | null
+          xrf_report_file_path: string | null
         }
         Insert: {
           building_address?: string | null
@@ -184,14 +185,15 @@ export type Database = {
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
-          dust_swab_status?: string
-          job_status?: string
+          dust_swab_report_file_path?: string | null
+          dust_swab_status?: string | null
           estimated_end_time?: string | null
           has_asbestos?: boolean
           has_dust_swab?: boolean
           has_xrf?: boolean
           id?: string
           job_number?: number
+          job_status?: string
           notes?: string | null
           num_common_spaces?: number | null
           num_units?: number | null
@@ -199,12 +201,12 @@ export type Database = {
           price_per_common_space?: number | null
           price_per_unit?: number | null
           prospect_id?: string | null
-          report_file_path?: string | null
           report_status?: string
           scan_date?: string | null
           start_time?: string | null
           updated_at?: string | null
           worker_id?: string | null
+          xrf_report_file_path?: string | null
         }
         Update: {
           building_address?: string | null
@@ -213,14 +215,15 @@ export type Database = {
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
-          dust_swab_status?: string
-          job_status?: string
+          dust_swab_report_file_path?: string | null
+          dust_swab_status?: string | null
           estimated_end_time?: string | null
           has_asbestos?: boolean
           has_dust_swab?: boolean
           has_xrf?: boolean
           id?: string
           job_number?: number
+          job_status?: string
           notes?: string | null
           num_common_spaces?: number | null
           num_units?: number | null
@@ -228,12 +231,12 @@ export type Database = {
           price_per_common_space?: number | null
           price_per_unit?: number | null
           prospect_id?: string | null
-          report_file_path?: string | null
           report_status?: string
           scan_date?: string | null
           start_time?: string | null
           updated_at?: string | null
           worker_id?: string | null
+          xrf_report_file_path?: string | null
         }
         Relationships: [
           {

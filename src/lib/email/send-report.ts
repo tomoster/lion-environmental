@@ -5,10 +5,16 @@ type SendReportParams = {
   jobNumber: number;
   clientCompany: string;
   buildingAddress: string;
-  services: { has_xrf: boolean; has_dust_swab: boolean; has_asbestos: boolean };
+  serviceType: "xrf" | "dust_swab" | "asbestos";
   pdfBuffer: Buffer;
   filename: string;
   senderName: string;
+};
+
+const SERVICE_LABELS: Record<string, string> = {
+  xrf: "Lead Paint Testing (XRF)",
+  dust_swab: "Dust Wipe Sampling",
+  asbestos: "Asbestos Testing",
 };
 
 export async function sendReportEmail({
@@ -16,17 +22,13 @@ export async function sendReportEmail({
   jobNumber,
   clientCompany,
   buildingAddress,
-  services,
+  serviceType,
   pdfBuffer,
   filename,
   senderName,
 }: SendReportParams) {
   const resend = new Resend(process.env.RESEND_API_KEY);
-  const labels: string[] = [];
-  if (services.has_xrf) labels.push("Lead Paint Testing (XRF)");
-  if (services.has_dust_swab) labels.push("Dust Wipe Sampling");
-  if (services.has_asbestos) labels.push("Asbestos Testing");
-  const serviceLabel = labels.length > 1 ? "Inspection" : labels[0] ?? "Inspection";
+  const serviceLabel = SERVICE_LABELS[serviceType] ?? "Inspection";
 
   const { data, error } = await resend.emails.send({
     from: `${senderName} <reports@lionenvironmental.com>`,

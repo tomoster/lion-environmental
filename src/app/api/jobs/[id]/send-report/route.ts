@@ -8,11 +8,14 @@ type RouteParams = {
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   const { id } = await params;
+  const body = await request.json();
+  const reportType: "xrf" | "dust_swab" = body.reportType ?? "xrf";
+
   const supabase = createAdminClient();
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, report_file_path, has_xrf, has_dust_swab, has_asbestos")
+    .select("id, job_number, client_company, client_email, building_address, xrf_report_file_path, dust_swab_report_file_path, has_xrf, has_dust_swab, has_asbestos")
     .eq("id", id)
     .single();
 
@@ -24,22 +27,24 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ error: "No client email on file" }, { status: 400 });
   }
 
-  if (!job.report_file_path) {
-    return NextResponse.json({ error: "No report uploaded" }, { status: 400 });
+  const filePath = reportType === "xrf" ? job.xrf_report_file_path : job.dust_swab_report_file_path;
+  if (!filePath) {
+    return NextResponse.json({ error: `No ${reportType} report uploaded` }, { status: 400 });
   }
 
   try {
     const { data: fileData } = await supabase.storage
       .from("reports")
-      .download(job.report_file_path);
+      .download(filePath);
 
     if (!fileData) {
       return NextResponse.json({ error: "Failed to download report" }, { status: 500 });
     }
 
     const buffer = Buffer.from(await fileData.arrayBuffer());
-    const ext = job.report_file_path.split(".").pop() ?? "pdf";
-    const filename = `report-job-${job.job_number}.${ext}`;
+    const ext = filePath.split(".").pop() ?? "pdf";
+    const prefix = reportType === "xrf" ? "xrf-report" : "dust-swab-report";
+    const filename = `${prefix}-job-${job.job_number}.${ext}`;
 
     const { data: settings } = await supabase
       .from("settings")
@@ -53,23 +58,19 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       jobNumber: job.job_number,
       clientCompany: job.client_company ?? "Client",
       buildingAddress: job.building_address ?? "",
-      services: { has_xrf: job.has_xrf, has_dust_swab: job.has_dust_swab, has_asbestos: job.has_asbestos },
+      serviceType: reportType,
       pdfBuffer: buffer,
       filename,
       senderName: settingsMap["sender_name"] ?? "Avi Bursztyn",
     });
 
-    const reportUpdate: Record<string, unknown> = {
-      report_status: "sent",
-      updated_at: new Date().toISOString(),
-    };
-    if (job.has_dust_swab) {
-      reportUpdate.dust_swab_status = "sent";
-    }
-
+    const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
     await supabase
       .from("jobs")
-      .update(reportUpdate)
+      .update({
+        [statusColumn]: "sent",
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", id);
 
     return NextResponse.json({ ok: true });

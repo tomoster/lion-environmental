@@ -1,7 +1,7 @@
 import type { TelegramMessage } from "../types";
 import { sendMessage, getFileUrl } from "../client";
 import { setState } from "../state";
-import { reportForJobKeyboard } from "../keyboard";
+import { reportForJobKeyboard, reportTypeKeyboard } from "../keyboard";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function handleDocumentUpload(message: TelegramMessage) {
@@ -28,15 +28,16 @@ export async function handleDocumentUpload(message: TelegramMessage) {
     const jobNum = parseInt(jobNumberMatch[1], 10);
     const { data: job } = await supabase
       .from("jobs")
-      .select("id, job_number, client_company")
+      .select("id, job_number, client_company, has_xrf, has_dust_swab")
       .eq("job_number", jobNum)
       .single();
 
     if (job) {
-      await handleReportUpload(
+      await promptReportType(
         supabase, chatId, doc.file_id,
         doc.file_name ?? "report.pdf",
-        job.id, job.job_number, job.client_company
+        job.id, job.job_number, job.client_company,
+        job.has_xrf, job.has_dust_swab
       );
       return;
     }
@@ -44,10 +45,12 @@ export async function handleDocumentUpload(message: TelegramMessage) {
 
   const { data: pendingJobs } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company")
+    .select("id, job_number, client_company, has_xrf, has_dust_swab")
     .eq("worker_id", worker.id)
-    .in("report_status", ["not_started", "writing"])
-    .is("report_file_path", null);
+    .or(
+      "and(has_xrf.eq.true,xrf_report_file_path.is.null,report_status.in.(not_started,writing))," +
+      "and(has_dust_swab.eq.true,dust_swab_report_file_path.is.null,dust_swab_status.in.(not_started,writing))"
+    );
 
   if (!pendingJobs || pendingJobs.length === 0) {
     await setState(supabase, String(chatId), "awaiting_job_number", {
@@ -63,10 +66,11 @@ export async function handleDocumentUpload(message: TelegramMessage) {
 
   if (pendingJobs.length === 1) {
     const job = pendingJobs[0];
-    await handleReportUpload(
+    await promptReportType(
       supabase, chatId, doc.file_id,
       doc.file_name ?? "report.pdf",
-      job.id, job.job_number, job.client_company
+      job.id, job.job_number, job.client_company,
+      job.has_xrf, job.has_dust_swab
     );
     return;
   }
@@ -82,9 +86,43 @@ export async function handleDocumentUpload(message: TelegramMessage) {
       pendingJobs.map((j) => ({
         id: j.id,
         jobNumber: j.job_number,
-        client: j.client_company ?? "—",
+        client: j.client_company ?? "\u2014",
       }))
     )
+  );
+}
+
+async function promptReportType(
+  supabase: ReturnType<typeof createAdminClient>,
+  chatId: number,
+  fileId: string,
+  fileName: string,
+  jobId: string,
+  jobNumber: number,
+  clientCompany: string | null,
+  hasXrf: boolean,
+  hasDustSwab: boolean,
+) {
+  if (hasXrf && !hasDustSwab) {
+    await handleReportUpload(supabase, chatId, fileId, fileName, jobId, jobNumber, clientCompany, "xrf");
+    return;
+  }
+  if (hasDustSwab && !hasXrf) {
+    await handleReportUpload(supabase, chatId, fileId, fileName, jobId, jobNumber, clientCompany, "dust_swab");
+    return;
+  }
+
+  await setState(supabase, String(chatId), "awaiting_report_type", {
+    file_id: fileId,
+    file_name: fileName,
+    job_id: jobId,
+    job_number: jobNumber,
+    client_company: clientCompany,
+  });
+  await sendMessage(
+    chatId,
+    `Is this the XRF or Dust Swab report for Job #${jobNumber}?`,
+    reportTypeKeyboard(jobId)
   );
 }
 
@@ -95,7 +133,8 @@ export async function handleReportUpload(
   fileName: string,
   jobId: string,
   jobNumber: number,
-  clientCompany: string | null
+  clientCompany: string | null,
+  reportType: "xrf" | "dust_swab"
 ) {
   const fileUrl = await getFileUrl(fileId);
   if (!fileUrl) {
@@ -126,18 +165,22 @@ export async function handleReportUpload(
     return;
   }
 
+  const fileColumn = reportType === "xrf" ? "xrf_report_file_path" : "dust_swab_report_file_path";
+  const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
+  const typeLabel = reportType === "xrf" ? "XRF" : "Dust Swab";
+
   await supabase
     .from("jobs")
     .update({
-      report_file_path: storagePath,
-      report_status: "uploaded",
+      [fileColumn]: storagePath,
+      [statusColumn]: "uploaded",
       updated_at: new Date().toISOString(),
     })
     .eq("id", jobId);
 
   await sendMessage(
     chatId,
-    `Report uploaded for Job #${jobNumber} (${clientCompany ?? "—"}).`
+    `${typeLabel} report uploaded for Job #${jobNumber} (${clientCompany ?? "\u2014"}).`
   );
 
   const { getManagementChatIds } = await import("../get-management-chat-ids");
@@ -146,7 +189,7 @@ export async function handleReportUpload(
   for (const mChatId of managementChatIds) {
     await sendMessage(
       mChatId,
-      `New report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "—"}).`
+      `New <b>${typeLabel}</b> report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "\u2014"}).`
     );
   }
 }

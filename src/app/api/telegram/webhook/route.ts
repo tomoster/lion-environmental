@@ -6,6 +6,7 @@ import { handleAcceptJob } from "@/lib/telegram/handlers/accept-job";
 import { handleCompleteJob } from "@/lib/telegram/handlers/complete-job";
 import { handleDocumentUpload } from "@/lib/telegram/handlers/document-upload";
 import { handleReportForJob } from "@/lib/telegram/handlers/report-for-job";
+import { handleReportTypePick } from "@/lib/telegram/handlers/report-type-pick";
 import { handleSendInvoice } from "@/lib/telegram/handlers/send-invoice";
 import { handleSendReport } from "@/lib/telegram/handlers/send-report";
 
@@ -31,6 +32,8 @@ export async function POST(request: NextRequest) {
         await handleSendReport(update.callback_query);
       } else if (data.startsWith("reportfor_")) {
         await handleReportForJob(update.callback_query);
+      } else if (data.startsWith("rtype_")) {
+        await handleReportTypePick(update.callback_query);
       }
     } else if (update.message?.document) {
       await handleDocumentUpload(update.message);
