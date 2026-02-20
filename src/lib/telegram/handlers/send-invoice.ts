@@ -11,6 +11,21 @@ export async function handleSendInvoice(query: TelegramCallbackQuery) {
   const supabase = createAdminClient();
 
   try {
+    const { data: invoice } = await supabase
+      .from("invoices")
+      .select("status, invoice_number")
+      .eq("id", invoiceId)
+      .single();
+
+    if (invoice?.status === "sent" || invoice?.status === "paid") {
+      await answerCallbackQuery(query.id, "Already sent.");
+      await sendMessage(
+        chatId,
+        `Invoice #${invoice.invoice_number} has already been sent.`
+      );
+      return;
+    }
+
     const result = await sendInvoiceForId(invoiceId, supabase);
     await answerCallbackQuery(query.id, "Invoice sent!");
     await sendMessage(
