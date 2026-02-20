@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Scraping Checklist</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f0f0f; color: #e0e0e0; padding: 24px; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 22px; margin-bottom: 4px; color: #fff; }
+  .subtitle { color: #888; font-size: 14px; margin-bottom: 24px; }
+  .stats { display: flex; gap: 16px; margin-bottom: 24px; }
+  .stat { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 12px 16px; flex: 1; text-align: center; }
+  .stat-num { font-size: 28px; font-weight: 700; color: #fff; }
+  .stat-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+  .stat.done .stat-num { color: #4ade80; }
+  .borough { margin-bottom: 20px; }
+  .borough-header { font-size: 14px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 1px; padding: 8px 0; border-bottom: 1px solid #2a2a2a; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .borough-count { font-weight: 400; color: #666; }
+  .run { padding: 10px 12px; border-radius: 6px; cursor: pointer; user-select: none; transition: background 0.15s; }
+  .run:hover { background: #1a1a1a; }
+  .run.done { opacity: 0.45; }
+  .run.done .run-title { text-decoration: line-through; }
+  .run-top { display: flex; align-items: center; gap: 12px; }
+  .checkbox { width: 20px; height: 20px; border: 2px solid #444; border-radius: 4px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .run.done .checkbox { background: #4ade80; border-color: #4ade80; }
+  .checkmark { display: none; color: #000; font-size: 13px; font-weight: 700; }
+  .run.done .checkmark { display: block; }
+  .run-num { font-size: 12px; color: #666; width: 24px; text-align: right; flex-shrink: 0; }
+  .run-title { font-size: 14px; color: #e0e0e0; flex: 1; }
+  .run-location { font-size: 12px; color: #888; }
+  .copy-json-btn { background: #7c3aed; border: 1px solid #8b5cf6; color: #fff; font-size: 11px; padding: 4px 10px; border-radius: 4px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; font-weight: 500; }
+  .copy-json-btn:hover { background: #6d28d9; }
+  .copy-json-btn.copied { background: #4ade80; color: #000; border-color: #4ade80; }
+  .json-toggle { background: none; border: 1px solid #3a3a3a; color: #888; font-size: 11px; padding: 3px 8px; border-radius: 4px; cursor: pointer; flex-shrink: 0; transition: all 0.15s; }
+  .json-toggle:hover { color: #ccc; border-color: #555; }
+  .json-preview { display: none; margin-top: 8px; margin-left: 44px; background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 12px; font-family: monospace; font-size: 11px; color: #aaa; white-space: pre; overflow-x: auto; max-height: 300px; overflow-y: auto; line-height: 1.4; }
+  .json-preview.open { display: block; }
+  .settings { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+  .settings h2 { font-size: 14px; color: #fff; margin-bottom: 10px; }
+  .setting-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
+  .setting-key { color: #888; }
+  .setting-val { color: #e0e0e0; font-weight: 500; }
+  .apify-link { display: inline-block; background: #2563eb; color: #fff; text-decoration: none; padding: 8px 16px; border-radius: 6px; font-size: 13px; font-weight: 500; margin-bottom: 24px; }
+  .apify-link:hover { background: #1d4ed8; }
+  .instructions { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 24px; }
+  .instructions h2 { font-size: 14px; color: #fff; margin-bottom: 10px; }
+  .instructions ol { padding-left: 20px; font-size: 13px; color: #aaa; line-height: 1.8; }
+  .instructions strong { color: #e0e0e0; }
+  .after { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 8px; padding: 16px; margin-top: 24px; }
+  .after h2 { font-size: 14px; color: #fff; margin-bottom: 8px; }
+  .after p { font-size: 13px; color: #aaa; line-height: 1.5; }
+  .after code { background: #2a2a2a; padding: 2px 6px; border-radius: 3px; font-size: 12px; color: #e0e0e0; }
+  .merge-cmd { background: #0a0a0a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 12px; margin-top: 10px; font-family: monospace; font-size: 12px; color: #ccc; white-space: pre; overflow-x: auto; }
+  .progress-bar { height: 4px; background: #2a2a2a; border-radius: 2px; overflow: hidden; margin-bottom: 24px; }
+  .progress-fill { height: 100%; background: #4ade80; border-radius: 2px; transition: width 0.3s; }
+</style>
+</head>
+<body>
+
+<h1>Lead Scraping Checklist</h1>
+<p class="subtitle">4 search terms x 5 NYC boroughs = 20 Apify runs</p>
+
+<div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+<div class="stats">
+  <div class="stat done"><div class="stat-num" id="doneCount">0</div><div class="stat-label">Done</div></div>
+  <div class="stat"><div class="stat-num" id="remainCount">20</div><div class="stat-label">Remaining</div></div>
+  <div class="stat"><div class="stat-num">20</div><div class="stat-label">Total</div></div>
+</div>
+
+<a href="https://console.apify.com/actors/compass~crawler-google-places" target="_blank" class="apify-link">Open Google Maps Scraper in Apify</a>
+
+<div class="instructions">
+  <h2>How to use (for each run)</h2>
+  <ol>
+    <li>Click <strong>Copy JSON</strong> on the run below</li>
+    <li>In Apify, click the <strong>JSON</strong> tab in the input editor</li>
+    <li>Select all, paste the JSON, click <strong>Start</strong></li>
+    <li>When done, click <strong>Export</strong> &rarr; <strong>CSV</strong></li>
+    <li>Come back here and click the row to check it off</li>
+  </ol>
+</div>
+
+<div id="checklist"></div>
+
+<div class="after">
+  <h2>After all 20 runs</h2>
+  <p>Upload each CSV to your app at <code>/prospects/import</code> one at a time. The dedup handles overlaps automatically.</p>
+  <p style="margin-top:8px">Or merge them first, then upload once:</p>
+  <div class="merge-cmd">cd ~/Downloads
+head -1 run-01.csv > all-leads.csv
+for f in run-*.csv; do tail -n +2 "$f" >> all-leads.csv; done</div>
+</div>
+
+<script>
+var RUNS_DATA = [
+  ["Manhattan", "property management company"],
+  ["Manhattan", "real estate management"],
+  ["Manhattan", "building management company"],
+  ["Manhattan", "apartment management"],
+  ["Brooklyn", "property management company"],
+  ["Brooklyn", "real estate management"],
+  ["Brooklyn", "building management company"],
+  ["Brooklyn", "apartment management"],
+  ["Queens", "property management company"],
+  ["Queens", "real estate management"],
+  ["Queens", "building management company"],
+  ["Queens", "apartment management"],
+  ["Bronx", "property management company"],
+  ["Bronx", "real estate management"],
+  ["Bronx", "building management company"],
+  ["Bronx", "apartment management"],
+  ["Staten Island", "property management company"],
+  ["Staten Island", "real estate management"],
+  ["Staten Island", "building management company"],
+  ["Staten Island", "apartment management"]
+];
+
+var BOROUGHS = ["Manhattan", "Brooklyn", "Queens", "Bronx", "Staten Island"];
+
+function buildJson(searchTerm, borough) {
+  return JSON.stringify({
+    "searchStringsArray": [searchTerm],
+    "locationQuery": borough + ", New York, NY",
+    "maxCrawledPlacesPerSearch": 500,
+    "language": "en",
+    "countryCode": "us",
+    "searchMatching": "all",
+    "placeMinimumStars": "",
+    "website": "allPlaces",
+    "skipClosedPlaces": true,
+    "scrapePlaceDetailPage": false,
+    "scrapeTableReservationProvider": false,
+    "includeWebResults": false,
+    "scrapeDirectories": false,
+    "maxQuestions": 0,
+    "scrapeContacts": true,
+    "scrapeSocialMediaProfiles": {
+      "facebooks": false,
+      "instagrams": false,
+      "youtubes": false,
+      "tiktoks": false,
+      "twitters": false
+    },
+    "maximumLeadsEnrichmentRecords": 0,
+    "maxReviews": 0,
+    "reviewsSort": "newest",
+    "reviewsFilterString": "",
+    "reviewsOrigin": "all",
+    "scrapeReviewsPersonalData": false,
+    "maxImages": 0,
+    "scrapeImageAuthors": false,
+    "allPlacesNoSearchAction": ""
+  }, null, 2);
+}
+
+var automatedDone = {"run-1":true,"run-2":true,"run-3":true,"run-4":true,"run-5":true,"run-6":true,"run-7":true,"run-8":true};
+var state = Object.assign({}, automatedDone, JSON.parse(localStorage.getItem("scrape-state") || "{}"));
+
+function save() {
+  localStorage.setItem("scrape-state", JSON.stringify(state));
+}
+
+function updateStats() {
+  var done = 0;
+  for (var k in state) { if (state[k]) done++; }
+  document.getElementById("doneCount").textContent = done;
+  document.getElementById("remainCount").textContent = 20 - done;
+  document.getElementById("progressFill").style.width = (done / 20 * 100) + "%";
+}
+
+function updateBoroughCounts() {
+  BOROUGHS.forEach(function(borough) {
+    var done = 0;
+    var total = 0;
+    RUNS_DATA.forEach(function(r, i) {
+      if (r[0] === borough) {
+        total++;
+        if (state["run-" + (i + 1)]) done++;
+      }
+    });
+    var el = document.getElementById("bc-" + borough.replace(" ", "-"));
+    if (el) el.textContent = done + "/" + total;
+  });
+}
+
+function flashCopied(btn) {
+  btn.textContent = "Copied!";
+  btn.classList.add("copied");
+  setTimeout(function() {
+    btn.textContent = "Copy JSON";
+    btn.classList.remove("copied");
+  }, 1500);
+}
+
+function buildChecklist() {
+  var container = document.getElementById("checklist");
+  var currentBorough = "";
+
+  RUNS_DATA.forEach(function(item, i) {
+    var borough = item[0];
+    var term = item[1];
+    var num = i + 1;
+    var id = "run-" + num;
+    var location = borough + ", New York, NY";
+    var jsonStr = buildJson(term, borough);
+
+    if (borough !== currentBorough) {
+      currentBorough = borough;
+      var section = document.createElement("div");
+      section.className = "borough";
+
+      var header = document.createElement("div");
+      header.className = "borough-header";
+
+      var nameSpan = document.createElement("span");
+      nameSpan.textContent = borough;
+      header.appendChild(nameSpan);
+
+      var countSpan = document.createElement("span");
+      countSpan.className = "borough-count";
+      countSpan.id = "bc-" + borough.replace(" ", "-");
+      countSpan.textContent = "0/4";
+      header.appendChild(countSpan);
+
+      section.appendChild(header);
+      container.appendChild(section);
+    }
+
+    var lastSection = container.lastElementChild;
+
+    var run = document.createElement("div");
+    run.className = "run" + (state[id] ? " done" : "");
+
+    var topRow = document.createElement("div");
+    topRow.className = "run-top";
+
+    var cb = document.createElement("div");
+    cb.className = "checkbox";
+    var check = document.createElement("span");
+    check.className = "checkmark";
+    check.textContent = "\u2713";
+    cb.appendChild(check);
+    topRow.appendChild(cb);
+
+    var numEl = document.createElement("span");
+    numEl.className = "run-num";
+    numEl.textContent = num;
+    topRow.appendChild(numEl);
+
+    var titleEl = document.createElement("span");
+    titleEl.className = "run-title";
+    titleEl.textContent = term;
+    topRow.appendChild(titleEl);
+
+    var locEl = document.createElement("span");
+    locEl.className = "run-location";
+    locEl.textContent = location;
+    topRow.appendChild(locEl);
+
+    var copyBtn = document.createElement("button");
+    copyBtn.className = "copy-json-btn";
+    copyBtn.textContent = "Copy JSON";
+    copyBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      navigator.clipboard.writeText(jsonStr);
+      flashCopied(copyBtn);
+    });
+    topRow.appendChild(copyBtn);
+
+    var toggleBtn = document.createElement("button");
+    toggleBtn.className = "json-toggle";
+    toggleBtn.textContent = "View";
+    toggleBtn.addEventListener("click", function(e) {
+      e.stopPropagation();
+      var preview = run.querySelector(".json-preview");
+      var isOpen = preview.classList.contains("open");
+      preview.classList.toggle("open");
+      toggleBtn.textContent = isOpen ? "View" : "Hide";
+    });
+    topRow.appendChild(toggleBtn);
+
+    run.appendChild(topRow);
+
+    var preview = document.createElement("div");
+    preview.className = "json-preview";
+    preview.textContent = jsonStr;
+    run.appendChild(preview);
+
+    topRow.addEventListener("click", function(e) {
+      if (e.target.classList.contains("copy-json-btn") ||
+          e.target.classList.contains("json-toggle")) return;
+      state[id] = !state[id];
+      run.classList.toggle("done");
+      save();
+      updateStats();
+      updateBoroughCounts();
+    });
+
+    lastSection.appendChild(run);
+  });
+}
+
+buildChecklist();
+updateStats();
+updateBoroughCounts();
+</script>
+</body>
+</html>
