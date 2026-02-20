@@ -1,7 +1,7 @@
 import type { TelegramMessage } from "../types";
 import { sendMessage, getFileUrl } from "../client";
 import { setState } from "../state";
-import { sendReportKeyboard, reportForJobKeyboard } from "../keyboard";
+import { reportForJobKeyboard } from "../keyboard";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function handleDocumentUpload(message: TelegramMessage) {
@@ -146,8 +146,7 @@ export async function handleReportUpload(
   for (const mChatId of managementChatIds) {
     await sendMessage(
       mChatId,
-      `New report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "—"}).`,
-      sendReportKeyboard(jobId)
+      `New report uploaded for <b>Job #${jobNumber}</b> (${clientCompany ?? "—"}).`
     );
   }
 }
