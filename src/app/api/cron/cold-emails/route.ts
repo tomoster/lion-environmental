@@ -94,9 +94,10 @@ export async function GET(request: NextRequest) {
 
   let dailyLimit = baseDailyLimit;
   if (rampStart && rampIncrement > 0) {
+    const todayDate = new Date(todayStr + "T00:00:00");
     const startDate = new Date(rampStart + "T00:00:00");
     const daysSinceStart = Math.floor(
-      (new Date().getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
+      (todayDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)
     );
     if (daysSinceStart > 0) {
       const rampSteps = Math.floor(daysSinceStart / 2);
