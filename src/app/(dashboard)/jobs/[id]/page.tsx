@@ -296,10 +296,11 @@ export default async function JobDetailPage({ params }: PageProps) {
                     <Label htmlFor="estimated_end_time">Est. End Time</Label>
                     <Input
                       id="estimated_end_time"
-                      name="estimated_end_time"
                       type="time"
                       step="300"
                       defaultValue={job.estimated_end_time ?? ""}
+                      readOnly
+                      className="bg-muted/40 cursor-not-allowed"
                     />
                   </div>
                 </div>
