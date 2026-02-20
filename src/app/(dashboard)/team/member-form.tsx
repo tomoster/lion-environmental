@@ -200,7 +200,7 @@ export function MemberForm(props: MemberFormProps) {
                 </div>
               </div>
             )}
-            {showRates && (
+            {showRates && role === "field" && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="rate_per_unit">Rate / Unit ($)</Label>
@@ -224,6 +224,19 @@ export function MemberForm(props: MemberFormProps) {
                     defaultValue={worker?.rate_per_common_space ?? ""}
                   />
                 </div>
+              </div>
+            )}
+            {showRates && role === "office" && (
+              <div className="grid gap-2">
+                <Label htmlFor="rate_per_unit">Rate / Report ($)</Label>
+                <Input
+                  id="rate_per_unit"
+                  name="rate_per_unit"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={worker?.rate_per_unit ?? ""}
+                />
               </div>
             )}
           </div>

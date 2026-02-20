@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { updateJob, deleteJob, uploadReport } from "../actions";
 import { dispatchJob, markClientPaid } from "./automation-actions";
 import { DeleteJobButton } from "./delete-job-button";
+import { DispatchButton, ClientPaidButton } from "./action-buttons";
 import { JobDetailForm } from "./job-detail-form";
 import { getAvailableWorkers } from "@/lib/scheduling";
 import { formatServiceTypes } from "@/lib/service-type-utils";
@@ -197,18 +198,10 @@ export default async function JobDetailPage({ params }: PageProps) {
         </div>
         <div className="flex items-center gap-2">
           {canDispatch && (
-            <form action={dispatchJobWithId}>
-              <Button type="submit" variant="outline">
-                Dispatch to Workers
-              </Button>
-            </form>
+            <DispatchButton action={dispatchJobWithId} />
           )}
           {canMarkPaid && (
-            <form action={markClientPaidWithId}>
-              <Button type="submit">
-                Client Paid
-              </Button>
-            </form>
+            <ClientPaidButton action={markClientPaidWithId} />
           )}
           {!jobInvoice && (
             <Link href={`/invoices/new?job_id=${id}`}>

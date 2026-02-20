@@ -166,7 +166,7 @@ export default async function MemberDetailPage({
                 </dd>
               </div>
             )}
-            {worker.role !== "management" && (
+            {worker.role === "field" && (
               <>
                 <div>
                   <dt className="text-xs text-muted-foreground">Rate / Unit</dt>
@@ -181,6 +181,14 @@ export default async function MemberDetailPage({
                   </dd>
                 </div>
               </>
+            )}
+            {worker.role === "office" && (
+              <div>
+                <dt className="text-xs text-muted-foreground">Rate / Report</dt>
+                <dd className="mt-1 text-sm">
+                  {worker.rate_per_unit != null ? `$${worker.rate_per_unit.toFixed(2)}` : "\u2014"}
+                </dd>
+              </div>
             )}
             <div>
               <dt className="text-xs text-muted-foreground">Total Paid</dt>
