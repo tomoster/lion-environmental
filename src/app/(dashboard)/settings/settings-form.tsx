@@ -42,6 +42,55 @@ If you have any questions about this report, please don't hesitate to reach out.
 
 Thank you for choosing Lion Environmental!`;
 
+const DEFAULT_COLD_EMAIL_SUBJECT = "Quick question about {{company}}";
+
+const DEFAULT_COLD_EMAIL_STEPS = [
+  `Hi {{first_name}},
+
+I run a lead paint testing company in the NJ/NYC area. With the Local Law 31 deadlines coming up, a lot of property managers are scrambling to get inspections done.
+
+We handle everything - full-building XRF inspections with reports ready in 48-72 hours.
+
+Would it make sense to chat for 5 minutes about your buildings?
+
+Best,
+Avi Bursztyn
+Lion Environmental LLC
+(201) 375-2797`,
+
+  `Hi {{first_name}},
+
+Following up on my last note. NYC just expanded enforcement on Local Law 31 - fines start at $1,000 per unit for non-compliance, and they're actively issuing violations.
+
+We do full-building inspections with certified reports, typically turned around in 2-3 days. Happy to give you a quick quote if you want to compare pricing.
+
+Best,
+Avi Bursztyn
+Lion Environmental LLC
+(201) 375-2797`,
+
+  `Hi {{first_name}},
+
+Just finished a 24-unit building inspection in Jersey City - results back in 2 days, client was happy with the pricing.
+
+If you're shopping around for lead paint testing, happy to put together a comparison quote. No pressure either way.
+
+Best,
+Avi Bursztyn
+Lion Environmental LLC
+(201) 375-2797`,
+
+  `Hi {{first_name}},
+
+Haven't heard back, totally understand - you're busy.
+
+If lead paint testing ever comes up down the road, my number is (201) 375-2797. Always happy to help.
+
+Best,
+Avi Bursztyn
+Lion Environmental LLC`,
+];
+
 interface SettingsFormProps {
   settings: Record<string, string>;
 }
@@ -547,8 +596,9 @@ export function SettingsForm({ settings }: SettingsFormProps) {
               <Input
                 id="cold_email_subject"
                 name="cold_email_subject"
-                defaultValue={settings.cold_email_subject ?? ""}
-                placeholder="e.g., Lead paint inspection services for {{company}}"
+                defaultValue={
+                  settings.cold_email_subject ?? DEFAULT_COLD_EMAIL_SUBJECT
+                }
               />
             </div>
             {[1, 2, 3, 4].map((step) => (
@@ -558,8 +608,11 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                   id={`cold_email_step_${step}`}
                   name={`cold_email_step_${step}`}
                   rows={5}
-                  defaultValue={settings[`cold_email_step_${step}`] ?? ""}
-                  placeholder={`Email body for step ${step}...`}
+                  defaultValue={
+                    settings[`cold_email_step_${step}`] ??
+                    DEFAULT_COLD_EMAIL_STEPS[step - 1] ??
+                    ""
+                  }
                 />
               </div>
             ))}
