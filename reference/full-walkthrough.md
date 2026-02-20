@@ -142,7 +142,7 @@ _None_
 
 ## Step 7: Worker Accepts Job
 
-**Status:** [ ] NEXT
+**Status:** [x] DONE
 
 **What to do:**
 - In Telegram, tap "Accept" on the dispatched job message
@@ -156,13 +156,16 @@ _None_
 - Management notified of acceptance (if applicable)
 
 **Issues found:**
-
+- Accept silently failed when multiple workers shared the same telegram_chat_id (.single() errored on 3 rows). Fixed: use .maybeSingle() with role filter.
+- Dispatch message missing common spaces and wipes counts. Fixed: added to broadcast query and message text.
+- No worker specialty filtering — all workers got all dispatches. Fixed: added has_xrf/has_dust_swab/has_asbestos columns + UI + dispatch filtering.
+- User requested dispatch messages be deleted from all workers' chats on accept. Fixed: broadcast saves message IDs, accept handler deletes them all.
 
 ---
 
 ## Step 8: Worker Completes Job
 
-**Status:** [ ] NOT STARTED
+**Status:** [ ] NEXT
 
 **What to do:**
 - Worker taps "Complete" on the job reminder or changes status
@@ -376,10 +379,10 @@ _None_
 | 2 | Add Prospect | [x] DONE |
 | 3 | Prospect to Job | [x] DONE |
 | 4 | Job Creation | [x] DONE |
-| 5 | Job Detail Page | [ ] IN PROGRESS |
-| 6 | Dispatch | [ ] NEXT |
-| 7 | Worker Accepts Job | [ ] NOT STARTED |
-| 8 | Worker Completes Job | [ ] NOT STARTED |
+| 5 | Job Detail Page | [x] DONE |
+| 6 | Dispatch | [x] DONE |
+| 7 | Worker Accepts Job | [x] DONE |
+| 8 | Worker Completes Job | [ ] NEXT |
 | 9 | Report Upload | [ ] NOT STARTED |
 | 10 | Send Report | [ ] NOT STARTED |
 | 11 | Generate Invoice | [ ] NOT STARTED |
