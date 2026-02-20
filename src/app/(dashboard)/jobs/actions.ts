@@ -53,7 +53,7 @@ export async function updateJob(id: string, formData: FormData) {
 
   const { data: currentJob } = await supabase
     .from("jobs")
-    .select("job_status, start_time")
+    .select("job_status, start_time, report_status, dust_swab_status")
     .eq("id", id)
     .single();
   const wasNotDispatched = currentJob?.job_status === "not_dispatched";
@@ -112,8 +112,18 @@ export async function updateJob(id: string, formData: FormData) {
       return v && v !== "unassigned" ? v : null;
     })(),
     job_status: formData.get("job_status") as string,
-    report_status: formData.get("report_status") as string,
-    dust_swab_status: (formData.get("dust_swab_status") as string) || "not_started",
+    report_status: (() => {
+      const formVal = formData.get("report_status") as string;
+      const dbVal = currentJob?.report_status ?? "not_started";
+      const locked = ["uploaded", "sent"];
+      return locked.includes(dbVal) && !locked.includes(formVal) ? dbVal : formVal;
+    })(),
+    dust_swab_status: (() => {
+      const formVal = (formData.get("dust_swab_status") as string) || "not_started";
+      const dbVal = currentJob?.dust_swab_status ?? "not_started";
+      const locked = ["uploaded", "sent"];
+      return locked.includes(dbVal) && !locked.includes(formVal) ? dbVal : formVal;
+    })(),
     updated_at: new Date().toISOString(),
   };
 
