@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAuth } from "@/lib/auth/require-auth";
 
 interface ApifyRow {
   title?: string;
@@ -39,6 +40,9 @@ function normalizeCompany(name: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const user = await requireAuth();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
   const supabase = createAdminClient();
 
   const { rows } = (await request.json()) as { rows: ApifyRow[] };
