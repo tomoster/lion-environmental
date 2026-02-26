@@ -29,8 +29,12 @@ export default async function ProspectsPage({
     );
   }
 
-  if (status && status !== "all") {
+  if (status === "archived") {
+    query = query.eq("status", "archived");
+  } else if (status && status !== "all") {
     query = query.eq("status", status);
+  } else {
+    query = query.neq("status", "archived");
   }
 
   const { data: prospects, count, error } = await query;

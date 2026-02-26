@@ -340,6 +340,7 @@ export type Database = {
       }
       prospects: {
         Row: {
+          apollo_id: string | null
           building_address: string | null
           company: string
           contact_name: string | null
@@ -347,6 +348,9 @@ export type Database = {
           email: string | null
           google_rating: number | null
           id: string
+          job_title: string | null
+          lead_type: string | null
+          linkedin: string | null
           next_followup: string | null
           next_send: string | null
           notes: string | null
@@ -359,6 +363,7 @@ export type Database = {
           website: string | null
         }
         Insert: {
+          apollo_id?: string | null
           building_address?: string | null
           company: string
           contact_name?: string | null
@@ -366,6 +371,9 @@ export type Database = {
           email?: string | null
           google_rating?: number | null
           id?: string
+          job_title?: string | null
+          lead_type?: string | null
+          linkedin?: string | null
           next_followup?: string | null
           next_send?: string | null
           notes?: string | null
@@ -378,6 +386,7 @@ export type Database = {
           website?: string | null
         }
         Update: {
+          apollo_id?: string | null
           building_address?: string | null
           company?: string
           contact_name?: string | null
@@ -385,6 +394,9 @@ export type Database = {
           email?: string | null
           google_rating?: number | null
           id?: string
+          job_title?: string | null
+          lead_type?: string | null
+          linkedin?: string | null
           next_followup?: string | null
           next_send?: string | null
           notes?: string | null
