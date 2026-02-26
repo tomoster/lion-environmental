@@ -111,12 +111,12 @@ export function ProspectForm({ prospect, onSuccess }: ProspectFormProps) {
         </div>
 
         <div className="col-span-2 space-y-1.5">
-          <Label htmlFor="building_address">Building Address</Label>
+          <Label htmlFor="building_address">Location</Label>
           <Input
             id="building_address"
             name="building_address"
             defaultValue={prospect?.building_address ?? ""}
-            placeholder="123 Main St, New York, NY"
+            placeholder="Brooklyn, New York"
           />
         </div>
 
