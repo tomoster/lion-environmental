@@ -522,7 +522,7 @@ export default function ApolloSearchPage() {
                   className="rounded"
                 />
                 <label htmlFor="revealPhones" className="text-sm text-muted-foreground">
-                  Phone numbers <span className="text-xs text-amber-600">(extra credits)</span>
+                  Phone numbers <span className="text-xs text-amber-600">(~8 credits/person)</span>
                 </label>
               </div>
             </div>
