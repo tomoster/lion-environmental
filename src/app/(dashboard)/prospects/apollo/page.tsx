@@ -538,17 +538,22 @@ export default function ApolloSearchPage() {
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="enrichToggle"
-                checked={enrichResults}
-                onChange={(e) => setEnrichResults(e.target.checked)}
-                className="rounded"
-              />
-              <label htmlFor="enrichToggle" className="text-sm text-muted-foreground">
-                Enrich immediately (costs credits)
-              </label>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="enrichToggle"
+                  checked={enrichResults}
+                  onChange={(e) => setEnrichResults(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="enrichToggle" className="text-sm text-muted-foreground">
+                  Enrich immediately (costs credits)
+                </label>
+              </div>
+              <p className="text-xs text-amber-600">
+                Phone number reveals cost extra credits on Apollo
+              </p>
             </div>
 
             <Button onClick={handleSearch} disabled={searching} size="lg">
