@@ -8,9 +8,13 @@ function getApiKey(): string {
 
 export interface ApolloSearchParams {
   person_titles?: string[];
+  person_locations?: string[];
   organization_locations?: string[];
   person_seniorities?: string[];
   contact_email_status?: string[];
+  organization_num_employees_ranges?: string[];
+  q_keywords?: string;
+  include_similar_titles?: boolean;
   per_page?: number;
   page?: number;
 }
@@ -58,18 +62,25 @@ export interface ApolloEnrichedPerson {
 export async function searchPeople(
   params: ApolloSearchParams
 ): Promise<ApolloSearchResult> {
+  const body: Record<string, unknown> = {
+    api_key: getApiKey(),
+    per_page: params.per_page ?? 100,
+    page: params.page ?? 1,
+  };
+
+  if (params.person_titles?.length) body.person_titles = params.person_titles;
+  if (params.person_locations?.length) body.person_locations = params.person_locations;
+  if (params.organization_locations?.length) body.organization_locations = params.organization_locations;
+  if (params.person_seniorities?.length) body.person_seniorities = params.person_seniorities;
+  if (params.contact_email_status?.length) body.contact_email_status = params.contact_email_status;
+  if (params.organization_num_employees_ranges?.length) body.organization_num_employees_ranges = params.organization_num_employees_ranges;
+  if (params.q_keywords) body.q_keywords = params.q_keywords;
+  if (params.include_similar_titles !== undefined) body.include_similar_titles = params.include_similar_titles;
+
   const res = await fetch(`${APOLLO_BASE_URL}/api/v1/mixed_people/search`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      api_key: getApiKey(),
-      person_titles: params.person_titles,
-      organization_locations: params.organization_locations,
-      person_seniorities: params.person_seniorities,
-      contact_email_status: params.contact_email_status ?? ["verified"],
-      per_page: params.per_page ?? 100,
-      page: params.page ?? 1,
-    }),
+    body: JSON.stringify(body),
   });
 
   if (!res.ok) {

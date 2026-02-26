@@ -5,25 +5,12 @@ import {
   bulkEnrichPeople,
   delay,
   type ApolloEnrichedPerson,
+  type ApolloSearchParams,
 } from "@/lib/apollo/client";
 
 export const maxDuration = 60;
 
-const DEFAULT_TITLES = [
-  "Property Manager",
-  "Regional Property Manager",
-  "Director of Property Management",
-  "Director of Operations",
-  "Operations Manager",
-  "Facilities Manager",
-  "Building Manager",
-  "Asset Manager",
-  "Portfolio Manager",
-  "VP of Property Management",
-  "VP of Operations",
-];
-
-const ROCKLAND_LOCATIONS = [
+const ROCKLAND_TOWNS = [
   "New City, New York",
   "Suffern, New York",
   "Nanuet, New York",
@@ -41,17 +28,20 @@ const ROCKLAND_LOCATIONS = [
   "Blauvelt, New York",
   "Chestnut Ridge, New York",
   "Airmont, New York",
+  "Garnerville, New York",
+  "Valley Cottage, New York",
 ];
-
-const PRESETS: Record<string, string[]> = {
-  rockland: ROCKLAND_LOCATIONS,
-  brooklyn: ["Brooklyn, New York"],
-};
 
 interface SearchRequest {
   locations: string[];
   titles?: string[];
+  seniorities?: string[];
+  employeeRanges?: string[];
+  keywords?: string;
+  emailStatus?: string[];
+  includeSimilarTitles?: boolean;
   maxResults?: number;
+  enrichResults?: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -60,42 +50,62 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = (await request.json()) as SearchRequest;
-  const locations = body.locations;
-  const titles = body.titles ?? DEFAULT_TITLES;
   const maxResults = Math.min(body.maxResults ?? 200, 500);
+  const shouldEnrich = body.enrichResults !== false;
 
-  if (!locations || locations.length === 0) {
+  if (!body.locations || body.locations.length === 0) {
     return NextResponse.json(
-      { error: "locations is required" },
+      { error: "At least one location is required" },
       { status: 400 }
     );
   }
 
-  // Resolve preset names
-  const resolvedLocations = locations.flatMap(
-    (loc) => PRESETS[loc.toLowerCase()] ?? [loc]
+  // Resolve "rockland" preset to individual towns
+  const resolvedLocations = body.locations.flatMap((loc) =>
+    loc.toLowerCase() === "rockland" ? ROCKLAND_TOWNS : [loc]
   );
 
+  const searchParams: ApolloSearchParams = {
+    person_locations: resolvedLocations,
+    per_page: 100,
+    page: 1,
+  };
+
+  if (body.titles?.length) searchParams.person_titles = body.titles;
+  if (body.seniorities?.length) searchParams.person_seniorities = body.seniorities;
+  if (body.employeeRanges?.length) searchParams.organization_num_employees_ranges = body.employeeRanges;
+  if (body.keywords) searchParams.q_keywords = body.keywords;
+  if (body.emailStatus?.length) searchParams.contact_email_status = body.emailStatus;
+  if (body.includeSimilarTitles !== undefined) searchParams.include_similar_titles = body.includeSimilarTitles;
+
   // Search (FREE — no credits)
-  const allPeople: Array<{ id: string; name: string; title: string | null; company: string | null }> = [];
+  const allPeople: Array<{
+    id: string;
+    name: string;
+    title: string | null;
+    company: string | null;
+    city: string | null;
+    state: string | null;
+  }> = [];
   let page = 1;
+  let totalAvailable = 0;
 
   while (allPeople.length < maxResults) {
-    const result = await searchPeople({
-      person_titles: titles,
-      organization_locations: resolvedLocations,
-      contact_email_status: ["verified"],
-      per_page: 100,
-      page,
-    });
+    searchParams.page = page;
+    const result = await searchPeople(searchParams);
+    totalAvailable = result.pagination.total_entries;
 
     for (const person of result.people) {
       if (allPeople.length >= maxResults) break;
       allPeople.push({
         id: person.id,
-        name: person.name ?? `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim(),
+        name:
+          person.name ??
+          `${person.first_name ?? ""} ${person.last_name ?? ""}`.trim(),
         title: person.title,
         company: person.organization?.name ?? null,
+        city: person.city,
+        state: person.state,
       });
     }
 
@@ -107,8 +117,28 @@ export async function POST(request: NextRequest) {
   if (allPeople.length === 0) {
     return NextResponse.json({
       total: 0,
+      total_available: totalAvailable,
       credits_used: 0,
       people: [],
+    });
+  }
+
+  // If not enriching, return search-only results (0 credits)
+  if (!shouldEnrich) {
+    return NextResponse.json({
+      total: allPeople.length,
+      total_available: totalAvailable,
+      credits_used: 0,
+      people: allPeople.map((p) => ({
+        apollo_id: p.id,
+        name: p.name,
+        email: null,
+        title: p.title,
+        company: p.company,
+        linkedin: null,
+        phone: null,
+        location: [p.city, p.state].filter(Boolean).join(", "),
+      })),
     });
   }
 
@@ -142,6 +172,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     total: people.length,
+    total_available: totalAvailable,
     credits_used: ids.length,
     searched: allPeople.length,
     people,
