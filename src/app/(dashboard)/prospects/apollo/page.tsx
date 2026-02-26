@@ -75,30 +75,37 @@ const EMPLOYEE_COUNT_OPTIONS = [
 ];
 
 const LOCATION_PRESETS = [
-  { value: "Monsey, New York", label: "Monsey" },
-  { value: "Spring Valley, New York", label: "Spring Valley" },
-  { value: "New City, New York", label: "New City" },
-  { value: "Suffern, New York", label: "Suffern" },
-  { value: "Nanuet, New York", label: "Nanuet" },
-  { value: "Pearl River, New York", label: "Pearl River" },
-  { value: "Haverstraw, New York", label: "Haverstraw" },
-  { value: "Nyack, New York", label: "Nyack" },
-  { value: "Stony Point, New York", label: "Stony Point" },
-  { value: "Congers, New York", label: "Congers" },
-  { value: "Greater New York City Area", label: "Greater NYC Area" },
+  "Monsey, New York",
+  "Spring Valley, New York",
+  "New City, New York",
+  "Suffern, New York",
+  "Nanuet, New York",
+  "Pearl River, New York",
+  "Haverstraw, New York",
+  "Nyack, New York",
+  "Stony Point, New York",
+  "Congers, New York",
+  "Greater New York City Area",
 ];
 
-const DEFAULT_TITLES = ["Property Manager"];
+const TITLE_PRESETS = [
+  "Property Manager",
+  "Building Manager",
+  "Facilities Manager",
+  "Operations Manager",
+  "Asset Manager",
+  "Director of Property Management",
+  "Regional Property Manager",
+];
 
 export default function ApolloSearchPage() {
   const router = useRouter();
 
   // Filters
-  const [selectedLocations, setSelectedLocations] = useState<string[]>(
-    LOCATION_PRESETS.map((p) => p.value)
-  );
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([...LOCATION_PRESETS]);
   const [customLocation, setCustomLocation] = useState("");
-  const [titles, setTitles] = useState(DEFAULT_TITLES.join(", "));
+  const [selectedTitles, setSelectedTitles] = useState<string[]>(["Property Manager"]);
+  const [customTitle, setCustomTitle] = useState("");
   const [includeSimilarTitles, setIncludeSimilarTitles] = useState(true);
   const [seniorities, setSeniorities] = useState<string[]>(["manager", "director", "vp"]);
   const [employeeRanges, setEmployeeRanges] = useState<string[]>([]);
@@ -127,6 +134,14 @@ export default function ApolloSearchPage() {
     }
   }
 
+  function addCustomTitle() {
+    const t = customTitle.trim();
+    if (t && !selectedTitles.includes(t)) {
+      setSelectedTitles([...selectedTitles, t]);
+      setCustomTitle("");
+    }
+  }
+
   async function handleSearch() {
     if (selectedLocations.length === 0) {
       toast.error("Select at least one location");
@@ -137,10 +152,7 @@ export default function ApolloSearchPage() {
     setResults(null);
     setImportResult(null);
 
-    const titleList = titles
-      .split(",")
-      .map((t) => t.trim())
-      .filter(Boolean);
+    const titleList = selectedTitles;
 
     try {
       const res = await fetch("/api/apollo/search", {
@@ -190,10 +202,7 @@ export default function ApolloSearchPage() {
       setSearching(true);
       setImportResult(null);
 
-      const titleList = titles
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean);
+      const titleList = selectedTitles;
 
       try {
         const res = await fetch("/api/apollo/search", {
@@ -312,49 +321,40 @@ export default function ApolloSearchPage() {
               <button
                 onClick={() => {
                   const allSelected = LOCATION_PRESETS.every((p) =>
-                    selectedLocations.includes(p.value)
+                    selectedLocations.includes(p)
                   );
                   if (allSelected) {
                     setSelectedLocations(
-                      selectedLocations.filter(
-                        (l) => !LOCATION_PRESETS.some((p) => p.value === l)
-                      )
+                      selectedLocations.filter((l) => !LOCATION_PRESETS.includes(l))
                     );
                   } else {
-                    const presetValues = LOCATION_PRESETS.map((p) => p.value);
                     setSelectedLocations([
-                      ...selectedLocations.filter(
-                        (l) => !presetValues.includes(l)
-                      ),
-                      ...presetValues,
+                      ...selectedLocations.filter((l) => !LOCATION_PRESETS.includes(l)),
+                      ...LOCATION_PRESETS,
                     ]);
                   }
                 }}
                 className="text-xs text-primary hover:underline"
               >
-                {LOCATION_PRESETS.every((p) =>
-                  selectedLocations.includes(p.value)
-                )
+                {LOCATION_PRESETS.every((p) => selectedLocations.includes(p))
                   ? "Clear all"
                   : "Select all"}
               </button>
             </div>
             <div className="flex flex-wrap gap-2">
-              {LOCATION_PRESETS.map((preset) => (
+              {LOCATION_PRESETS.map((loc) => (
                 <button
-                  key={preset.value}
+                  key={loc}
                   onClick={() =>
-                    setSelectedLocations(
-                      toggleArrayValue(selectedLocations, preset.value)
-                    )
+                    setSelectedLocations(toggleArrayValue(selectedLocations, loc))
                   }
                   className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                    selectedLocations.includes(preset.value)
+                    selectedLocations.includes(loc)
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/50"
                   }`}
                 >
-                  {preset.label}
+                  {loc}
                 </button>
               ))}
             </div>
@@ -371,10 +371,10 @@ export default function ApolloSearchPage() {
                 Add
               </Button>
             </div>
-            {selectedLocations.filter((l) => !LOCATION_PRESETS.some((p) => p.value === l)).length > 0 && (
+            {selectedLocations.filter((l) => !LOCATION_PRESETS.includes(l)).length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {selectedLocations
-                  .filter((l) => !LOCATION_PRESETS.some((p) => p.value === l))
+                  .filter((l) => !LOCATION_PRESETS.includes(l))
                   .map((loc) => (
                     <Badge
                       key={loc}
@@ -394,15 +394,57 @@ export default function ApolloSearchPage() {
           </div>
 
           {/* Job Titles */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label className="text-sm font-medium">Job Titles</Label>
-            <textarea
-              value={titles}
-              onChange={(e) => setTitles(e.target.value)}
-              rows={3}
-              className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
-              placeholder="Comma-separated titles..."
-            />
+            <div className="flex flex-wrap gap-2">
+              {TITLE_PRESETS.map((title) => (
+                <button
+                  key={title}
+                  onClick={() =>
+                    setSelectedTitles(toggleArrayValue(selectedTitles, title))
+                  }
+                  className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                    selectedTitles.includes(title)
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  {title}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <Input
+                placeholder="Add custom title"
+                value={customTitle}
+                onChange={(e) => setCustomTitle(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addCustomTitle()}
+                className="max-w-sm"
+              />
+              <Button variant="outline" size="sm" onClick={addCustomTitle}>
+                Add
+              </Button>
+            </div>
+            {selectedTitles.filter((t) => !TITLE_PRESETS.includes(t)).length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {selectedTitles
+                  .filter((t) => !TITLE_PRESETS.includes(t))
+                  .map((title) => (
+                    <Badge
+                      key={title}
+                      variant="secondary"
+                      className="cursor-pointer"
+                      onClick={() =>
+                        setSelectedTitles(
+                          selectedTitles.filter((t) => t !== title)
+                        )
+                      }
+                    >
+                      {title} x
+                    </Badge>
+                  ))}
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <input
                 type="checkbox"
