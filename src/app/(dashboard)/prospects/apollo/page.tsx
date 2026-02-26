@@ -74,12 +74,29 @@ const EMPLOYEE_COUNT_OPTIONS = [
   { value: "5001,10000", label: "5,001-10,000" },
 ];
 
+const ROCKLAND_TOWNS = [
+  "New City, New York",
+  "Suffern, New York",
+  "Nanuet, New York",
+  "Pearl River, New York",
+  "Spring Valley, New York",
+  "Nyack, New York",
+  "Haverstraw, New York",
+  "Stony Point, New York",
+  "Monsey, New York",
+  "Orangeburg, New York",
+  "Congers, New York",
+  "West Nyack, New York",
+  "Pomona, New York",
+  "Tappan, New York",
+  "Blauvelt, New York",
+  "Chestnut Ridge, New York",
+  "Airmont, New York",
+  "Garnerville, New York",
+  "Valley Cottage, New York",
+];
+
 const LOCATION_PRESETS = [
-  {
-    value: "rockland",
-    label: "Rockland County, NY",
-    description: "Searches 19 towns: New City, Suffern, Nanuet, Nyack, etc.",
-  },
   {
     value: "Brooklyn, New York",
     label: "Brooklyn, NY",
@@ -340,8 +357,8 @@ export default function ApolloSearchPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Locations */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Locations</Label>
+          <div className="space-y-3">
+            <Label className="text-sm font-medium">NYC Boroughs</Label>
             <div className="flex flex-wrap gap-2">
               {LOCATION_PRESETS.map((preset) => (
                 <button
@@ -356,12 +373,68 @@ export default function ApolloSearchPage() {
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/50"
                   }`}
-                  title={preset.description}
                 >
                   {preset.label}
                 </button>
               ))}
             </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <Label className="text-sm font-medium">Rockland County Towns</Label>
+                <button
+                  onClick={() => {
+                    const allSelected = ROCKLAND_TOWNS.every((t) =>
+                      selectedLocations.includes(t)
+                    );
+                    if (allSelected) {
+                      setSelectedLocations(
+                        selectedLocations.filter(
+                          (l) => !ROCKLAND_TOWNS.includes(l)
+                        )
+                      );
+                    } else {
+                      setSelectedLocations([
+                        ...selectedLocations.filter(
+                          (l) => !ROCKLAND_TOWNS.includes(l)
+                        ),
+                        ...ROCKLAND_TOWNS,
+                      ]);
+                    }
+                  }}
+                  className="text-xs text-primary hover:underline"
+                >
+                  {ROCKLAND_TOWNS.every((t) =>
+                    selectedLocations.includes(t)
+                  )
+                    ? "Clear all"
+                    : "Select all"}
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {ROCKLAND_TOWNS.map((town) => {
+                  const shortName = town.replace(", New York", "");
+                  return (
+                    <button
+                      key={town}
+                      onClick={() =>
+                        setSelectedLocations(
+                          toggleArrayValue(selectedLocations, town)
+                        )
+                      }
+                      className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
+                        selectedLocations.includes(town)
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      {shortName}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             <div className="flex gap-2">
               <Input
                 placeholder="Add custom location (e.g. Westchester, New York)"
@@ -374,11 +447,11 @@ export default function ApolloSearchPage() {
                 Add
               </Button>
             </div>
-            {selectedLocations.length > 0 && (
+            {selectedLocations.filter((l) => !LOCATION_PRESETS.some((p) => p.value === l) && !ROCKLAND_TOWNS.includes(l)).length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {selectedLocations.map((loc) => {
-                  const preset = LOCATION_PRESETS.find((p) => p.value === loc);
-                  return (
+                {selectedLocations
+                  .filter((l) => !LOCATION_PRESETS.some((p) => p.value === l) && !ROCKLAND_TOWNS.includes(l))
+                  .map((loc) => (
                     <Badge
                       key={loc}
                       variant="secondary"
@@ -389,10 +462,9 @@ export default function ApolloSearchPage() {
                         )
                       }
                     >
-                      {preset?.label ?? loc} x
+                      {loc} x
                     </Badge>
-                  );
-                })}
+                  ))}
               </div>
             )}
           </div>
