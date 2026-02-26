@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 
   const { data: existing, error: fetchError } = await supabase
     .from("prospects")
-    .select("company, phone, email");
+    .select("company, phone, email, apollo_id");
 
   if (fetchError) {
     return NextResponse.json(
@@ -70,8 +70,15 @@ export async function POST(request: NextRequest) {
       .map((p) => p.email?.toLowerCase())
       .filter(Boolean)
   );
+  const existingApolloIds = new Set(
+    (existing ?? [])
+      .map((p) => (p as Record<string, unknown>).apollo_id as string | null)
+      .filter(Boolean)
+  );
 
-  const seenInBatch = new Set<string>();
+  const seenEmails = new Set<string>();
+  const seenApolloIds = new Set<string>();
+  const seenCompanies = new Set<string>();
   const toInsert: Array<{
     company: string;
     contact_name: string | null;
@@ -96,13 +103,18 @@ export async function POST(request: NextRequest) {
     const normalized = normalizeCompany(lead.company);
     const phone = normalizePhone(lead.phone);
     const email = lead.email?.trim().toLowerCase() || null;
+    const apolloId = lead.apollo_id || null;
+    const hasPersonId = !!email || !!apolloId;
 
     let isDuplicate = false;
-    if (existingNames.has(normalized) || seenInBatch.has(normalized)) {
+
+    if (apolloId && (existingApolloIds.has(apolloId) || seenApolloIds.has(apolloId))) {
+      isDuplicate = true;
+    } else if (email && (existingEmails.has(email) || seenEmails.has(email))) {
       isDuplicate = true;
     } else if (phone && existingPhones.has(phone)) {
       isDuplicate = true;
-    } else if (email && existingEmails.has(email)) {
+    } else if (!hasPersonId && (existingNames.has(normalized) || seenCompanies.has(normalized))) {
       isDuplicate = true;
     }
 
@@ -111,9 +123,9 @@ export async function POST(request: NextRequest) {
       continue;
     }
 
-    seenInBatch.add(normalized);
-    if (phone) existingPhones.add(phone);
-    if (email) existingEmails.add(email);
+    if (apolloId) seenApolloIds.add(apolloId);
+    if (email) seenEmails.add(email);
+    if (!hasPersonId) seenCompanies.add(normalized);
 
     const hasEmail = !!email;
     toInsert.push({
