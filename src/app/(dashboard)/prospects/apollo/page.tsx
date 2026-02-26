@@ -83,12 +83,6 @@ const LOCATION_PRESETS = [
 
 const TITLE_PRESETS = [
   "Property Manager",
-  "Building Manager",
-  "Facilities Manager",
-  "Operations Manager",
-  "Asset Manager",
-  "Director of Property Management",
-  "Regional Property Manager",
 ];
 
 export default function ApolloSearchPage() {
@@ -102,6 +96,8 @@ export default function ApolloSearchPage() {
   const [includeSimilarTitles, setIncludeSimilarTitles] = useState(true);
   const [employeeRanges, setEmployeeRanges] = useState<string[]>(["1,10", "11,20", "21,50", "51,100"]);
   const [emailStatus, setEmailStatus] = useState<string[]>(["verified"]);
+  const [enrichEmails, setEnrichEmails] = useState(true);
+  const [revealPhones, setRevealPhones] = useState(false);
   const [sessionCredits, setSessionCredits] = useState(0);
   const [maxResults, setMaxResults] = useState(100);
   const [enrichResults, setEnrichResults] = useState(false);
@@ -158,6 +154,7 @@ export default function ApolloSearchPage() {
           includeSimilarTitles,
           maxResults,
           enrichResults,
+          revealPhones,
         }),
       });
 
@@ -207,6 +204,7 @@ export default function ApolloSearchPage() {
             includeSimilarTitles,
             maxResults,
             enrichResults: true,
+            revealPhones,
           }),
         });
 
@@ -499,6 +497,37 @@ export default function ApolloSearchPage() {
             </div>
           </div>
 
+          {/* Enrichment Options */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Enrichment</Label>
+            <div className="flex flex-wrap gap-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="enrichEmails"
+                  checked={enrichEmails}
+                  onChange={(e) => setEnrichEmails(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="enrichEmails" className="text-sm text-muted-foreground">
+                  Emails <span className="text-xs">(1 credit/person)</span>
+                </label>
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="revealPhones"
+                  checked={revealPhones}
+                  onChange={(e) => setRevealPhones(e.target.checked)}
+                  className="rounded"
+                />
+                <label htmlFor="revealPhones" className="text-sm text-muted-foreground">
+                  Phone numbers <span className="text-xs text-amber-600">(extra credits)</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
           {/* Email Status */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Email Status</Label>
@@ -536,24 +565,6 @@ export default function ApolloSearchPage() {
                 <option value={200}>200</option>
                 <option value={500}>500</option>
               </select>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="enrichToggle"
-                  checked={enrichResults}
-                  onChange={(e) => setEnrichResults(e.target.checked)}
-                  className="rounded"
-                />
-                <label htmlFor="enrichToggle" className="text-sm text-muted-foreground">
-                  Enrich immediately (costs credits)
-                </label>
-              </div>
-              <p className="text-xs text-amber-600">
-                Phone number reveals cost extra credits on Apollo
-              </p>
             </div>
 
             <Button onClick={handleSearch} disabled={searching} size="lg">

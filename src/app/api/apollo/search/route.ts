@@ -18,6 +18,7 @@ interface SearchRequest {
   includeSimilarTitles?: boolean;
   maxResults?: number;
   enrichResults?: boolean;
+  revealPhones?: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -118,7 +119,7 @@ export async function POST(request: NextRequest) {
   for (let i = 0; i < ids.length; i += 10) {
     const batch = ids.slice(i, i + 10);
     try {
-      const results = await bulkEnrichPeople(batch);
+      const results = await bulkEnrichPeople(batch, { revealPhones: body.revealPhones });
       enriched.push(...results);
     } catch (err) {
       console.error(`Enrich batch ${i / 10 + 1} failed:`, err);

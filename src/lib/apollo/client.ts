@@ -101,7 +101,8 @@ export async function searchPeople(
 }
 
 export async function bulkEnrichPeople(
-  ids: string[]
+  ids: string[],
+  options?: { revealPhones?: boolean }
 ): Promise<ApolloEnrichedPerson[]> {
   if (ids.length === 0) return [];
   if (ids.length > 10) throw new Error("Max 10 IDs per bulk enrich call");
@@ -115,6 +116,7 @@ export async function bulkEnrichPeople(
       api_key: getApiKey(),
       details,
       reveal_personal_emails: false,
+      reveal_phone_number: options?.revealPhones ?? false,
     }),
   });
 
