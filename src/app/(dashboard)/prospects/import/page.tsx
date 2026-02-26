@@ -21,12 +21,19 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 
+type ImportFormat = "google_maps" | "apollo";
+
 interface ParsedRow {
-  title: string;
-  phone: string;
+  company: string;
+  contactName: string;
   email: string;
+  phone: string;
+  jobTitle: string;
+  linkedin: string;
+  apolloId: string;
   address: string;
   website: string;
+  location: string;
   totalScore: number | null;
   placeId: string;
 }
@@ -34,16 +41,24 @@ interface ParsedRow {
 interface ImportResult {
   imported: number;
   skipped: number;
-  duplicates: string[];
+  duplicateNames: string[];
   error?: string;
 }
 
-function parseCSV(text: string): ParsedRow[] {
-  const lines = text.split("\n");
-  if (lines.length < 2) return [];
+function detectFormat(headers: string[]): ImportFormat {
+  const lower = headers.map((h) => h.trim().toLowerCase());
+  if (lower.includes("first name") && lower.includes("company name")) {
+    return "apollo";
+  }
+  return "google_maps";
+}
 
-  const headerLine = lines[0];
-  const headers = parseCSVLine(headerLine);
+function parseCSV(text: string): { rows: ParsedRow[]; format: ImportFormat } {
+  const lines = text.split("\n");
+  if (lines.length < 2) return { rows: [], format: "google_maps" };
+
+  const headers = parseCSVLine(lines[0]);
+  const format = detectFormat(headers);
 
   const headerMap: Record<string, number> = {};
   headers.forEach((h, i) => {
@@ -57,6 +72,62 @@ function parseCSV(text: string): ParsedRow[] {
     return -1;
   };
 
+  if (format === "apollo") {
+    const firstNameCol = findCol(["first name"]);
+    const lastNameCol = findCol(["last name"]);
+    const titleCol = findCol(["title"]);
+    const companyCol = findCol(["company name"]);
+    const emailCol = findCol(["email"]);
+    const linkedinCol = findCol(["person linkedin url"]);
+    const workPhoneCol = findCol(["work direct phone"]);
+    const mobilePhoneCol = findCol(["mobile phone"]);
+    const corporatePhoneCol = findCol(["corporate phone"]);
+    const cityCol = findCol(["city"]);
+    const stateCol = findCol(["state"]);
+    const apolloIdCol = findCol(["apollo contact id"]);
+
+    const rows: ParsedRow[] = [];
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+      const cols = parseCSVLine(line);
+
+      const firstName =
+        firstNameCol >= 0 ? cols[firstNameCol]?.trim() || "" : "";
+      const lastName =
+        lastNameCol >= 0 ? cols[lastNameCol]?.trim() || "" : "";
+      const company =
+        companyCol >= 0 ? cols[companyCol]?.trim() || "" : "";
+      if (!company) continue;
+
+      const phone =
+        (workPhoneCol >= 0 ? cols[workPhoneCol]?.trim() : "") ||
+        (mobilePhoneCol >= 0 ? cols[mobilePhoneCol]?.trim() : "") ||
+        (corporatePhoneCol >= 0 ? cols[corporatePhoneCol]?.trim() : "") ||
+        "";
+
+      const city = cityCol >= 0 ? cols[cityCol]?.trim() || "" : "";
+      const state = stateCol >= 0 ? cols[stateCol]?.trim() || "" : "";
+
+      rows.push({
+        company,
+        contactName: `${firstName} ${lastName}`.trim(),
+        email: emailCol >= 0 ? cols[emailCol]?.trim() || "" : "",
+        phone,
+        jobTitle: titleCol >= 0 ? cols[titleCol]?.trim() || "" : "",
+        linkedin: linkedinCol >= 0 ? cols[linkedinCol]?.trim() || "" : "",
+        apolloId: apolloIdCol >= 0 ? cols[apolloIdCol]?.trim() || "" : "",
+        address: "",
+        website: "",
+        location: [city, state].filter(Boolean).join(", "),
+        totalScore: null,
+        placeId: "",
+      });
+    }
+    return { rows, format };
+  }
+
+  // Google Maps format
   const titleCol = findCol(["title", "name", "company", "business name"]);
   const phoneCol = findCol(["phone", "telephone", "phonenumber"]);
   const emailCol = findCol(["email", "mail", "emailaddress"]);
@@ -76,23 +147,27 @@ function parseCSV(text: string): ParsedRow[] {
   ]);
   const placeIdCol = findCol(["placeid", "place_id", "googleplaceid"]);
 
-  if (titleCol === -1) return [];
+  if (titleCol === -1) return { rows: [], format };
 
   const rows: ParsedRow[] = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-
     const cols = parseCSVLine(line);
     const title = cols[titleCol]?.trim();
     if (!title) continue;
 
     rows.push({
-      title,
-      phone: phoneCol >= 0 ? cols[phoneCol]?.trim() || "" : "",
+      company: title,
+      contactName: "",
       email: emailCol >= 0 ? cols[emailCol]?.trim() || "" : "",
+      phone: phoneCol >= 0 ? cols[phoneCol]?.trim() || "" : "",
+      jobTitle: "",
+      linkedin: "",
+      apolloId: "",
       address: addressCol >= 0 ? cols[addressCol]?.trim() || "" : "",
       website: websiteCol >= 0 ? cols[websiteCol]?.trim() || "" : "",
+      location: "",
       totalScore:
         scoreCol >= 0 && cols[scoreCol]
           ? parseFloat(cols[scoreCol]) || null
@@ -100,8 +175,7 @@ function parseCSV(text: string): ParsedRow[] {
       placeId: placeIdCol >= 0 ? cols[placeIdCol]?.trim() || "" : "",
     });
   }
-
-  return rows;
+  return { rows, format };
 }
 
 function parseCSVLine(line: string): string[] {
@@ -146,11 +220,16 @@ function parseJSON(text: string): ParsedRow[] {
       .map((item: Record<string, unknown>) => {
         const emails = item.emails as string[] | undefined;
         return {
-          title: String(item.title || ""),
-          phone: String(item.phone || ""),
+          company: String(item.title || ""),
+          contactName: "",
           email: emails?.[0] || String(item.email || ""),
+          phone: String(item.phone || ""),
+          jobTitle: "",
+          linkedin: "",
+          apolloId: "",
           address: String(item.address || ""),
           website: String(item.website || ""),
+          location: "",
           totalScore:
             item.totalScore != null ? Number(item.totalScore) || null : null,
           placeId: String(item.placeId || ""),
@@ -164,6 +243,7 @@ function parseJSON(text: string): ParsedRow[] {
 export default function ImportProspectsPage() {
   const router = useRouter();
   const [rows, setRows] = useState<ParsedRow[]>([]);
+  const [format, setFormat] = useState<ImportFormat>("google_maps");
   const [fileName, setFileName] = useState<string>("");
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
@@ -178,17 +258,31 @@ export default function ImportProspectsPage() {
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const isJSON = file.name.toLowerCase().endsWith(".json");
-      const parsed = isJSON ? parseJSON(text) : parseCSV(text);
-      if (parsed.length === 0) {
-        toast.error(
-          isJSON
-            ? 'Could not parse JSON. Expected an array of objects with a "title" field.'
-            : 'Could not parse CSV. Make sure it has a "title" column header.'
-        );
-        return;
+
+      if (isJSON) {
+        const parsed = parseJSON(text);
+        if (parsed.length === 0) {
+          toast.error(
+            'Could not parse JSON. Expected an array of objects with a "title" field.'
+          );
+          return;
+        }
+        setFormat("google_maps");
+        setRows(parsed);
+        toast.success(`Parsed ${parsed.length} rows from ${file.name}`);
+      } else {
+        const { rows: parsed, format: detected } = parseCSV(text);
+        if (parsed.length === 0) {
+          toast.error(
+            "Could not parse CSV. Make sure it has recognizable column headers."
+          );
+          return;
+        }
+        setFormat(detected);
+        setRows(parsed);
+        const label = detected === "apollo" ? "Apollo contacts" : "rows";
+        toast.success(`Parsed ${parsed.length} ${label} from ${file.name}`);
       }
-      setRows(parsed);
-      toast.success(`Parsed ${parsed.length} rows from ${file.name}`);
     };
     reader.readAsText(file);
   }, []);
@@ -211,18 +305,71 @@ export default function ImportProspectsPage() {
     if (filteredRows.length === 0) return;
     setImporting(true);
     try {
-      const res = await fetch("/api/prospects/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: filteredRows }),
-      });
-      const data = (await res.json()) as ImportResult;
-      if (!res.ok) {
-        toast.error(data.error || "Import failed");
+      if (format === "apollo") {
+        const res = await fetch("/api/leads/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            leads: filteredRows.map((row) => ({
+              name: row.contactName,
+              email: row.email || null,
+              phone: row.phone || null,
+              company: row.company,
+              job_title: row.jobTitle || null,
+              linkedin: row.linkedin || null,
+              apollo_id: row.apolloId || null,
+              source: "apollo",
+              lead_type: "manager",
+              location: row.location || null,
+            })),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || "Import failed");
+          setResult({
+            imported: data.imported ?? 0,
+            skipped: data.duplicates ?? 0,
+            duplicateNames: [],
+            error: data.error,
+          });
+        } else {
+          toast.success(`Imported ${data.imported} leads`);
+          setResult({
+            imported: data.imported,
+            skipped: data.duplicates,
+            duplicateNames: [],
+          });
+        }
       } else {
-        toast.success(`Imported ${data.imported} prospects`);
+        const res = await fetch("/api/prospects/import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            rows: filteredRows.map((row) => ({
+              title: row.company,
+              phone: row.phone,
+              email: row.email,
+              address: row.address,
+              website: row.website,
+              totalScore: row.totalScore,
+              placeId: row.placeId,
+            })),
+          }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          toast.error(data.error || "Import failed");
+        } else {
+          toast.success(`Imported ${data.imported} prospects`);
+        }
+        setResult({
+          imported: data.imported ?? 0,
+          skipped: data.skipped ?? 0,
+          duplicateNames: data.duplicates ?? [],
+          error: data.error,
+        });
       }
-      setResult(data);
     } catch {
       toast.error("Import request failed");
     } finally {
@@ -238,8 +385,8 @@ export default function ImportProspectsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Import Leads</h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          Upload a CSV or JSON file exported from Apify Google Maps Scraper to
-          bulk-import prospects.
+          Upload a CSV or JSON file to bulk-import prospects. Supports Apollo
+          exports and Google Maps Scraper files.
         </p>
       </div>
 
@@ -247,8 +394,8 @@ export default function ImportProspectsPage() {
         <CardHeader>
           <CardTitle>Upload File</CardTitle>
           <CardDescription>
-            Drag and drop or click to select. Accepts CSV or JSON. Expected
-            fields: title, phone, email, address, website.
+            Drag and drop or click to select. Auto-detects Apollo CSV or Google
+            Maps format.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -286,9 +433,15 @@ export default function ImportProspectsPage() {
         <>
           <Card>
             <CardHeader>
-              <CardTitle>Preview</CardTitle>
+              <div className="flex items-center gap-3">
+                <CardTitle>Preview</CardTitle>
+                <Badge variant="outline" className="text-xs">
+                  {format === "apollo" ? "Apollo Export" : "Google Maps"}
+                </Badge>
+              </div>
               <CardDescription>
-                {rows.length} rows parsed from {fileName}
+                {rows.length} {format === "apollo" ? "contacts" : "rows"} parsed
+                from {fileName}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -313,7 +466,7 @@ export default function ImportProspectsPage() {
                     </span>
                   </div>
                 </div>
-                <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+                <label className="flex cursor-pointer select-none items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={onlyWithEmail}
@@ -329,11 +482,24 @@ export default function ImportProspectsPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-8">#</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Address</TableHead>
-                      <TableHead>Rating</TableHead>
+                      {format === "apollo" ? (
+                        <>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Title</TableHead>
+                          <TableHead>Company</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Location</TableHead>
+                        </>
+                      ) : (
+                        <>
+                          <TableHead>Company</TableHead>
+                          <TableHead>Phone</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Address</TableHead>
+                          <TableHead>Rating</TableHead>
+                        </>
+                      )}
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -342,21 +508,46 @@ export default function ImportProspectsPage() {
                         <TableCell className="text-muted-foreground text-xs">
                           {i + 1}
                         </TableCell>
-                        <TableCell className="font-medium max-w-48 truncate">
-                          {row.title}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {row.phone || "—"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground max-w-40 truncate text-sm">
-                          {row.email || "—"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground max-w-52 truncate text-sm">
-                          {row.address || "—"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {row.totalScore ?? "—"}
-                        </TableCell>
+                        {format === "apollo" ? (
+                          <>
+                            <TableCell className="max-w-36 truncate font-medium">
+                              {row.contactName || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground max-w-36 truncate text-sm">
+                              {row.jobTitle || "—"}
+                            </TableCell>
+                            <TableCell className="max-w-40 truncate text-sm">
+                              {row.company}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground max-w-40 truncate text-sm">
+                              {row.email || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {row.phone || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground max-w-32 truncate text-sm">
+                              {row.location || "—"}
+                            </TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell className="max-w-48 truncate font-medium">
+                              {row.company}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {row.phone || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground max-w-40 truncate text-sm">
+                              {row.email || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground max-w-52 truncate text-sm">
+                              {row.address || "—"}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm">
+                              {row.totalScore ?? "—"}
+                            </TableCell>
+                          </>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>
@@ -364,7 +555,8 @@ export default function ImportProspectsPage() {
               </div>
               {filteredRows.length > 100 && (
                 <p className="text-muted-foreground text-xs">
-                  Showing first 100 of {filteredRows.length} rows.
+                  Showing first 100 of {filteredRows.length}{" "}
+                  {format === "apollo" ? "contacts" : "rows"}.
                 </p>
               )}
 
@@ -424,14 +616,14 @@ export default function ImportProspectsPage() {
                 {result.error && (
                   <p className="text-destructive text-sm">{result.error}</p>
                 )}
-                {result.duplicates.length > 0 && (
+                {result.duplicateNames.length > 0 && (
                   <details className="text-sm">
                     <summary className="text-muted-foreground cursor-pointer">
-                      {result.duplicates.length} duplicates skipped (click to
-                      see)
+                      {result.duplicateNames.length} duplicates skipped (click
+                      to see)
                     </summary>
                     <ul className="text-muted-foreground mt-2 max-h-48 list-inside list-disc overflow-auto text-xs">
-                      {result.duplicates.map((d, i) => (
+                      {result.duplicateNames.map((d, i) => (
                         <li key={i}>{d}</li>
                       ))}
                     </ul>
