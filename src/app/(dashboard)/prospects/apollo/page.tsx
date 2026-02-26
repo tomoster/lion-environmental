@@ -65,7 +65,7 @@ const EMPLOYEE_COUNT_OPTIONS = [
   { value: "10001,", label: "10,001+" },
 ];
 
-const MONTHLY_CREDIT_LIMIT = 2535;
+const MONTHLY_CREDIT_LIMIT = 2540;
 
 const LOCATION_PRESETS = [
   "Monsey, New York",
