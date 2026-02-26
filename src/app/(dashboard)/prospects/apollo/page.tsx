@@ -74,80 +74,29 @@ const EMPLOYEE_COUNT_OPTIONS = [
   { value: "5001,10000", label: "5,001-10,000" },
 ];
 
-const ROCKLAND_TOWNS = [
-  "New City, New York",
-  "Suffern, New York",
-  "Nanuet, New York",
-  "Pearl River, New York",
-  "Spring Valley, New York",
-  "Nyack, New York",
-  "Haverstraw, New York",
-  "Stony Point, New York",
-  "Monsey, New York",
-  "Orangeburg, New York",
-  "Congers, New York",
-  "West Nyack, New York",
-  "Pomona, New York",
-  "Tappan, New York",
-  "Blauvelt, New York",
-  "Chestnut Ridge, New York",
-  "Airmont, New York",
-  "Garnerville, New York",
-  "Valley Cottage, New York",
-];
-
 const LOCATION_PRESETS = [
-  {
-    value: "Brooklyn, New York",
-    label: "Brooklyn, NY",
-    description: "",
-  },
-  {
-    value: "Manhattan, New York",
-    label: "Manhattan, NY",
-    description: "",
-  },
-  {
-    value: "Queens, New York",
-    label: "Queens, NY",
-    description: "",
-  },
-  {
-    value: "Bronx, New York",
-    label: "Bronx, NY",
-    description: "",
-  },
-  {
-    value: "New York",
-    label: "New York (entire state)",
-    description: "",
-  },
-  {
-    value: "New Jersey",
-    label: "New Jersey (entire state)",
-    description: "",
-  },
+  { value: "Monsey, New York", label: "Monsey" },
+  { value: "Spring Valley, New York", label: "Spring Valley" },
+  { value: "New City, New York", label: "New City" },
+  { value: "Suffern, New York", label: "Suffern" },
+  { value: "Nanuet, New York", label: "Nanuet" },
+  { value: "Pearl River, New York", label: "Pearl River" },
+  { value: "Haverstraw, New York", label: "Haverstraw" },
+  { value: "Nyack, New York", label: "Nyack" },
+  { value: "Stony Point, New York", label: "Stony Point" },
+  { value: "Congers, New York", label: "Congers" },
+  { value: "Greater New York City Area", label: "Greater NYC Area" },
 ];
 
-const DEFAULT_TITLES = [
-  "Property Manager",
-  "Regional Property Manager",
-  "Director of Property Management",
-  "Director of Operations",
-  "Operations Manager",
-  "Facilities Manager",
-  "Building Manager",
-  "Asset Manager",
-  "Portfolio Manager",
-  "VP of Property Management",
-  "VP of Operations",
-];
+const DEFAULT_TITLES = ["Property Manager"];
 
 export default function ApolloSearchPage() {
   const router = useRouter();
 
   // Filters
-  const [selectedLocations, setSelectedLocations] = useState<string[]>(["Brooklyn, New York"]);
+  const [selectedLocations, setSelectedLocations] = useState<string[]>(
+    LOCATION_PRESETS.map((p) => p.value)
+  );
   const [customLocation, setCustomLocation] = useState("");
   const [titles, setTitles] = useState(DEFAULT_TITLES.join(", "));
   const [includeSimilarTitles, setIncludeSimilarTitles] = useState(true);
@@ -358,7 +307,38 @@ export default function ApolloSearchPage() {
         <CardContent className="space-y-6">
           {/* Locations */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">NYC Boroughs</Label>
+            <div className="flex items-center gap-3">
+              <Label className="text-sm font-medium">Locations</Label>
+              <button
+                onClick={() => {
+                  const allSelected = LOCATION_PRESETS.every((p) =>
+                    selectedLocations.includes(p.value)
+                  );
+                  if (allSelected) {
+                    setSelectedLocations(
+                      selectedLocations.filter(
+                        (l) => !LOCATION_PRESETS.some((p) => p.value === l)
+                      )
+                    );
+                  } else {
+                    const presetValues = LOCATION_PRESETS.map((p) => p.value);
+                    setSelectedLocations([
+                      ...selectedLocations.filter(
+                        (l) => !presetValues.includes(l)
+                      ),
+                      ...presetValues,
+                    ]);
+                  }
+                }}
+                className="text-xs text-primary hover:underline"
+              >
+                {LOCATION_PRESETS.every((p) =>
+                  selectedLocations.includes(p.value)
+                )
+                  ? "Clear all"
+                  : "Select all"}
+              </button>
+            </div>
             <div className="flex flex-wrap gap-2">
               {LOCATION_PRESETS.map((preset) => (
                 <button
@@ -379,62 +359,6 @@ export default function ApolloSearchPage() {
               ))}
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <Label className="text-sm font-medium">Rockland County Towns</Label>
-                <button
-                  onClick={() => {
-                    const allSelected = ROCKLAND_TOWNS.every((t) =>
-                      selectedLocations.includes(t)
-                    );
-                    if (allSelected) {
-                      setSelectedLocations(
-                        selectedLocations.filter(
-                          (l) => !ROCKLAND_TOWNS.includes(l)
-                        )
-                      );
-                    } else {
-                      setSelectedLocations([
-                        ...selectedLocations.filter(
-                          (l) => !ROCKLAND_TOWNS.includes(l)
-                        ),
-                        ...ROCKLAND_TOWNS,
-                      ]);
-                    }
-                  }}
-                  className="text-xs text-primary hover:underline"
-                >
-                  {ROCKLAND_TOWNS.every((t) =>
-                    selectedLocations.includes(t)
-                  )
-                    ? "Clear all"
-                    : "Select all"}
-                </button>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {ROCKLAND_TOWNS.map((town) => {
-                  const shortName = town.replace(", New York", "");
-                  return (
-                    <button
-                      key={town}
-                      onClick={() =>
-                        setSelectedLocations(
-                          toggleArrayValue(selectedLocations, town)
-                        )
-                      }
-                      className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
-                        selectedLocations.includes(town)
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground hover:border-primary/50"
-                      }`}
-                    >
-                      {shortName}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
             <div className="flex gap-2">
               <Input
                 placeholder="Add custom location (e.g. Westchester, New York)"
@@ -447,10 +371,10 @@ export default function ApolloSearchPage() {
                 Add
               </Button>
             </div>
-            {selectedLocations.filter((l) => !LOCATION_PRESETS.some((p) => p.value === l) && !ROCKLAND_TOWNS.includes(l)).length > 0 && (
+            {selectedLocations.filter((l) => !LOCATION_PRESETS.some((p) => p.value === l)).length > 0 && (
               <div className="flex flex-wrap gap-1">
                 {selectedLocations
-                  .filter((l) => !LOCATION_PRESETS.some((p) => p.value === l) && !ROCKLAND_TOWNS.includes(l))
+                  .filter((l) => !LOCATION_PRESETS.some((p) => p.value === l))
                   .map((loc) => (
                     <Badge
                       key={loc}

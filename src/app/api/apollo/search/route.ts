@@ -10,28 +10,6 @@ import {
 
 export const maxDuration = 60;
 
-const ROCKLAND_TOWNS = [
-  "New City, New York",
-  "Suffern, New York",
-  "Nanuet, New York",
-  "Pearl River, New York",
-  "Spring Valley, New York",
-  "Nyack, New York",
-  "Haverstraw, New York",
-  "Stony Point, New York",
-  "Monsey, New York",
-  "Orangeburg, New York",
-  "Congers, New York",
-  "West Nyack, New York",
-  "Pomona, New York",
-  "Tappan, New York",
-  "Blauvelt, New York",
-  "Chestnut Ridge, New York",
-  "Airmont, New York",
-  "Garnerville, New York",
-  "Valley Cottage, New York",
-];
-
 interface SearchRequest {
   locations: string[];
   titles?: string[];
@@ -60,13 +38,8 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Resolve "rockland" preset to individual towns
-  const resolvedLocations = body.locations.flatMap((loc) =>
-    loc.toLowerCase() === "rockland" ? ROCKLAND_TOWNS : [loc]
-  );
-
   const searchParams: ApolloSearchParams = {
-    person_locations: resolvedLocations,
+    person_locations: body.locations,
     per_page: 100,
     page: 1,
   };
