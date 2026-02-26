@@ -110,13 +110,19 @@ export default async function WorkerDetailPage({
               <dd className="mt-1 text-sm">{worker.email ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Specialization</dt>
-              <dd className="mt-1 text-sm">{worker.specialization ?? "—"}</dd>
+              <dt className="text-xs text-muted-foreground">Role</dt>
+              <dd className="mt-1 text-sm">{worker.role ?? "—"}</dd>
             </div>
             <div>
-              <dt className="text-xs text-muted-foreground">Rate</dt>
+              <dt className="text-xs text-muted-foreground">Rate/Unit</dt>
               <dd className="mt-1 text-sm">
-                {worker.rate != null ? `$${worker.rate.toFixed(2)}/hr` : "—"}
+                {worker.rate_per_unit != null ? `$${worker.rate_per_unit.toFixed(2)}` : "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted-foreground">Rate/Common Space</dt>
+              <dd className="mt-1 text-sm">
+                {worker.rate_per_common_space != null ? `$${worker.rate_per_common_space.toFixed(2)}` : "—"}
               </dd>
             </div>
             <div>

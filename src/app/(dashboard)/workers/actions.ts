@@ -6,14 +6,16 @@ import { createClient } from "@/lib/supabase/server";
 export async function createWorker(formData: FormData) {
   const supabase = await createClient();
 
-  const rateRaw = formData.get("rate") as string;
+  const ratePerUnit = formData.get("rate_per_unit") as string;
+  const ratePerCommon = formData.get("rate_per_common_space") as string;
 
   const { error } = await supabase.from("workers").insert({
     name: formData.get("name") as string,
     phone: (formData.get("phone") as string) || null,
     email: (formData.get("email") as string) || null,
-    specialization: (formData.get("specialization") as string) || null,
-    rate: rateRaw ? parseFloat(rateRaw) : null,
+    role: (formData.get("role") as string) || "inspector",
+    rate_per_unit: ratePerUnit ? parseFloat(ratePerUnit) : null,
+    rate_per_common_space: ratePerCommon ? parseFloat(ratePerCommon) : null,
     active: true,
   });
 
@@ -28,7 +30,8 @@ export async function createWorker(formData: FormData) {
 export async function updateWorker(id: string, formData: FormData) {
   const supabase = await createClient();
 
-  const rateRaw = formData.get("rate") as string;
+  const ratePerUnit = formData.get("rate_per_unit") as string;
+  const ratePerCommon = formData.get("rate_per_common_space") as string;
 
   const { error } = await supabase
     .from("workers")
@@ -36,8 +39,9 @@ export async function updateWorker(id: string, formData: FormData) {
       name: formData.get("name") as string,
       phone: (formData.get("phone") as string) || null,
       email: (formData.get("email") as string) || null,
-      specialization: (formData.get("specialization") as string) || null,
-      rate: rateRaw ? parseFloat(rateRaw) : null,
+      role: (formData.get("role") as string) || "inspector",
+      rate_per_unit: ratePerUnit ? parseFloat(ratePerUnit) : null,
+      rate_per_common_space: ratePerCommon ? parseFloat(ratePerCommon) : null,
     })
     .eq("id", id);
 

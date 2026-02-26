@@ -8,7 +8,7 @@ export default async function WorkersPage() {
 
   const { data: workers } = await supabase
     .from("workers")
-    .select("id, name, phone, email, active, specialization, rate")
+    .select("id, name, phone, email, active, role, rate_per_unit, rate_per_common_space")
     .order("name");
 
   const workerList = workers ?? [];

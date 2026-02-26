@@ -30,8 +30,9 @@ type WorkerRow = {
   phone: string | null;
   email: string | null;
   active: boolean | null;
-  specialization: string | null;
-  rate: number | null;
+  role: string;
+  rate_per_unit: number | null;
+  rate_per_common_space: number | null;
   jobsDone: number;
 };
 
@@ -44,8 +45,9 @@ export function WorkersTable({ workers }: { workers: WorkerRow[] }) {
           <TableHead>Phone</TableHead>
           <TableHead>Email</TableHead>
           <TableHead>Status</TableHead>
-          <TableHead>Specialization</TableHead>
-          <TableHead>Rate</TableHead>
+          <TableHead>Role</TableHead>
+          <TableHead>Rate/Unit</TableHead>
+          <TableHead>Rate/Common</TableHead>
           <TableHead className="text-right">Jobs Done</TableHead>
           <TableHead className="w-10" />
         </TableRow>
@@ -54,7 +56,7 @@ export function WorkersTable({ workers }: { workers: WorkerRow[] }) {
         {workers.length === 0 && (
           <TableRow>
             <TableCell
-              colSpan={8}
+              colSpan={9}
               className="h-24 text-center text-muted-foreground"
             >
               No workers yet. Add one to get started.
@@ -122,10 +124,13 @@ function WorkerTableRow({ worker }: { worker: WorkerRow }) {
         )}
       </TableCell>
       <TableCell className="text-muted-foreground">
-        {worker.specialization ?? "—"}
+        {worker.role ?? "—"}
       </TableCell>
       <TableCell className="text-muted-foreground">
-        {worker.rate != null ? `$${worker.rate.toFixed(2)}/hr` : "—"}
+        {worker.rate_per_unit != null ? `$${worker.rate_per_unit.toFixed(2)}` : "—"}
+      </TableCell>
+      <TableCell className="text-muted-foreground">
+        {worker.rate_per_common_space != null ? `$${worker.rate_per_common_space.toFixed(2)}` : "—"}
       </TableCell>
       <TableCell className="text-right">{worker.jobsDone}</TableCell>
       <TableCell>

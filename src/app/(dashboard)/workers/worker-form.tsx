@@ -20,8 +20,9 @@ type Worker = {
   name: string;
   phone: string | null;
   email: string | null;
-  specialization: string | null;
-  rate: number | null;
+  role: string;
+  rate_per_unit: number | null;
+  rate_per_common_space: number | null;
 };
 
 type WorkerFormProps =
@@ -95,22 +96,33 @@ export function WorkerForm(props: WorkerFormProps) {
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="specialization">Specialization</Label>
+              <Label htmlFor="role">Role</Label>
               <Input
-                id="specialization"
-                name="specialization"
-                defaultValue={worker?.specialization ?? ""}
+                id="role"
+                name="role"
+                defaultValue={worker?.role ?? ""}
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="rate">Rate ($/hr)</Label>
+              <Label htmlFor="rate_per_unit">Rate per Unit ($)</Label>
               <Input
-                id="rate"
-                name="rate"
+                id="rate_per_unit"
+                name="rate_per_unit"
                 type="number"
                 step="0.01"
                 min="0"
-                defaultValue={worker?.rate ?? ""}
+                defaultValue={worker?.rate_per_unit ?? ""}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="rate_per_common_space">Rate per Common Space ($)</Label>
+              <Input
+                id="rate_per_common_space"
+                name="rate_per_common_space"
+                type="number"
+                step="0.01"
+                min="0"
+                defaultValue={worker?.rate_per_common_space ?? ""}
               />
             </div>
           </div>
