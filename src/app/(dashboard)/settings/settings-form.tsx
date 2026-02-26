@@ -32,7 +32,7 @@ If you have any questions, please don't hesitate to reach out.
 
 Thank you for your business!`;
 
-const DEFAULT_REPORT_SUBJECT = "{{service_type}} Report — {{address}}";
+const DEFAULT_REPORT_SUBJECT = "{{service_type}} Report - {{address}}";
 
 const DEFAULT_REPORT_BODY = `Dear {{company}},
 
@@ -95,9 +95,9 @@ Lion Environmental LLC`,
 const DEFAULT_COLD_EMAIL_STEPS_ROCKLAND = [
   `Hi {{first_name}},
 
-I run a lead paint testing company serving the Rockland County area. New York State requires lead paint inspections for all pre-1980 multi-family rental properties — and Rockland County is offering up to $40,000 per unit in remediation grants for landlords who get inspected.
+I run a lead paint testing company serving the Rockland County area. New York State requires lead paint inspections for all pre-1980 multi-family rental properties - and Rockland County is offering up to $40,000 per unit in remediation grants for landlords who get inspected.
 
-We handle everything — full-building XRF inspections with certified reports in 48-72 hours.
+We handle everything - full-building XRF inspections with certified reports in 48-72 hours.
 
 Would it make sense to chat for 5 minutes about your properties?
 
@@ -108,7 +108,7 @@ Lion Environmental LLC
 
   `Hi {{first_name}},
 
-Following up on my last note. With 80% of Rockland County homes built before 1978, most multi-family rentals require lead paint inspections under NY State law. The county's remediation grant program ($40k/unit) requires an inspection first — it's a good time to get ahead of it.
+Following up on my last note. With 80% of Rockland County homes built before 1978, most multi-family rentals require lead paint inspections under NY State law. The county's remediation grant program ($40k/unit) requires an inspection first - it's a good time to get ahead of it.
 
 We do full-building inspections with certified reports, typically turned around in 2-3 days. Happy to give you a quick quote.
 
@@ -119,7 +119,7 @@ Lion Environmental LLC
 
   `Hi {{first_name}},
 
-Just finished inspecting a multi-family property in New City — results back in 2 days. The owner is applying for the Rockland County remediation grant, which covers up to $40k per unit.
+Just finished inspecting a multi-family property in New City - results back in 2 days. The owner is applying for the Rockland County remediation grant, which covers up to $40k per unit.
 
 If you've been thinking about getting your buildings inspected, happy to put together a quote. No pressure either way.
 
@@ -130,7 +130,7 @@ Lion Environmental LLC
 
   `Hi {{first_name}},
 
-Haven't heard back, totally understand — you're busy.
+Haven't heard back, totally understand - you're busy.
 
 If lead paint testing or the Rockland County remediation grants ever come up, my number is (201) 375-2797. Always happy to help.
 
