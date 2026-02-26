@@ -551,7 +551,7 @@ export default function ApolloSearchPage() {
           </div>
 
           {/* Max Results + Search */}
-          <div className="flex flex-wrap items-end gap-4 border-t pt-4">
+          <div className="flex flex-wrap items-center gap-4 border-t pt-4">
             <div className="space-y-1.5">
               <Label className="text-sm font-medium">Max Results</Label>
               <select
@@ -567,9 +567,20 @@ export default function ApolloSearchPage() {
               </select>
             </div>
 
-            <Button onClick={handleSearch} disabled={searching} size="lg">
-              {searching ? "Searching..." : "Search Apollo"}
-            </Button>
+            {(enrichEmails || revealPhones) && (
+              <div className="text-sm text-muted-foreground pt-5">
+                Est. <span className="font-medium text-foreground">{maxResults * ((enrichEmails ? 1 : 0) + (revealPhones ? 8 : 0))}</span> credits
+                <span className="text-xs ml-1">
+                  ({maxResults} x {[enrichEmails && "1 email", revealPhones && "8 phone"].filter(Boolean).join(" + ")})
+                </span>
+              </div>
+            )}
+
+            <div className="ml-auto">
+              <Button onClick={handleSearch} disabled={searching} size="lg">
+                {searching ? "Searching..." : "Search Apollo"}
+              </Button>
+            </div>
           </div>
 
           {searching && (
