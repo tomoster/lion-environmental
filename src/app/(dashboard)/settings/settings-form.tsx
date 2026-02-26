@@ -42,52 +42,50 @@ If you have any questions about this report, please don't hesitate to reach out.
 
 Thank you for choosing Lion Environmental!`;
 
-const DEFAULT_COLD_EMAIL_SUBJECT_NYC = "Quick question about {{company}}";
-const DEFAULT_COLD_EMAIL_SUBJECT_ROCKLAND = "Quick question about {{company}}";
+const DEFAULT_COLD_EMAIL_SUBJECT_NYC = "Quick question, {{first_name}}";
+const DEFAULT_COLD_EMAIL_SUBJECT_ROCKLAND = "Quick question, {{first_name}}";
 
 const DEFAULT_COLD_EMAIL_STEPS_NYC = [
   `Hi {{first_name}},
 
-I run a lead paint testing company in the NJ/NYC area. With the Local Law 31 deadlines coming up, a lot of property managers are scrambling to get inspections done.
+Local Law 31 deadlines are putting a lot of pressure on NYC property managers right now - buildings need to be inspected or fines start at $1,000 per unit.
 
-We handle everything - full-building XRF inspections with reports ready in 48-72 hours.
+We do full-building XRF inspections with certified reports ready in 48-72 hours.
 
-Would it make sense to chat for 5 minutes about your buildings?
+Worth a quick conversation about your portfolio?
 
-Best,
 Avi Bursztyn
 Lion Environmental LLC
 (201) 375-2797`,
 
   `Hi {{first_name}},
 
-Following up on my last note. NYC just expanded enforcement on Local Law 31 - fines start at $1,000 per unit for non-compliance, and they're actively issuing violations.
+Following up on my last note. NYC enforcement on Local Law 31 is picking up - violations are being issued and fines start at $1,000 per unit.
 
-We do full-building inspections with certified reports, typically turned around in 2-3 days. Happy to give you a quick quote if you want to compare pricing.
+We handle full-building inspections with certified reports, typically in 2-3 days. Happy to put together a quick quote if you want to see numbers.
 
-Best,
+Worth it?
+
 Avi Bursztyn
 Lion Environmental LLC
 (201) 375-2797`,
 
   `Hi {{first_name}},
 
-Just finished a 24-unit building inspection in Jersey City - results back in 2 days, client was happy with the pricing.
+Just wrapped up a 24-unit inspection in Jersey City - certified report delivered in 2 days, owner submitted for compliance the same week.
 
-If you're shopping around for lead paint testing, happy to put together a comparison quote. No pressure either way.
+If your buildings still need to be checked off, happy to put together a quote. Faster turnaround than most.
 
-Best,
+Worth a look?
+
 Avi Bursztyn
 Lion Environmental LLC
 (201) 375-2797`,
 
   `Hi {{first_name}},
 
-Haven't heard back, totally understand - you're busy.
+No worries if the timing isn't right. If lead paint testing or Local Law 31 compliance comes up down the road, I'm at (201) 375-2797.
 
-If lead paint testing ever comes up down the road, my number is (201) 375-2797. Always happy to help.
-
-Best,
 Avi Bursztyn
 Lion Environmental LLC`,
 ];
@@ -95,46 +93,44 @@ Lion Environmental LLC`,
 const DEFAULT_COLD_EMAIL_STEPS_ROCKLAND = [
   `Hi {{first_name}},
 
-I run a lead paint testing company serving the Rockland County area. New York State requires lead paint inspections for all pre-1980 multi-family rental properties - and Rockland County is offering up to $40,000 per unit in remediation grants for landlords who get inspected.
+New York State requires lead paint inspections for pre-1980 rental properties - and Rockland County's remediation grant covers up to $40,000 per unit for landlords who get inspected first.
 
-We handle everything - full-building XRF inspections with certified reports in 48-72 hours.
+We do full-building XRF inspections with certified reports in 48-72 hours.
 
-Would it make sense to chat for 5 minutes about your properties?
+Worth a quick conversation about your properties?
 
-Best,
 Avi Bursztyn
 Lion Environmental LLC
 (201) 375-2797`,
 
   `Hi {{first_name}},
 
-Following up on my last note. With 80% of Rockland County homes built before 1978, most multi-family rentals require lead paint inspections under NY State law. The county's remediation grant program ($40k/unit) requires an inspection first - it's a good time to get ahead of it.
+Following up on my last note. With most Rockland County rentals built before 1978, the state inspection requirement applies to almost every multi-family portfolio in the area.
 
-We do full-building inspections with certified reports, typically turned around in 2-3 days. Happy to give you a quick quote.
+The county grant ($40K per unit) requires an inspection first - worth getting ahead of it.
 
-Best,
+Happy to put together a quick quote.
+
 Avi Bursztyn
 Lion Environmental LLC
 (201) 375-2797`,
 
   `Hi {{first_name}},
 
-Just finished inspecting a multi-family property in New City - results back in 2 days. The owner is applying for the Rockland County remediation grant, which covers up to $40k per unit.
+Just finished a property in New City - owner is applying for the Rockland County remediation grant this month. The inspection report is the first thing they ask for.
 
-If you've been thinking about getting your buildings inspected, happy to put together a quote. No pressure either way.
+If you've been sitting on this, happy to get you a quote this week.
 
-Best,
+Worth it?
+
 Avi Bursztyn
 Lion Environmental LLC
 (201) 375-2797`,
 
   `Hi {{first_name}},
 
-Haven't heard back, totally understand - you're busy.
+No worries if the timing isn't right. If lead paint inspections or the Rockland County remediation grants ever come up, I'm at (201) 375-2797.
 
-If lead paint testing or the Rockland County remediation grants ever come up, my number is (201) 375-2797. Always happy to help.
-
-Best,
 Avi Bursztyn
 Lion Environmental LLC`,
 ];
