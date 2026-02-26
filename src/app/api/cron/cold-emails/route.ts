@@ -6,6 +6,22 @@ function replaceVars(template: string, vars: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
 }
 
+const ROCKLAND_TOWNS = [
+  "new city", "suffern", "nanuet", "pearl river", "spring valley",
+  "nyack", "haverstraw", "stony point", "monsey", "orangeburg",
+  "congers", "west nyack", "pomona", "tappan", "blauvelt",
+  "chestnut ridge", "airmont",
+];
+
+function detectLocation(buildingAddress: string | null): "nyc" | "rockland" {
+  if (!buildingAddress) return "nyc";
+  const lower = buildingAddress.toLowerCase();
+  for (const town of ROCKLAND_TOWNS) {
+    if (lower.includes(town)) return "rockland";
+  }
+  return "nyc";
+}
+
 function getETDate(): { hour: number; dayOfWeek: number; todayStr: string } {
   const now = new Date();
   const et = new Intl.DateTimeFormat("en-US", {
@@ -133,15 +149,16 @@ export async function GET(request: NextRequest) {
     (suppressedRows ?? []).map((r) => r.email.toLowerCase())
   );
 
-  // Get due prospects
+  // Get 1 due prospect — follow-ups first, then oldest scheduled
   const { data: prospects } = await supabase
     .from("prospects")
     .select("*")
     .eq("seq_status", "active")
     .not("email", "is", null)
     .lte("next_send", new Date().toISOString())
+    .order("seq_step", { ascending: false })
     .order("next_send", { ascending: true })
-    .limit(remaining);
+    .limit(1);
 
   if (!prospects || prospects.length === 0) {
     return NextResponse.json({
@@ -166,7 +183,10 @@ export async function GET(request: NextRequest) {
     }
 
     const step = prospect.seq_step;
-    const bodyTemplate = settings[`cold_email_step_${step}`];
+    const location = detectLocation(prospect.building_address);
+    const bodyTemplate =
+      settings[`cold_email_step_${step}_${location}`] ??
+      settings[`cold_email_step_${step}`];
     if (!bodyTemplate || bodyTemplate.startsWith("[PASTE")) {
       continue; // Skip if template not configured
     }
@@ -174,7 +194,10 @@ export async function GET(request: NextRequest) {
     // Personalize
     const firstName = prospect.contact_name?.split(" ")[0] ?? "there";
     const vars = { first_name: firstName, company: prospect.company };
-    const subject = replaceVars(subjectTemplate, vars);
+    const locationSubject =
+      settings[`cold_email_subject_${location}`] ??
+      subjectTemplate;
+    const subject = replaceVars(locationSubject, vars);
     let body = replaceVars(bodyTemplate, vars);
     if (unsubscribeFooter) {
       body += `\n\n---\n${unsubscribeFooter}`;

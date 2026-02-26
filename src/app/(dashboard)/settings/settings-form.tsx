@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,9 +42,10 @@ If you have any questions about this report, please don't hesitate to reach out.
 
 Thank you for choosing Lion Environmental!`;
 
-const DEFAULT_COLD_EMAIL_SUBJECT = "Quick question about {{company}}";
+const DEFAULT_COLD_EMAIL_SUBJECT_NYC = "Quick question about {{company}}";
+const DEFAULT_COLD_EMAIL_SUBJECT_ROCKLAND = "Quick question about {{company}}";
 
-const DEFAULT_COLD_EMAIL_STEPS = [
+const DEFAULT_COLD_EMAIL_STEPS_NYC = [
   `Hi {{first_name}},
 
 I run a lead paint testing company in the NJ/NYC area. With the Local Law 31 deadlines coming up, a lot of property managers are scrambling to get inspections done.
@@ -91,11 +92,59 @@ Avi Bursztyn
 Lion Environmental LLC`,
 ];
 
+const DEFAULT_COLD_EMAIL_STEPS_ROCKLAND = [
+  `Hi {{first_name}},
+
+I run a lead paint testing company serving the Rockland County area. New York State requires lead paint inspections for all pre-1980 multi-family rental properties — and Rockland County is offering up to $40,000 per unit in remediation grants for landlords who get inspected.
+
+We handle everything — full-building XRF inspections with certified reports in 48-72 hours.
+
+Would it make sense to chat for 5 minutes about your properties?
+
+Best,
+Avi Bursztyn
+Lion Environmental LLC
+(201) 375-2797`,
+
+  `Hi {{first_name}},
+
+Following up on my last note. With 80% of Rockland County homes built before 1978, most multi-family rentals require lead paint inspections under NY State law. The county's remediation grant program ($40k/unit) requires an inspection first — it's a good time to get ahead of it.
+
+We do full-building inspections with certified reports, typically turned around in 2-3 days. Happy to give you a quick quote.
+
+Best,
+Avi Bursztyn
+Lion Environmental LLC
+(201) 375-2797`,
+
+  `Hi {{first_name}},
+
+Just finished inspecting a multi-family property in New City — results back in 2 days. The owner is applying for the Rockland County remediation grant, which covers up to $40k per unit.
+
+If you've been thinking about getting your buildings inspected, happy to put together a quote. No pressure either way.
+
+Best,
+Avi Bursztyn
+Lion Environmental LLC
+(201) 375-2797`,
+
+  `Hi {{first_name}},
+
+Haven't heard back, totally understand — you're busy.
+
+If lead paint testing or the Rockland County remediation grants ever come up, my number is (201) 375-2797. Always happy to help.
+
+Best,
+Avi Bursztyn
+Lion Environmental LLC`,
+];
+
 interface SettingsFormProps {
   settings: Record<string, string>;
 }
 
 export function SettingsForm({ settings }: SettingsFormProps) {
+  const [emailLocation, setEmailLocation] = useState<"nyc" | "rockland">("nyc");
   const [isBizPending, startBizTransition] = useTransition();
   const [isXrfPending, startXrfTransition] = useTransition();
   const [isDustSwabPending, startDustSwabTransition] = useTransition();
@@ -580,38 +629,68 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           <CardHeader>
             <CardTitle>Cold Email Sequence</CardTitle>
             <CardDescription>
-              4-step outreach sequence for new prospects. Available variables:{" "}
+              4-step outreach sequence. Templates auto-selected based on
+              prospect location. Variables:{" "}
               <code className="text-xs">{"{{company}}"}</code>,{" "}
               <code className="text-xs">{"{{first_name}}"}</code>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
-              Cold email engine coming soon — save your templates now.
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEmailLocation("nyc")}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  emailLocation === "nyc"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                NYC / Default
+              </button>
+              <button
+                type="button"
+                onClick={() => setEmailLocation("rockland")}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                  emailLocation === "rockland"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Rockland County
+              </button>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="cold_email_subject">
-                Subject Line (shared across all steps)
+              <Label htmlFor={`cold_email_subject_${emailLocation}`}>
+                Subject Line
               </Label>
               <Input
-                id="cold_email_subject"
-                name="cold_email_subject"
+                key={`subject_${emailLocation}`}
+                id={`cold_email_subject_${emailLocation}`}
+                name={`cold_email_subject_${emailLocation}`}
                 defaultValue={
-                  settings.cold_email_subject ?? DEFAULT_COLD_EMAIL_SUBJECT
+                  settings[`cold_email_subject_${emailLocation}`] ??
+                  (emailLocation === "nyc"
+                    ? settings.cold_email_subject ?? DEFAULT_COLD_EMAIL_SUBJECT_NYC
+                    : DEFAULT_COLD_EMAIL_SUBJECT_ROCKLAND)
                 }
               />
             </div>
             {[1, 2, 3, 4].map((step) => (
-              <div key={step} className="space-y-1.5">
-                <Label htmlFor={`cold_email_step_${step}`}>Step {step}</Label>
+              <div key={`${step}_${emailLocation}`} className="space-y-1.5">
+                <Label htmlFor={`cold_email_step_${step}_${emailLocation}`}>
+                  Step {step}
+                </Label>
                 <Textarea
-                  id={`cold_email_step_${step}`}
-                  name={`cold_email_step_${step}`}
-                  rows={5}
+                  id={`cold_email_step_${step}_${emailLocation}`}
+                  name={`cold_email_step_${step}_${emailLocation}`}
+                  rows={7}
                   defaultValue={
-                    settings[`cold_email_step_${step}`] ??
-                    DEFAULT_COLD_EMAIL_STEPS[step - 1] ??
-                    ""
+                    settings[`cold_email_step_${step}_${emailLocation}`] ??
+                    (emailLocation === "nyc"
+                      ? settings[`cold_email_step_${step}`] ??
+                        DEFAULT_COLD_EMAIL_STEPS_NYC[step - 1] ?? ""
+                      : DEFAULT_COLD_EMAIL_STEPS_ROCKLAND[step - 1] ?? "")
                   }
                 />
               </div>
@@ -619,7 +698,9 @@ export function SettingsForm({ settings }: SettingsFormProps) {
           </CardContent>
           <CardFooter>
             <Button type="submit" disabled={isColdEmailPending}>
-              {isColdEmailPending ? "Saving..." : "Save Cold Email Templates"}
+              {isColdEmailPending
+                ? "Saving..."
+                : `Save ${emailLocation === "nyc" ? "NYC" : "Rockland"} Templates`}
             </Button>
           </CardFooter>
         </Card>
