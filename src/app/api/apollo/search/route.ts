@@ -13,9 +13,7 @@ export const maxDuration = 60;
 interface SearchRequest {
   locations: string[];
   titles?: string[];
-  seniorities?: string[];
   employeeRanges?: string[];
-  keywords?: string;
   emailStatus?: string[];
   includeSimilarTitles?: boolean;
   maxResults?: number;
@@ -45,9 +43,7 @@ export async function POST(request: NextRequest) {
   };
 
   if (body.titles?.length) searchParams.person_titles = body.titles;
-  if (body.seniorities?.length) searchParams.person_seniorities = body.seniorities;
   if (body.employeeRanges?.length) searchParams.organization_num_employees_ranges = body.employeeRanges;
-  if (body.keywords) searchParams.q_keywords = body.keywords;
   if (body.emailStatus?.length) searchParams.contact_email_status = body.emailStatus;
   if (body.includeSimilarTitles !== undefined) searchParams.include_similar_titles = body.includeSimilarTitles;
 

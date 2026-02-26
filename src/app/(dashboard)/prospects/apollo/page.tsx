@@ -51,28 +51,21 @@ interface ImportResult {
   error?: string;
 }
 
-const SENIORITY_OPTIONS = [
-  { value: "owner", label: "Owner" },
-  { value: "founder", label: "Founder" },
-  { value: "c_suite", label: "C-Suite" },
-  { value: "partner", label: "Partner" },
-  { value: "vp", label: "VP" },
-  { value: "head", label: "Head" },
-  { value: "director", label: "Director" },
-  { value: "manager", label: "Manager" },
-  { value: "senior", label: "Senior" },
-  { value: "entry", label: "Entry" },
-];
-
 const EMPLOYEE_COUNT_OPTIONS = [
   { value: "1,10", label: "1-10" },
-  { value: "11,50", label: "11-50" },
-  { value: "51,200", label: "51-200" },
+  { value: "11,20", label: "11-20" },
+  { value: "21,50", label: "21-50" },
+  { value: "51,100", label: "51-100" },
+  { value: "101,200", label: "101-200" },
   { value: "201,500", label: "201-500" },
   { value: "501,1000", label: "501-1,000" },
-  { value: "1001,5000", label: "1,001-5,000" },
+  { value: "1001,2000", label: "1,001-2,000" },
+  { value: "2001,5000", label: "2,001-5,000" },
   { value: "5001,10000", label: "5,001-10,000" },
+  { value: "10001,", label: "10,001+" },
 ];
+
+const MONTHLY_CREDIT_LIMIT = 2535;
 
 const LOCATION_PRESETS = [
   "Monsey, New York",
@@ -107,10 +100,9 @@ export default function ApolloSearchPage() {
   const [selectedTitles, setSelectedTitles] = useState<string[]>(["Property Manager"]);
   const [customTitle, setCustomTitle] = useState("");
   const [includeSimilarTitles, setIncludeSimilarTitles] = useState(true);
-  const [seniorities, setSeniorities] = useState<string[]>(["manager", "director", "vp"]);
-  const [employeeRanges, setEmployeeRanges] = useState<string[]>([]);
-  const [keywords, setKeywords] = useState("");
+  const [employeeRanges, setEmployeeRanges] = useState<string[]>(["1,10", "11,20", "21,50", "51,100"]);
   const [emailStatus, setEmailStatus] = useState<string[]>(["verified"]);
+  const [sessionCredits, setSessionCredits] = useState(0);
   const [maxResults, setMaxResults] = useState(100);
   const [enrichResults, setEnrichResults] = useState(false);
 
@@ -161,9 +153,7 @@ export default function ApolloSearchPage() {
         body: JSON.stringify({
           locations: selectedLocations,
           titles: titleList.length > 0 ? titleList : undefined,
-          seniorities: seniorities.length > 0 ? seniorities : undefined,
           employeeRanges: employeeRanges.length > 0 ? employeeRanges : undefined,
-          keywords: keywords || undefined,
           emailStatus: emailStatus.length > 0 ? emailStatus : undefined,
           includeSimilarTitles,
           maxResults,
@@ -178,6 +168,7 @@ export default function ApolloSearchPage() {
       }
 
       setResults(data);
+      if (data.credits_used > 0) setSessionCredits((c) => c + data.credits_used);
       if (data.total === 0) {
         toast.info(
           `No results found. ${data.total_available} total in Apollo but none matched all filters.`
@@ -211,9 +202,7 @@ export default function ApolloSearchPage() {
           body: JSON.stringify({
             locations: selectedLocations,
             titles: titleList.length > 0 ? titleList : undefined,
-            seniorities: seniorities.length > 0 ? seniorities : undefined,
             employeeRanges: employeeRanges.length > 0 ? employeeRanges : undefined,
-            keywords: keywords || undefined,
             emailStatus: emailStatus.length > 0 ? emailStatus : undefined,
             includeSimilarTitles,
             maxResults,
@@ -228,6 +217,7 @@ export default function ApolloSearchPage() {
         }
 
         setResults(data);
+        if (data.credits_used > 0) setSessionCredits((c) => c + data.credits_used);
         toast.success(`Enriched ${data.total} contacts (${data.credits_used} credits used)`);
 
         // Now import
@@ -305,6 +295,32 @@ export default function ApolloSearchPage() {
           Search Apollo.io for property management leads. Preview is free, enrichment costs 1 credit per contact.
         </p>
       </div>
+
+      {/* Credits Bar */}
+      <Card>
+        <CardContent className="py-4">
+          <div className="flex items-center justify-between text-sm mb-2">
+            <span className="font-medium">Monthly Credits</span>
+            <span className="text-muted-foreground">
+              {sessionCredits > 0 && (
+                <span className="text-primary font-medium mr-2">
+                  {sessionCredits} used this session
+                </span>
+              )}
+              {MONTHLY_CREDIT_LIMIT.toLocaleString()} / month (Basic plan)
+            </span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${Math.min((sessionCredits / MONTHLY_CREDIT_LIMIT) * 100, 100)}%` }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground mt-1">
+            {MONTHLY_CREDIT_LIMIT - sessionCredits} credits remaining this session. Check Apollo dashboard for full monthly usage.
+          </p>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -459,28 +475,6 @@ export default function ApolloSearchPage() {
             </div>
           </div>
 
-          {/* Seniority */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">Seniority Level</Label>
-            <div className="flex flex-wrap gap-2">
-              {SENIORITY_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() =>
-                    setSeniorities(toggleArrayValue(seniorities, opt.value))
-                  }
-                  className={`rounded-full border px-3 py-1 text-sm transition-colors ${
-                    seniorities.includes(opt.value)
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border text-muted-foreground hover:border-primary/50"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           {/* Employee Count */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Company Size (employees)</Label>
@@ -505,35 +499,25 @@ export default function ApolloSearchPage() {
             </div>
           </div>
 
-          {/* Keywords + Email Status */}
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Keywords</Label>
-              <Input
-                placeholder="e.g. property management, real estate"
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-sm font-medium">Email Status</Label>
-              <div className="flex flex-wrap gap-2">
-                {["verified", "likely to engage", "unverified"].map((status) => (
-                  <button
-                    key={status}
-                    onClick={() =>
-                      setEmailStatus(toggleArrayValue(emailStatus, status))
-                    }
-                    className={`rounded-full border px-3 py-1 text-sm capitalize transition-colors ${
-                      emailStatus.includes(status)
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "border-border text-muted-foreground hover:border-primary/50"
-                    }`}
-                  >
-                    {status}
-                  </button>
-                ))}
-              </div>
+          {/* Email Status */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Email Status</Label>
+            <div className="flex flex-wrap gap-2">
+              {["verified", "likely to engage", "unverified"].map((status) => (
+                <button
+                  key={status}
+                  onClick={() =>
+                    setEmailStatus(toggleArrayValue(emailStatus, status))
+                  }
+                  className={`rounded-full border px-3 py-1 text-sm capitalize transition-colors ${
+                    emailStatus.includes(status)
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  {status}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -612,7 +596,10 @@ export default function ApolloSearchPage() {
                         <TableHead>Title</TableHead>
                         <TableHead>Company</TableHead>
                         {results.credits_used > 0 && (
-                          <TableHead>Email</TableHead>
+                          <>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Phone</TableHead>
+                          </>
                         )}
                         <TableHead>Location</TableHead>
                       </TableRow>
@@ -644,9 +631,14 @@ export default function ApolloSearchPage() {
                             {person.company ?? "—"}
                           </TableCell>
                           {results.credits_used > 0 && (
-                            <TableCell className="text-muted-foreground max-w-48 truncate text-sm">
-                              {person.email ?? "—"}
-                            </TableCell>
+                            <>
+                              <TableCell className="text-muted-foreground max-w-48 truncate text-sm">
+                                {person.email ?? "—"}
+                              </TableCell>
+                              <TableCell className="text-muted-foreground text-sm">
+                                {person.phone ?? "—"}
+                              </TableCell>
+                            </>
                           )}
                           <TableCell className="text-muted-foreground text-sm">
                             {person.location ?? "—"}
