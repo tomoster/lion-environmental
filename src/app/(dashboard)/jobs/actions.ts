@@ -157,30 +157,34 @@ export async function updateJob(id: string, formData: FormData) {
   }
 
   if (wasNotDispatched) {
-    const { data: fullJob } = await supabase
-      .from("jobs")
-      .select("job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
-      .eq("id", id)
-      .single();
+    try {
+      const { data: fullJob } = await supabase
+        .from("jobs")
+        .select("job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
+        .eq("id", id)
+        .single();
 
-    if (fullJob && fullJob.client_email && (fullJob.has_xrf || fullJob.has_dust_swab || fullJob.has_asbestos)) {
-      const proposals = await generateProposals(fullJob);
-      if (proposals.length > 0) {
-        const { data: senderSetting } = await supabase
-          .from("settings")
-          .select("value")
-          .eq("key", "sender_name")
-          .maybeSingle();
+      if (fullJob && fullJob.client_email && (fullJob.has_xrf || fullJob.has_dust_swab || fullJob.has_asbestos)) {
+        const proposals = await generateProposals(fullJob);
+        if (proposals.length > 0) {
+          const { data: senderSetting } = await supabase
+            .from("settings")
+            .select("value")
+            .eq("key", "sender_name")
+            .maybeSingle();
 
-        await sendProposalEmail({
-          to: fullJob.client_email,
-          jobNumber: fullJob.job_number,
-          clientCompany: fullJob.client_company ?? "",
-          buildingAddress: fullJob.building_address ?? "",
-          attachments: proposals,
-          senderName: senderSetting?.value ?? "Lion Environmental",
-        });
+          await sendProposalEmail({
+            to: fullJob.client_email,
+            jobNumber: fullJob.job_number,
+            clientCompany: fullJob.client_company ?? "",
+            buildingAddress: fullJob.building_address ?? "",
+            attachments: proposals,
+            senderName: senderSetting?.value ?? "Lion Environmental",
+          });
+        }
       }
+    } catch (e) {
+      console.error("Proposal generation/email failed:", e);
     }
   }
 
