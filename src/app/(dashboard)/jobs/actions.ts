@@ -5,7 +5,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calculateEndTime } from "@/lib/scheduling-utils";
-import { broadcastJobToWorkers } from "@/lib/telegram/broadcast";
+import { generateProposals } from "@/lib/proposals/generate";
+import { sendProposalEmail } from "@/lib/email/send-proposal";
 import { autoSendReports } from "@/lib/reports/auto-send";
 
 export async function createJob(formData: FormData) {
@@ -107,6 +108,12 @@ export async function updateJob(id: string, formData: FormData) {
     num_common_spaces: formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : null,
     price_per_common_space: formData.get("price_per_common_space") ? Number(formData.get("price_per_common_space")) : null,
     num_wipes: formData.get("num_wipes") ? Number(formData.get("num_wipes")) : null,
+    wipe_rate: formData.get("wipe_rate") ? Number(formData.get("wipe_rate")) : null,
+    dust_swab_site_visit_rate: formData.get("dust_swab_site_visit_rate") ? Number(formData.get("dust_swab_site_visit_rate")) : null,
+    dust_swab_proj_mgmt_rate: formData.get("dust_swab_proj_mgmt_rate") ? Number(formData.get("dust_swab_proj_mgmt_rate")) : null,
+    num_asbestos_samples: formData.get("num_asbestos_samples") ? Number(formData.get("num_asbestos_samples")) : null,
+    asbestos_sample_rate: formData.get("asbestos_sample_rate") ? Number(formData.get("asbestos_sample_rate")) : null,
+    asbestos_site_visit_rate: formData.get("asbestos_site_visit_rate") ? Number(formData.get("asbestos_site_visit_rate")) : null,
     scan_date: (formData.get("scan_date") as string) || null,
     start_time: startTime,
     estimated_end_time: estimatedEndTime,
@@ -136,7 +143,8 @@ export async function updateJob(id: string, formData: FormData) {
   };
 
   if (wasNotDispatched) {
-    data.job_status = "open";
+    data.job_status = "proposal_sent";
+    (data as Record<string, unknown>).proposal_sent_at = new Date().toISOString();
     (data as Record<string, unknown>).complete_reminder_sent = false;
   } else if (startTime !== currentJob?.start_time) {
     (data as Record<string, unknown>).complete_reminder_sent = false;
@@ -149,8 +157,31 @@ export async function updateJob(id: string, formData: FormData) {
   }
 
   if (wasNotDispatched) {
-    const adminClient = createAdminClient();
-    await broadcastJobToWorkers(adminClient, id);
+    const { data: fullJob } = await supabase
+      .from("jobs")
+      .select("job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
+      .eq("id", id)
+      .single();
+
+    if (fullJob && fullJob.client_email && (fullJob.has_xrf || fullJob.has_dust_swab || fullJob.has_asbestos)) {
+      const proposals = await generateProposals(fullJob);
+      if (proposals.length > 0) {
+        const { data: senderSetting } = await supabase
+          .from("settings")
+          .select("value")
+          .eq("key", "sender_name")
+          .maybeSingle();
+
+        await sendProposalEmail({
+          to: fullJob.client_email,
+          jobNumber: fullJob.job_number,
+          clientCompany: fullJob.client_company ?? "",
+          buildingAddress: fullJob.building_address ?? "",
+          attachments: proposals,
+          senderName: senderSetting?.value ?? "Lion Environmental",
+        });
+      }
+    }
   }
 
   revalidatePath("/jobs");

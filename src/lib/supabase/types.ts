@@ -228,12 +228,16 @@ export type Database = {
       }
       jobs: {
         Row: {
+          asbestos_sample_rate: number | null
+          asbestos_site_visit_rate: number | null
           building_address: string | null
           client_company: string | null
           client_email: string | null
           complete_reminder_sent: boolean
           created_at: string | null
           dispatch_message_ids: Json | null
+          dust_swab_proj_mgmt_rate: number | null
+          dust_swab_site_visit_rate: number | null
           dust_swab_status: string | null
           estimated_end_time: string | null
           has_asbestos: boolean
@@ -243,26 +247,33 @@ export type Database = {
           job_number: number
           job_status: string
           notes: string | null
+          num_asbestos_samples: number | null
           num_common_spaces: number | null
           num_units: number | null
           num_wipes: number | null
           price_per_common_space: number | null
           price_per_unit: number | null
+          proposal_sent_at: string | null
           prospect_id: string | null
           report_status: string
           report_writer_id: string | null
           scan_date: string | null
           start_time: string | null
           updated_at: string | null
+          wipe_rate: number | null
           worker_id: string | null
         }
         Insert: {
+          asbestos_sample_rate?: number | null
+          asbestos_site_visit_rate?: number | null
           building_address?: string | null
           client_company?: string | null
           client_email?: string | null
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
+          dust_swab_proj_mgmt_rate?: number | null
+          dust_swab_site_visit_rate?: number | null
           dust_swab_status?: string | null
           estimated_end_time?: string | null
           has_asbestos?: boolean
@@ -272,26 +283,33 @@ export type Database = {
           job_number?: number
           job_status?: string
           notes?: string | null
+          num_asbestos_samples?: number | null
           num_common_spaces?: number | null
           num_units?: number | null
           num_wipes?: number | null
           price_per_common_space?: number | null
           price_per_unit?: number | null
+          proposal_sent_at?: string | null
           prospect_id?: string | null
           report_status?: string
           report_writer_id?: string | null
           scan_date?: string | null
           start_time?: string | null
           updated_at?: string | null
+          wipe_rate?: number | null
           worker_id?: string | null
         }
         Update: {
+          asbestos_sample_rate?: number | null
+          asbestos_site_visit_rate?: number | null
           building_address?: string | null
           client_company?: string | null
           client_email?: string | null
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
+          dust_swab_proj_mgmt_rate?: number | null
+          dust_swab_site_visit_rate?: number | null
           dust_swab_status?: string | null
           estimated_end_time?: string | null
           has_asbestos?: boolean
@@ -301,17 +319,20 @@ export type Database = {
           job_number?: number
           job_status?: string
           notes?: string | null
+          num_asbestos_samples?: number | null
           num_common_spaces?: number | null
           num_units?: number | null
           num_wipes?: number | null
           price_per_common_space?: number | null
           price_per_unit?: number | null
+          proposal_sent_at?: string | null
           prospect_id?: string | null
           report_status?: string
           report_writer_id?: string | null
           scan_date?: string | null
           start_time?: string | null
           updated_at?: string | null
+          wipe_rate?: number | null
           worker_id?: string | null
         }
         Relationships: [

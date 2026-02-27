@@ -41,6 +41,7 @@ type JobsTableProps = {
 
 const JOB_STATUS_LABELS: Record<string, string> = {
   not_dispatched: "Not Dispatched",
+  proposal_sent: "Proposal Sent",
   open: "Open",
   assigned: "Assigned",
   completed: "Completed",
@@ -66,6 +67,8 @@ function jobStatusBadgeClass(status: string): string {
   switch (status) {
     case "not_dispatched":
       return "bg-zinc-100 text-zinc-700 border-zinc-200";
+    case "proposal_sent":
+      return "bg-purple-100 text-purple-700 border-purple-200";
     case "open":
       return "bg-blue-100 text-blue-700 border-blue-200";
     case "assigned":

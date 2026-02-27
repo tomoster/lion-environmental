@@ -14,13 +14,11 @@ import { JobDetailForm } from "./job-detail-form";
 import { getAvailableWorkers } from "@/lib/scheduling";
 import { formatServiceTypes } from "@/lib/service-type-utils";
 
-const DUST_SWAB_SITE_VISIT = 375;
-const DUST_SWAB_REPORT_FEE = 135;
-const DUST_SWAB_WIPE_RATE = 20;
 const TAX_RATE = 0.0888;
 
 const JOB_STATUS_LABELS: Record<string, string> = {
   not_dispatched: "Not Dispatched",
+  proposal_sent: "Proposal Sent",
   open: "Open",
   assigned: "Assigned",
   completed: "Completed",
@@ -45,6 +43,7 @@ const DUST_SWAB_STATUS_LABELS: Record<string, string> = {
 function dispatchBadgeClass(status: string): string {
   switch (status) {
     case "not_dispatched": return "bg-zinc-100 text-zinc-700 border-zinc-200";
+    case "proposal_sent": return "bg-purple-100 text-purple-700 border-purple-200";
     case "open": return "bg-blue-100 text-blue-700 border-blue-200";
     case "assigned": return "bg-yellow-100 text-yellow-700 border-yellow-200";
     case "completed": return "bg-green-100 text-green-700 border-green-200";
@@ -126,7 +125,11 @@ export default async function JobDetailPage({ params }: PageProps) {
   const { data: settings } = await supabase
     .from("settings")
     .select("key, value")
-    .in("key", ["xrf_price_per_unit", "xrf_price_per_common_space"]);
+    .in("key", [
+      "xrf_price_per_unit", "xrf_price_per_common_space",
+      "dust_swab_wipe_rate", "dust_swab_site_visit_rate", "dust_swab_proj_mgmt_rate",
+      "asbestos_sample_rate", "asbestos_site_visit_rate",
+    ]);
 
   const settingsMap: Record<string, string> = {};
   for (const s of settings ?? []) {
@@ -135,6 +138,11 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   const defaultPricePerUnit = job.price_per_unit ?? (settingsMap.xrf_price_per_unit ? Number(settingsMap.xrf_price_per_unit) : null);
   const defaultPricePerCommonSpace = job.price_per_common_space ?? (settingsMap.xrf_price_per_common_space ? Number(settingsMap.xrf_price_per_common_space) : null);
+  const defaultWipeRate = job.wipe_rate ?? (settingsMap.dust_swab_wipe_rate ? Number(settingsMap.dust_swab_wipe_rate) : 20);
+  const defaultDustSwabSiteVisitRate = job.dust_swab_site_visit_rate ?? (settingsMap.dust_swab_site_visit_rate ? Number(settingsMap.dust_swab_site_visit_rate) : 375);
+  const defaultDustSwabProjMgmtRate = job.dust_swab_proj_mgmt_rate ?? (settingsMap.dust_swab_proj_mgmt_rate ? Number(settingsMap.dust_swab_proj_mgmt_rate) : 135);
+  const defaultAsbestosSampleRate = job.asbestos_sample_rate ?? (settingsMap.asbestos_sample_rate ? Number(settingsMap.asbestos_sample_rate) : null);
+  const defaultAsbestosSiteVisitRate = job.asbestos_site_visit_rate ?? (settingsMap.asbestos_site_visit_rate ? Number(settingsMap.asbestos_site_visit_rate) : 375);
 
   let availability = { available: [] as { id: string; name: string }[], unavailable: [] as { worker: { id: string; name: string }; reason: string }[] };
 
@@ -160,12 +168,17 @@ export default async function JobDetailPage({ params }: PageProps) {
     : 0;
 
   const dustSwabSubtotal = job.has_dust_swab
-    ? DUST_SWAB_SITE_VISIT +
-      DUST_SWAB_REPORT_FEE +
-      (job.num_wipes ?? 0) * DUST_SWAB_WIPE_RATE
+    ? (defaultDustSwabSiteVisitRate ?? 0) +
+      (defaultDustSwabProjMgmtRate ?? 0) +
+      (job.num_wipes ?? 0) * (defaultWipeRate ?? 0)
     : 0;
 
-  const subtotal = xrfSubtotal + dustSwabSubtotal;
+  const asbestosSubtotal = job.has_asbestos
+    ? (defaultAsbestosSiteVisitRate ?? 0) +
+      (job.num_asbestos_samples ?? 0) * (defaultAsbestosSampleRate ?? 0)
+    : 0;
+
+  const subtotal = xrfSubtotal + dustSwabSubtotal + asbestosSubtotal;
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
@@ -179,7 +192,7 @@ export default async function JobDetailPage({ params }: PageProps) {
   const uploadDustSwabReport = uploadReport.bind(null, id, "dust_swab");
   const markClientPaidWithId = markClientPaid.bind(null, id);
 
-  const canDispatch = job.job_status === "not_dispatched" || job.job_status === "open";
+  const canDispatch = job.job_status === "proposal_sent" || job.job_status === "open";
   const canMarkPaid = jobInvoice && jobInvoice.status !== "paid";
 
   return (
@@ -250,6 +263,11 @@ export default async function JobDetailPage({ params }: PageProps) {
             job={job}
             defaultPricePerUnit={defaultPricePerUnit}
             defaultPricePerCommonSpace={defaultPricePerCommonSpace}
+            defaultWipeRate={defaultWipeRate}
+            defaultDustSwabSiteVisitRate={defaultDustSwabSiteVisitRate}
+            defaultDustSwabProjMgmtRate={defaultDustSwabProjMgmtRate}
+            defaultAsbestosSampleRate={defaultAsbestosSampleRate}
+            defaultAsbestosSiteVisitRate={defaultAsbestosSiteVisitRate}
             workerData={workerData}
             availability={availability}
             officeWorkers={officeWorkers ?? []}
@@ -380,17 +398,32 @@ export default async function JobDetailPage({ params }: PageProps) {
                 <>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Site visit</span>
-                    <span>{formatCurrency(DUST_SWAB_SITE_VISIT)}</span>
+                    <span>{formatCurrency(defaultDustSwabSiteVisitRate ?? 0)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Report</span>
-                    <span>{formatCurrency(DUST_SWAB_REPORT_FEE)}</span>
+                    <span className="text-muted-foreground">Proj mgmt</span>
+                    <span>{formatCurrency(defaultDustSwabProjMgmtRate ?? 0)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">
-                      Wipes ({job.num_wipes ?? 0} x {formatCurrency(DUST_SWAB_WIPE_RATE)})
+                      Wipes ({job.num_wipes ?? 0} x {formatCurrency(defaultWipeRate ?? 0)})
                     </span>
-                    <span>{formatCurrency((job.num_wipes ?? 0) * DUST_SWAB_WIPE_RATE)}</span>
+                    <span>{formatCurrency((job.num_wipes ?? 0) * (defaultWipeRate ?? 0))}</span>
+                  </div>
+                </>
+              )}
+
+              {job.has_asbestos && (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Site visit</span>
+                    <span>{formatCurrency(defaultAsbestosSiteVisitRate ?? 0)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">
+                      Samples ({job.num_asbestos_samples ?? 0} x {formatCurrency(defaultAsbestosSampleRate ?? 0)})
+                    </span>
+                    <span>{formatCurrency((job.num_asbestos_samples ?? 0) * (defaultAsbestosSampleRate ?? 0))}</span>
                   </div>
                 </>
               )}

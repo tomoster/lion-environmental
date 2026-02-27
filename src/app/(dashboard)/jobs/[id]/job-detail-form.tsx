@@ -35,6 +35,12 @@ type JobDetailFormProps = {
     num_units: number | null;
     num_common_spaces: number | null;
     num_wipes: number | null;
+    wipe_rate: number | null;
+    dust_swab_site_visit_rate: number | null;
+    dust_swab_proj_mgmt_rate: number | null;
+    num_asbestos_samples: number | null;
+    asbestos_sample_rate: number | null;
+    asbestos_site_visit_rate: number | null;
     job_status: string;
     report_status: string;
     dust_swab_status: string | null;
@@ -43,6 +49,11 @@ type JobDetailFormProps = {
   };
   defaultPricePerUnit: number | null;
   defaultPricePerCommonSpace: number | null;
+  defaultWipeRate: number | null;
+  defaultDustSwabSiteVisitRate: number | null;
+  defaultDustSwabProjMgmtRate: number | null;
+  defaultAsbestosSampleRate: number | null;
+  defaultAsbestosSiteVisitRate: number | null;
   workerData: { id: string; name: string } | null;
   availability: {
     available: { id: string; name: string }[];
@@ -59,6 +70,11 @@ export function JobDetailForm({
   job,
   defaultPricePerUnit,
   defaultPricePerCommonSpace,
+  defaultWipeRate,
+  defaultDustSwabSiteVisitRate,
+  defaultDustSwabProjMgmtRate,
+  defaultAsbestosSampleRate,
+  defaultAsbestosSiteVisitRate,
   workerData,
   availability,
   officeWorkers,
@@ -236,6 +252,76 @@ export function JobDetailForm({
                   type="number"
                   min="0"
                   defaultValue={job.num_wipes ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="wipe_rate">$/Wipe</Label>
+                <Input
+                  id="wipe_rate"
+                  name="wipe_rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={defaultWipeRate ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="dust_swab_site_visit_rate">Site Visit Rate</Label>
+                <Input
+                  id="dust_swab_site_visit_rate"
+                  name="dust_swab_site_visit_rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={defaultDustSwabSiteVisitRate ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="dust_swab_proj_mgmt_rate">Proj Mgmt Rate</Label>
+                <Input
+                  id="dust_swab_proj_mgmt_rate"
+                  name="dust_swab_proj_mgmt_rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={defaultDustSwabProjMgmtRate ?? ""}
+                />
+              </div>
+            </div>
+          )}
+
+          {asbestosChecked && (
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="num_asbestos_samples"># Samples</Label>
+                <Input
+                  id="num_asbestos_samples"
+                  name="num_asbestos_samples"
+                  type="number"
+                  min="0"
+                  defaultValue={job.num_asbestos_samples ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="asbestos_sample_rate">$/Sample</Label>
+                <Input
+                  id="asbestos_sample_rate"
+                  name="asbestos_sample_rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={defaultAsbestosSampleRate ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="asbestos_site_visit_rate">Site Visit Rate</Label>
+                <Input
+                  id="asbestos_site_visit_rate"
+                  name="asbestos_site_visit_rate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={defaultAsbestosSiteVisitRate ?? ""}
                 />
               </div>
             </div>
