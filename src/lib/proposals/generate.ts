@@ -144,37 +144,26 @@ function drawTable(doc: InstanceType<typeof PDFDocument>, y: number, rows: Table
   return y;
 }
 
-function addAccessScheduling(doc: InstanceType<typeof PDFDocument>, y: number) {
-  doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
-  doc.text("Access and Scheduling:", LEFT, y, { width: CONTENT_WIDTH });
-  y += 18;
-  doc.font("Helvetica").fontSize(9.5);
+function addIntroMessage(doc: InstanceType<typeof PDFDocument>, y: number, serviceLabel: string, clientCompany: string | null, buildingAddress: string | null) {
+  const client = clientCompany || "your organization";
+  const address = buildingAddress || "your property";
+
+  doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000");
+  doc.text(`${serviceLabel} Proposal`, LEFT, y, { width: CONTENT_WIDTH });
+  y = doc.y + 12;
+
+  doc.font("Helvetica").fontSize(10);
   doc.text(
-    "The Landlord or Property Manager is responsible for scheduling and coordinating all site access. If the Contractor arrives at the scheduled location and access is unavailable, or if the site is not ready and no work can be performed, the Contractor reserves the right to charge ",
-    LEFT, y, { width: CONTENT_WIDTH, continued: true }
+    `Thank you for the opportunity to provide this proposal for ${client} at ${address}. We appreciate your consideration and look forward to working with you.`,
+    LEFT, y, { width: CONTENT_WIDTH }
   );
-  doc.font("Helvetica-Bold").text("fifty percent (50%) of the scheduled site visit fee ", { continued: true });
-  doc.font("Helvetica").text("for that date.");
-  return doc.y + 15;
-}
-
-function addPaymentTerms(doc: InstanceType<typeof PDFDocument>, y: number, days: number) {
-  doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
-  doc.text("Payment Terms:", LEFT, y, { width: CONTENT_WIDTH });
-  y += 18;
-  doc.font("Helvetica").fontSize(9.5);
-
-  const daysText = days === 60 ? "sixty (60) days" : "fourteen (14) days";
-  doc.text("  -   Payment for services rendered is due within ", LEFT, y, { width: CONTENT_WIDTH, continued: true });
-  doc.font("Helvetica-Bold").text(daysText, { continued: true });
-  doc.font("Helvetica").text(" from the date of work completion. Any invoice remaining unpaid after this period shall be deemed past due.");
-
   y = doc.y + 8;
-  doc.text("  -   Final reports, clearance documentation, and any related deliverables will ", LEFT, y, { width: CONTENT_WIDTH, continued: true });
-  doc.font("Helvetica-Bold").text("not be issued or released ", { continued: true });
-  doc.font("Helvetica").text("until full payment has been received and processed by the Contractor.");
+  doc.text(
+    "Please review the pricing below. If you have any questions or would like to move forward, don't hesitate to reach out \u2014 we're happy to help.",
+    LEFT, y, { width: CONTENT_WIDTH }
+  );
 
-  return doc.y + 15;
+  return doc.y + 20;
 }
 
 function addSignatureBlock(doc: InstanceType<typeof PDFDocument>, y: number) {
@@ -223,7 +212,6 @@ export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
-  // PAGE 1
   addHeader(doc);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
@@ -233,69 +221,9 @@ export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
     units: fmtQty(data.num_units),
   });
 
-  doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
-  doc.text("NYC Local Law 31 Lead Based Paint Inspection Proposal", LEFT, y, { width: CONTENT_WIDTH });
-  y = doc.y + 10;
-
-  doc.font("Helvetica-Bold").fontSize(9.5).text("Overview: ", LEFT, y, { continued: true });
-  doc.font("Helvetica").text(
-    "New York City\u2019s Local Law 31 of 2020 introduced new lead inspection requirements for landlords and building owners, enforced by the NYC Department of Housing Preservation & Development (HPD)."
-  );
-  y = doc.y + 6;
-
-  doc.font("Helvetica").fontSize(9.5);
-  doc.text(
-    "Over the past few years, New York City has made several important updates to the NYC Childhood Lead Poisoning Prevention Act (Local Law 1 of 2004), strengthening existing lead laws and expanding inspection requirements for landlords and building owners.",
-    LEFT, y, { width: CONTENT_WIDTH }
-  );
-  y = doc.y + 6;
-
-  doc.text(
-    'Local Law 31 of 2020 is the most recent update, which went into effect on August 9, 2020 and mandates X-Ray Fluorescence (XRF) lead inspections by Environmental Protection Agency (EPA)-certified inspectors to test for the presence of lead-based paint in old residential "multiple dwelling" buildings.',
-    LEFT, y, { width: CONTENT_WIDTH }
-  );
-  y = doc.y + 6;
-
-  doc.text(
-    "Local Law 31 also includes a 5-year testing requirement, meaning that all residential building owners in NYC must have all dwelling units inspected for lead paint by August 9, 2025.",
-    LEFT, y, { width: CONTENT_WIDTH }
-  );
-  y = doc.y + 6;
-
-  doc.text(
-    "Apartments with children under the age of 6 residing, must be inspected within one year of the law. If a family with a child under the age of 6 recently moved into an apartment, lead testing must be completed within 1 year of their move-in date.",
-    LEFT, y, { width: CONTENT_WIDTH }
-  );
-  y = doc.y + 12;
-
-  doc.font("Helvetica-Bold").fontSize(10).text("Scope of Work:", LEFT, y);
-  y = doc.y + 6;
-  doc.font("Helvetica").fontSize(9.5);
-
-  [
-    "A Licensed EPA Lead Inspector will conduct a comprehensive XRF inspection on the entire Tenant space as per HPD requirements.",
-    "Lead based paint will be determined using an XRF calibrated to .5 mg/cm2 in accordance with Local Law 66.",
-    "Upon completion of the inspection, Lion Environmental LLC will provide signed documentation to the client verifying that the Apartment has been inspected in accordance with Local Law 31.",
-  ].forEach((b) => {
-    doc.text("  \u2022   " + b, LEFT, y, { width: CONTENT_WIDTH });
-    y = doc.y + 5;
-  });
-
-  y += 3;
-  doc.font("Helvetica-Bold").fontSize(9.5);
-  doc.text(
-    "Lion Environmental and property owner will retain a copy of the XRF Inspection records for a period of 10 years after the inspection date.",
-    LEFT, y, { width: CONTENT_WIDTH }
-  );
-
-  addFooter(doc);
-
-  // PAGE 2 - Pricing table
-  doc.addPage();
-  addHeader(doc);
+  y = addIntroMessage(doc, y, "Lead Paint Testing (XRF)", data.client_company, data.building_address);
 
   const colW = [CONTENT_WIDTH * 0.34, CONTENT_WIDTH * 0.19, CONTENT_WIDTH * 0.22, CONTENT_WIDTH * 0.25];
-  y = 155;
 
   y = drawTable(doc, y, [
     { cells: [{ text: "", bold: true }, { text: "Quantity", bold: true }, { text: "Price", bold: true }, { text: "Total", bold: true }], height: 26 },
@@ -332,7 +260,6 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
-  // PAGE 1
   addHeader(doc);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
@@ -342,22 +269,8 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
     units: fmtQty(data.num_units),
   });
 
-  doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
-  doc.text("Scope of Work:", LEFT, y, { width: CONTENT_WIDTH });
-  y = doc.y + 8;
+  y = addIntroMessage(doc, y, "Dust Wipe Sampling", data.client_company, data.building_address);
 
-  doc.font("Helvetica").fontSize(9.5);
-  [
-    "A Licensed EPA Lead Inspector or Risk Assessor will conduct lead dust wipe sampling within the tenant space in accordance with NYC Local Law 31 and HPD requirements.",
-    "Dust wipe samples will be collected from required surfaces, including floors, window sills, and window wells, following NYC DOHMH and HUD protocols.",
-    "Samples will be analyzed by a NYSDOH-certified laboratory using EPA-approved analytical methods to determine lead dust levels and clearance compliance.",
-    "Upon completion of sampling and receipt of laboratory results, Lion Environmental LLC will provide signed documentation verifying that the apartment has been tested in accordance with NYC Local Law 31.",
-  ].forEach((b) => {
-    doc.text("  \u2022   " + b, LEFT, y, { width: CONTENT_WIDTH });
-    y = doc.y + 5;
-  });
-
-  y += 10;
   const colW = [CONTENT_WIDTH * 0.34, CONTENT_WIDTH * 0.19, CONTENT_WIDTH * 0.22, CONTENT_WIDTH * 0.25];
 
   y = drawTable(doc, y, [
@@ -369,23 +282,7 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 28 },
   ], colW);
 
-  y += 15;
-  doc.font("Helvetica").fontSize(9).fillColor("#000000");
-  doc.text("The number of samples listed herein is an ", LEFT, y, { width: CONTENT_WIDTH, continued: true });
-  doc.font("Helvetica-Bold").text("estimate only. ", { continued: true });
-  doc.font("Helvetica").text("The final invoice shall be adjusted to reflect the ", { continued: true });
-  doc.font("Helvetica-Bold").text("actual number of samples collected and analyzed ", { continued: true });
-  doc.font("Helvetica").text("during the course of the work.");
-
-  addFooter(doc);
-
-  // PAGE 2 - Terms + Signature
-  doc.addPage();
-  y = 60;
-
-  y = addAccessScheduling(doc, y);
-  y = addPaymentTerms(doc, y, 60);
-  y += 10;
+  y += 25;
   addSignatureBlock(doc, y);
   addFooter(doc);
 
@@ -410,7 +307,6 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
   const tax = subtotal * TAX_RATE;
   const total = subtotal + tax;
 
-  // PAGE 1
   addHeader(doc);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
@@ -420,29 +316,8 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
     units: fmtQty(data.num_units),
   });
 
-  doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000");
-  doc.text("Scope of Work \u2013 Asbestos Inspection", LEFT, y, { width: CONTENT_WIDTH });
-  y = doc.y + 8;
+  y = addIntroMessage(doc, y, "Asbestos Testing", data.client_company, data.building_address);
 
-  doc.font("Helvetica").fontSize(9.5);
-  doc.text(
-    "A NYS-certified Asbestos Inspector will conduct a visual inspection of the project area in accordance with NYC DEP Asbestos Control Program, NYS Industrial Code Rule 56, and EPA NESHAP requirements.",
-    LEFT, y, { width: CONTENT_WIDTH }
-  );
-  y = doc.y + 8;
-
-  [
-    "Suspect asbestos-containing materials will be identified and representative bulk samples collected following regulatory sampling protocols.",
-    "Samples will be submitted to a NYS ELAP-certified laboratory for analysis using EPA-approved methods to determine asbestos content.",
-    "All laboratory results and inspection findings will be reviewed for accuracy and regulatory compliance by a NYS-certified Asbestos Investigator, as required by NYC DEP regulations.",
-    "Upon completion of review, a signed and certified asbestos survey report will be issued by the Asbestos Investigator, suitable for submission to NYC DEP and NYC DOB, as required.",
-  ].forEach((b) => {
-    doc.font("Helvetica").fontSize(9.5);
-    doc.text("  \u2022   " + b, LEFT, y, { width: CONTENT_WIDTH });
-    y = doc.y + 5;
-  });
-
-  y += 10;
   const colW = [CONTENT_WIDTH * 0.34, CONTENT_WIDTH * 0.19, CONTENT_WIDTH * 0.22, CONTENT_WIDTH * 0.25];
 
   y = drawTable(doc, y, [
@@ -453,23 +328,7 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 28 },
   ], colW);
 
-  y += 15;
-  doc.font("Helvetica").fontSize(9).fillColor("#000000");
-  doc.text("The number of samples listed herein is an ", LEFT, y, { width: CONTENT_WIDTH, continued: true });
-  doc.font("Helvetica-Bold").text("estimate only. ", { continued: true });
-  doc.font("Helvetica").text("The final invoice shall be adjusted to reflect the ", { continued: true });
-  doc.font("Helvetica-Bold").text("actual number of samples collected and analyzed ", { continued: true });
-  doc.font("Helvetica").text("during the course of the work.");
-
-  addFooter(doc);
-
-  // PAGE 2 - Terms + Signature
-  doc.addPage();
-  y = 60;
-
-  y = addAccessScheduling(doc, y);
-  y = addPaymentTerms(doc, y, 14);
-  y += 10;
+  y += 25;
   addSignatureBlock(doc, y);
   addFooter(doc);
 
