@@ -21,7 +21,7 @@ import { useState } from "react";
 import { formatTime12h } from "@/lib/scheduling-utils";
 
 type JobDetailFormProps = {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<{ proposalError?: string }>;
   job: {
     client_company: string | null;
     client_email: string | null;
@@ -92,8 +92,12 @@ export function JobDetailForm({
       action={(formData) => {
         startTransition(async () => {
           try {
-            await action(formData);
-            toast.success("Changes saved");
+            const result = await action(formData);
+            if (result.proposalError) {
+              toast.error(`Saved, but proposal email failed: ${result.proposalError}`);
+            } else {
+              toast.success("Changes saved");
+            }
           } catch {
             toast.error("Failed to save changes");
           }

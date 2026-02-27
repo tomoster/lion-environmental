@@ -53,7 +53,7 @@ export async function createJob(formData: FormData) {
   redirect(`/jobs/${job.id}`);
 }
 
-export async function updateJob(id: string, formData: FormData) {
+export async function updateJob(id: string, formData: FormData): Promise<{ proposalError?: string }> {
   const supabase = await createClient();
 
   const { data: currentJob } = await supabase
@@ -185,11 +185,15 @@ export async function updateJob(id: string, formData: FormData) {
       }
     } catch (e) {
       console.error("Proposal generation/email failed:", e);
+      revalidatePath("/jobs");
+      revalidatePath(`/jobs/${id}`);
+      return { proposalError: e instanceof Error ? e.message : String(e) };
     }
   }
 
   revalidatePath("/jobs");
   revalidatePath(`/jobs/${id}`);
+  return {};
 }
 
 export async function deleteJob(id: string) {
