@@ -192,13 +192,19 @@ export async function GET(request: NextRequest) {
     }
 
     // Personalize
-    const firstName = prospect.contact_name?.split(" ")[0] ?? "there";
+    const firstName = prospect.contact_name?.split(" ")[0] ?? "";
     const vars = { first_name: firstName, company: prospect.company };
     const locationSubject =
       settings[`cold_email_subject_${location}`] ??
       subjectTemplate;
-    const subject = replaceVars(locationSubject, vars);
+    let subject = replaceVars(locationSubject, vars);
     let body = replaceVars(bodyTemplate, vars);
+
+    // Clean up when no name: "Quick question, " → "Quick question", "Hi ," → "Hi,"
+    if (!firstName) {
+      subject = subject.replace(/,\s*$/, "");
+      body = body.replace(/^Hi\s*,/, "Hi,");
+    }
     if (unsubscribeFooter) {
       body += `\n\n---\n${unsubscribeFooter}`;
     }
