@@ -226,7 +226,7 @@ export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
   const colW = [CONTENT_WIDTH * 0.34, CONTENT_WIDTH * 0.19, CONTENT_WIDTH * 0.22, CONTENT_WIDTH * 0.25];
 
   y = drawTable(doc, y, [
-    { cells: [{ text: "", bold: true }, { text: "Quantity", bold: true }, { text: "Price", bold: true }, { text: "Total", bold: true }], height: 26 },
+    { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Price", bold: true }, { text: "Total", bold: true }], height: 26 },
     { cells: [{ text: "Units", bold: true }, { text: fmtQty(data.num_units) }, { text: fmt(data.price_per_unit) }, { text: fmt(unitsTotal || null) }], height: 30 },
     { cells: [{ text: "Common Area\n(i.e. staircases, laundry room,\nlobby, gym, public hallways\nand spaces)", bold: true, size: 8 }, { text: fmtQty(data.num_common_spaces) }, { text: fmt(data.price_per_common_space) }, { text: fmt(commonTotal || null) }], height: 58 },
     { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
@@ -274,12 +274,12 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
   const colW = [CONTENT_WIDTH * 0.34, CONTENT_WIDTH * 0.19, CONTENT_WIDTH * 0.22, CONTENT_WIDTH * 0.25];
 
   y = drawTable(doc, y, [
-    { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Unit Rate", bold: true }, { text: "Total", bold: true }], height: 26 },
+    { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Price", bold: true }, { text: "Total", bold: true }], height: 26 },
     { cells: [{ text: "Site Visit by EPA certified\nLead Inspector or Risk\nAssessor", size: 9 }, { text: "1" }, { text: fmt(siteVisitRate) }, { text: fmt(siteVisitTotal || null) }], height: 42 },
     { cells: [{ text: "Project management &\nReport Preparation", size: 9 }, { text: "1" }, { text: fmt(projMgmtRate) }, { text: fmt(projMgmtTotal || null) }], height: 35 },
     { cells: [{ text: "Lead Dust Wipes:\n(24 Hour Turn Around Time)", size: 9 }, { text: fmtQty(numWipes) }, { text: fmt(wipeRate) }, { text: fmt(wipesTotal || null) }], height: 35 },
     { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
-    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 28 },
+    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 30 },
   ], colW);
 
   y += 25;
@@ -321,11 +321,11 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
   const colW = [CONTENT_WIDTH * 0.34, CONTENT_WIDTH * 0.19, CONTENT_WIDTH * 0.22, CONTENT_WIDTH * 0.25];
 
   y = drawTable(doc, y, [
-    { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Unit Rate", bold: true }, { text: "Total", bold: true }], height: 26 },
+    { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Price", bold: true }, { text: "Total", bold: true }], height: 26 },
     { cells: [{ text: "Site Visit by certified\nAsbestos inspector", size: 9 }, { text: "1" }, { text: fmt(siteVisitRate) }, { text: fmt(siteVisitTotal || null) }], height: 35 },
     { cells: [{ text: "Asbestos Surface Wipe\nSampling:\n(24 Hour Turn Around Time)", size: 9 }, { text: fmtQty(numSamples) }, { text: fmt(sampleRate) }, { text: fmt(samplesTotal || null) }], height: 42 },
     { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
-    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 28 },
+    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 30 },
   ], colW);
 
   y += 25;
