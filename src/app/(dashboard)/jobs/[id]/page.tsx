@@ -8,8 +8,9 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { updateJob, deleteJob, uploadReport } from "../actions";
 import { dispatchJob, markClientPaid } from "./automation-actions";
+import { sendProposal } from "./send-proposal-action";
 import { DeleteJobButton } from "./delete-job-button";
-import { DispatchButton, ClientPaidButton } from "./action-buttons";
+import { WorkflowBar } from "./workflow-bar";
 import { JobDetailForm } from "./job-detail-form";
 import { getAvailableWorkers } from "@/lib/scheduling";
 import { formatServiceTypes } from "@/lib/service-type-utils";
@@ -191,13 +192,11 @@ export default async function JobDetailPage({ params }: PageProps) {
   const updateJobWithId = updateJob.bind(null, id);
   const deleteJobWithId = deleteJob.bind(null, id);
   const dispatchJobWithId = dispatchJob.bind(null, id);
+  const sendProposalWithId = sendProposal.bind(null, id);
 
   const uploadXrfReport = uploadReport.bind(null, id, "xrf");
   const uploadDustSwabReport = uploadReport.bind(null, id, "dust_swab");
   const markClientPaidWithId = markClientPaid.bind(null, id);
-
-  const canDispatch = job.job_status === "proposal_sent" || job.job_status === "open";
-  const canMarkPaid = jobInvoice && jobInvoice.status !== "paid";
 
   return (
     <div className="space-y-6">
@@ -224,20 +223,7 @@ export default async function JobDetailPage({ params }: PageProps) {
           <span className="text-muted-foreground">/</span>
           <span className="text-sm font-medium">Job #{job.job_number}</span>
         </div>
-        <div className="flex items-center gap-2">
-          {canDispatch && (
-            <DispatchButton action={dispatchJobWithId} />
-          )}
-          {canMarkPaid && (
-            <ClientPaidButton action={markClientPaidWithId} />
-          )}
-          {!jobInvoice && (
-            <Link href={`/invoices/new?job_id=${id}`}>
-              <Button variant="outline">Generate Invoice</Button>
-            </Link>
-          )}
-          <DeleteJobButton action={deleteJobWithId} />
-        </div>
+        <DeleteJobButton action={deleteJobWithId} />
       </div>
 
       <div className="flex items-center gap-3">
@@ -258,6 +244,23 @@ export default async function JobDetailPage({ params }: PageProps) {
           </Badge>
         )}
       </div>
+
+      <WorkflowBar
+        jobId={id}
+        jobStatus={job.job_status}
+        hasInvoice={!!jobInvoice}
+        invoiceStatus={jobInvoice?.status ?? null}
+        workerName={workerData?.name ?? null}
+        clientEmail={job.client_email}
+        hasXrf={job.has_xrf}
+        hasDustSwab={job.has_dust_swab}
+        hasAsbestos={job.has_asbestos}
+        xrfReportStatus={job.report_status}
+        dustSwabReportStatus={job.dust_swab_status ?? "not_started"}
+        dispatchAction={dispatchJobWithId}
+        markPaidAction={markClientPaidWithId}
+        sendProposalAction={sendProposalWithId}
+      />
 
       <div className="grid grid-cols-3 gap-6">
         <div className="col-span-2 space-y-6">

@@ -5,8 +5,6 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calculateEndTime } from "@/lib/scheduling-utils";
-import { generateProposals } from "@/lib/proposals/generate";
-import { sendProposalEmail } from "@/lib/email/send-proposal";
 import { autoSendReports } from "@/lib/reports/auto-send";
 
 export async function createJob(formData: FormData) {
@@ -53,7 +51,7 @@ export async function createJob(formData: FormData) {
   redirect(`/jobs/${job.id}`);
 }
 
-export async function updateJob(id: string, formData: FormData): Promise<{ proposalError?: string }> {
+export async function updateJob(id: string, formData: FormData): Promise<void> {
   const supabase = await createClient();
 
   const { data: currentJob } = await supabase
@@ -61,7 +59,6 @@ export async function updateJob(id: string, formData: FormData): Promise<{ propo
     .select("job_status, start_time, report_status, dust_swab_status")
     .eq("id", id)
     .single();
-  const wasNotDispatched = currentJob?.job_status === "not_dispatched";
 
   const startTime = (formData.get("start_time") as string) || null;
   const hasXrf = formData.get("has_xrf") === "true";
@@ -146,7 +143,7 @@ export async function updateJob(id: string, formData: FormData): Promise<{ propo
     updated_at: new Date().toISOString(),
   };
 
-  if (!wasNotDispatched && startTime !== currentJob?.start_time) {
+  if (startTime !== currentJob?.start_time) {
     (data as Record<string, unknown>).complete_reminder_sent = false;
   }
 
@@ -156,60 +153,8 @@ export async function updateJob(id: string, formData: FormData): Promise<{ propo
     throw new Error(error.message);
   }
 
-  if (wasNotDispatched) {
-    try {
-      const { data: fullJob } = await supabase
-        .from("jobs")
-        .select("job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
-        .eq("id", id)
-        .single();
-
-      let emailSent = false;
-
-      if (fullJob && fullJob.client_email && (fullJob.has_xrf || fullJob.has_dust_swab || fullJob.has_asbestos)) {
-        const proposals = await generateProposals(fullJob);
-        if (proposals.length > 0) {
-          const { data: settingsRows } = await supabase
-            .from("settings")
-            .select("key, value")
-            .in("key", ["sender_name", "proposal_email_subject", "proposal_email_body"]);
-
-          const s: Record<string, string> = Object.fromEntries(
-            (settingsRows ?? []).map(({ key, value }) => [key, value])
-          );
-
-          await sendProposalEmail({
-            to: fullJob.client_email,
-            jobNumber: fullJob.job_number,
-            clientCompany: fullJob.client_company ?? "",
-            buildingAddress: fullJob.building_address ?? "",
-            attachments: proposals,
-            senderName: s.sender_name ?? "Lion Environmental",
-            subjectTemplate: s.proposal_email_subject,
-            bodyTemplate: s.proposal_email_body,
-          });
-          emailSent = true;
-        }
-      }
-
-      if (emailSent) {
-        await supabase.from("jobs").update({
-          job_status: "proposal_sent",
-          proposal_sent_at: new Date().toISOString(),
-          complete_reminder_sent: false,
-        }).eq("id", id);
-      }
-    } catch (e) {
-      console.error("Proposal generation/email failed:", e);
-      revalidatePath("/jobs");
-      revalidatePath(`/jobs/${id}`);
-      return { proposalError: e instanceof Error ? e.message : String(e) };
-    }
-  }
-
   revalidatePath("/jobs");
   revalidatePath(`/jobs/${id}`);
-  return {};
 }
 
 export async function deleteJob(id: string) {
