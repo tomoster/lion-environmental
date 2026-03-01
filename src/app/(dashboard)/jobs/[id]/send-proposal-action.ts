@@ -19,17 +19,19 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
   if (!job.has_xrf && !job.has_dust_swab && !job.has_asbestos) return { error: "No service types selected" };
 
   try {
-    const proposals = await generateProposals(job);
-    if (proposals.length === 0) return { error: "No proposals generated" };
-
     const { data: settingsRows } = await supabase
       .from("settings")
       .select("key, value")
-      .in("key", ["sender_name", "proposal_email_subject", "proposal_email_body"]);
+      .in("key", ["sender_name", "proposal_email_subject", "proposal_email_body", "tax_rate"]);
 
     const s: Record<string, string> = Object.fromEntries(
       (settingsRows ?? []).map(({ key, value }) => [key, value])
     );
+
+    const taxRate = s.tax_rate ? parseFloat(s.tax_rate) / 100 : 0.0888;
+
+    const proposals = await generateProposals(job, taxRate);
+    if (proposals.length === 0) return { error: "No proposals generated" };
 
     await sendProposalEmail({
       to: job.client_email,

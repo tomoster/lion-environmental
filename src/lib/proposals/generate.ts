@@ -9,8 +9,6 @@ const LEFT = 72;
 const RIGHT = PAGE_WIDTH - 72;
 const CONTENT_WIDTH = RIGHT - LEFT; // 468
 
-const TAX_RATE = 0.0888;
-
 type ProposalData = {
   job_number: number;
   client_company: string | null;
@@ -214,7 +212,7 @@ function todayFormatted(): string {
   return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
-export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
+export async function generateXRFProposal(data: ProposalData, taxRate: number): Promise<Buffer> {
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
@@ -225,7 +223,7 @@ export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
   const bedsTotal = (data.num_2_3bed ?? 0) * (data.xrf_price_2_3bed ?? 0);
   const commonTotal = (data.num_common_spaces ?? 0) * (data.price_per_common_space ?? 0);
   const subtotal = studiosTotal + bedsTotal + commonTotal;
-  const tax = subtotal * TAX_RATE;
+  const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
   // PAGE 1
@@ -336,7 +334,7 @@ export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
   return bufferPromise;
 }
 
-export async function generateDustSwabsProposal(data: ProposalData): Promise<Buffer> {
+export async function generateDustSwabsProposal(data: ProposalData, taxRate: number): Promise<Buffer> {
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
@@ -352,7 +350,7 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
   const projMgmtTotal = projMgmtRate ?? 0;
   const wipesTotal = (numWipes ?? 0) * (wipeRate ?? 0);
   const subtotal = siteVisitTotal + projMgmtTotal + wipesTotal;
-  const tax = subtotal * TAX_RATE;
+  const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
   // PAGE 1
@@ -417,7 +415,7 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
   return bufferPromise;
 }
 
-export async function generateAsbestosProposal(data: ProposalData): Promise<Buffer> {
+export async function generateAsbestosProposal(data: ProposalData, taxRate: number): Promise<Buffer> {
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
@@ -431,7 +429,7 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
   const siteVisitTotal = siteVisitRate ?? 0;
   const samplesTotal = (numSamples ?? 0) * (sampleRate ?? 0);
   const subtotal = siteVisitTotal + samplesTotal;
-  const tax = subtotal * TAX_RATE;
+  const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
   // PAGE 1
@@ -502,11 +500,11 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
   return bufferPromise;
 }
 
-export async function generateProposals(data: ProposalData): Promise<GeneratedProposal[]> {
+export async function generateProposals(data: ProposalData, taxRate: number): Promise<GeneratedProposal[]> {
   const proposals: GeneratedProposal[] = [];
 
   if (data.has_xrf) {
-    const buffer = await generateXRFProposal(data);
+    const buffer = await generateXRFProposal(data, taxRate);
     proposals.push({
       type: "xrf",
       buffer,
@@ -515,7 +513,7 @@ export async function generateProposals(data: ProposalData): Promise<GeneratedPr
   }
 
   if (data.has_dust_swab) {
-    const buffer = await generateDustSwabsProposal(data);
+    const buffer = await generateDustSwabsProposal(data, taxRate);
     proposals.push({
       type: "dust_swab",
       buffer,
@@ -524,7 +522,7 @@ export async function generateProposals(data: ProposalData): Promise<GeneratedPr
   }
 
   if (data.has_asbestos) {
-    const buffer = await generateAsbestosProposal(data);
+    const buffer = await generateAsbestosProposal(data, taxRate);
     proposals.push({
       type: "asbestos",
       buffer,
