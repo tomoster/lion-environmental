@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { renderSignature } from "./signature";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -115,13 +116,7 @@ export async function sendInvoiceEmail({
           </tr>
         </table>
         ${bodyHtml}
-        <p style="color: #666; margin-top: 20px;">
-          Best regards,<br/>
-          ${senderName}<br/>
-          Lion Environmental LLC<br/>
-          (201) 375-2797<br/>
-          lionenvironmentalllc@gmail.com
-        </p>
+        ${renderSignature(senderName)}
       </div>
     `,
     attachments: [

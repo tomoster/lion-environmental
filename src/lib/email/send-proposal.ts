@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { renderSignature } from "./signature";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -71,13 +72,7 @@ export async function sendProposalEmail({
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         ${bodyHtml}
-        <p style="color: #666; margin-top: 20px;">
-          Best,<br/>
-          ${senderName}<br/>
-          Lion Environmental LLC<br/>
-          (201) 375-2797<br/>
-          lionenvironmentalllc@gmail.com
-        </p>
+        ${renderSignature(senderName)}
       </div>
     `,
     attachments: attachments.map((a) => ({
