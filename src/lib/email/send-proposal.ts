@@ -49,18 +49,15 @@ export async function sendProposalEmail({
     subject,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">Proposal for ${clientCompany || "your property"}</h2>
+        <p style="color: #333;">Hi,</p>
         <p style="color: #555;">
-          Thank you for your interest in our services. Please find attached our proposal${attachments.length > 1 ? "s" : ""} for the property at <strong>${buildingAddress || `Job #${jobNumber}`}</strong>.
+          Thank you for reaching out. Please find attached our proposal${attachments.length > 1 ? "s" : ""} for <strong>${buildingAddress || `Job #${jobNumber}`}</strong>.
         </p>
         <p style="color: #555;">
-          Attached services: <strong>${serviceList}</strong>
-        </p>
-        <p style="color: #555;">
-          Please review and let us know if you have any questions or would like to proceed. We look forward to working with you!
+          Once you've had a chance to review, let us know a good time to schedule the work. We're looking forward to working with you!
         </p>
         <p style="color: #666; margin-top: 20px;">
-          Best regards,<br/>
+          Best,<br/>
           ${senderName}<br/>
           Lion Environmental LLC<br/>
           (201) 375-2797<br/>
