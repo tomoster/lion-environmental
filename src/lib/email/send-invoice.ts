@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { renderSignature } from "./signature";
+import { renderSignature, type SignatureInfo } from "./signature";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -10,21 +10,24 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const DEFAULT_INVOICE_SUBJECT =
-  "Invoice #{{invoice_number}} from Lion Environmental LLC";
+function defaultInvoiceSubject(businessName: string) {
+  return `Invoice #{{invoice_number}} from ${businessName}`;
+}
 
-const DEFAULT_INVOICE_BODY = `Dear {{company}},
+function defaultInvoiceBody(businessName: string, zelle: string, checkAddress: string) {
+  return `Dear {{company}},
 
-Please find attached your invoice from Lion Environmental LLC.
+Please find attached your invoice from ${businessName}.
 
 Payment Options:
-- Zelle: 2013752797
-- Check payable to: Lion Environmental LLC
-- Mail to: 1500 Teaneck Rd #448, Teaneck, NJ 07666
+- Zelle: ${zelle}
+- Check payable to: ${businessName}
+- Mail to: ${checkAddress}
 
 If you have any questions, please don't hesitate to reach out.
 
 Thank you for your business!`;
+}
 
 function replaceVars(template: string, vars: Record<string, string>): string {
   return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
@@ -56,6 +59,11 @@ type SendInvoiceParams = {
   senderName: string;
   subjectTemplate?: string;
   bodyTemplate?: string;
+  businessName?: string;
+  businessPhone?: string;
+  businessEmail?: string;
+  businessZelle?: string;
+  businessCheckAddress?: string;
 };
 
 export async function sendInvoiceEmail({
@@ -68,7 +76,16 @@ export async function sendInvoiceEmail({
   senderName,
   subjectTemplate,
   bodyTemplate,
+  businessName,
+  businessPhone,
+  businessEmail,
+  businessZelle,
+  businessCheckAddress,
 }: SendInvoiceParams) {
+  const bizName = businessName || "Lion Environmental LLC";
+  const bizZelle = businessZelle || "2013752797";
+  const bizCheckAddr = businessCheckAddress || "1500 Teaneck Rd #448, Teaneck, NJ 07666";
+
   const formattedTotal = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -87,11 +104,11 @@ export async function sendInvoiceEmail({
   };
 
   const subject = replaceVars(
-    subjectTemplate || DEFAULT_INVOICE_SUBJECT,
+    subjectTemplate || defaultInvoiceSubject(bizName),
     vars
   );
   const bodyHtml = textToHtml(
-    replaceVars(bodyTemplate || DEFAULT_INVOICE_BODY, vars)
+    replaceVars(bodyTemplate || defaultInvoiceBody(bizName, bizZelle, bizCheckAddr), vars)
   );
 
   const info = await transporter.sendMail({
@@ -116,7 +133,7 @@ export async function sendInvoiceEmail({
           </tr>
         </table>
         ${bodyHtml}
-        ${renderSignature(senderName)}
+        ${renderSignature({ senderName, businessName: bizName, businessPhone, businessEmail })}
       </div>
     `,
     attachments: [
@@ -177,6 +194,11 @@ export async function sendInvoiceForId(
     (settings ?? []).map((s: { key: string; value: string }) => [s.key, s.value])
   );
   const senderName = settingsMap["sender_name"] ?? "Avi Bursztyn";
+  const businessName = settingsMap["business_name"];
+  const businessPhone = settingsMap["business_phone"];
+  const businessEmail = settingsMap["business_email"];
+  const businessZelle = settingsMap["business_zelle"];
+  const businessCheckAddress = settingsMap["business_check_address"];
 
   const { renderInvoiceToBuffer } = await import("@/lib/pdf/invoice-template");
 
@@ -210,7 +232,8 @@ export async function sendInvoiceForId(
       num_asbestos_samples: job.num_asbestos_samples,
       asbestos_sample_rate: job.asbestos_sample_rate,
       asbestos_site_visit_rate: job.asbestos_site_visit_rate,
-    }
+    },
+    { businessName, businessAddress: businessCheckAddress, businessPhone, businessEmail, businessZelle, businessCheckAddress }
   );
 
   await sendInvoiceEmail({
@@ -223,6 +246,11 @@ export async function sendInvoiceForId(
     senderName,
     subjectTemplate: settingsMap["invoice_email_subject"],
     bodyTemplate: settingsMap["invoice_email_body"],
+    businessName,
+    businessPhone,
+    businessEmail,
+    businessZelle,
+    businessCheckAddress,
   });
 
   const pdfPath = `invoices/${invoiceId}/invoice-${invoice.invoice_number}.pdf`;

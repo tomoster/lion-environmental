@@ -37,6 +37,18 @@ type GeneratedProposal = {
   filename: string;
 };
 
+export type ProposalBusinessInfo = {
+  businessName?: string;
+  businessAddress?: string;
+  businessPhone?: string;
+};
+
+const PROPOSAL_DEFAULTS = {
+  businessName: "Lion Environmental",
+  businessAddress: "1500 Teaneck Rd #448, Teaneck, NJ 07666",
+  businessPhone: "(201) 375-2797",
+};
+
 function fmt(val: number | null | undefined): string {
   if (val == null) return "TBD";
   return `$${val.toFixed(2)}`;
@@ -54,22 +66,22 @@ function createDoc(): InstanceType<typeof PDFDocument> {
   });
 }
 
-function addHeader(doc: InstanceType<typeof PDFDocument>) {
+function addHeader(doc: InstanceType<typeof PDFDocument>, biz: Required<ProposalBusinessInfo>) {
   if (fs.existsSync(LOGO_PATH)) {
     doc.image(LOGO_PATH, PAGE_WIDTH / 2 - 40, 35, { width: 80 });
   }
   doc.fontSize(20).font("Helvetica-Bold");
-  doc.text("Lion Environmental", LEFT, 120, { width: CONTENT_WIDTH, align: "center" });
+  doc.text(biz.businessName, LEFT, 120, { width: CONTENT_WIDTH, align: "center" });
 }
 
-function addFooter(doc: InstanceType<typeof PDFDocument>) {
+function addFooter(doc: InstanceType<typeof PDFDocument>, biz: Required<ProposalBusinessInfo>) {
   const saved = doc.page.margins.bottom;
   doc.page.margins.bottom = 0;
   doc.fontSize(8).font("Helvetica").fillColor("#000000");
-  doc.text("276 Fifth Avenue, Suite 704, PMB 70053, New York, NY 10001", LEFT, 720, {
+  doc.text(biz.businessAddress, LEFT, 720, {
     width: CONTENT_WIDTH, align: "center", lineBreak: false,
   });
-  doc.text("P: 267-973-9206", LEFT, 732, {
+  doc.text(`P: ${biz.businessPhone}`, LEFT, 732, {
     width: CONTENT_WIDTH, align: "center", lineBreak: false,
   });
   doc.page.margins.bottom = saved;
@@ -210,7 +222,13 @@ function todayFormatted(): string {
   return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
-export async function generateXRFProposal(data: ProposalData, taxRate: number): Promise<Buffer> {
+export async function generateXRFProposal(data: ProposalData, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
+  const biz = {
+    businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
+    businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
+    businessPhone: business?.businessPhone || PROPOSAL_DEFAULTS.businessPhone,
+  };
+  const bizLLC = biz.businessName.includes("LLC") ? biz.businessName : `${biz.businessName} LLC`;
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
@@ -223,8 +241,10 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number): 
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
+  const taxLabel = `New York State Tax\n${(taxRate * 100).toFixed(2)}%`;
+
   // PAGE 1
-  addHeader(doc);
+  addHeader(doc, biz);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
     client: data.client_company ?? "",
@@ -275,7 +295,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number): 
   [
     "A Licensed EPA Lead Inspector will conduct a comprehensive XRF inspection on the entire Tenant space as per HPD requirements.",
     "Lead based paint will be determined using an XRF calibrated to .5 mg/cm2 in accordance with Local Law 66.",
-    "Upon completion of the inspection, Lion Environmental LLC will provide signed documentation to the client verifying that the Apartment has been inspected in accordance with Local Law 31.",
+    `Upon completion of the inspection, ${bizLLC} will provide signed documentation to the client verifying that the Apartment has been inspected in accordance with Local Law 31.`,
   ].forEach((b) => {
     doc.text("  \u2022   " + b, LEFT, y, { width: CONTENT_WIDTH });
     y = doc.y + 5;
@@ -284,15 +304,15 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number): 
   y += 3;
   doc.font("Helvetica-Bold").fontSize(9.5);
   doc.text(
-    "Lion Environmental and property owner will retain a copy of the XRF Inspection records for a period of 10 years after the inspection date.",
+    `${biz.businessName} and property owner will retain a copy of the XRF Inspection records for a period of 10 years after the inspection date.`,
     LEFT, y, { width: CONTENT_WIDTH }
   );
 
-  addFooter(doc);
+  addFooter(doc, biz);
 
   // PAGE 2 - Access + Pricing table
   doc.addPage();
-  addHeader(doc);
+  addHeader(doc, biz);
   y = 155;
 
   // Access & Scheduling Requirements
@@ -301,7 +321,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number): 
   y = doc.y + 10;
 
   doc.font("Helvetica-Bold").fontSize(9).text("Access Coordination: ", LEFT, y, { width: CONTENT_WIDTH, continued: true });
-  doc.font("Helvetica").text("Property Management shall be responsible for scheduling and coordinating access to all required units for XRF scanning by Lion Environmental.");
+  doc.font("Helvetica").text(`Property Management shall be responsible for scheduling and coordinating access to all required units for XRF scanning by ${biz.businessName}.`);
   y = doc.y + 6;
 
   doc.font("Helvetica-Bold").fontSize(9).text("Required Access: ", LEFT, y, { width: CONTENT_WIDTH, continued: true });
@@ -309,7 +329,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number): 
   y = doc.y + 6;
 
   doc.font("Helvetica-Bold").fontSize(9).text("Standby Fee: ", LEFT, y, { width: CONTENT_WIDTH, continued: true });
-  doc.font("Helvetica").text("If Lion Environmental\u2019s XRF technician arrives on-site as scheduled and Property Management is unable to provide access to any unit for inspection, Lion Environmental reserves the right to charge a $500.00 standby fee for that day.");
+  doc.font("Helvetica").text(`If ${biz.businessName}\u2019s XRF technician arrives on-site as scheduled and Property Management is unable to provide access to any unit for inspection, ${biz.businessName} reserves the right to charge a $500.00 standby fee for that day.`);
   y = doc.y + 15;
 
   const colW = [CONTENT_WIDTH * 0.34, CONTENT_WIDTH * 0.19, CONTENT_WIDTH * 0.22, CONTENT_WIDTH * 0.25];
@@ -319,19 +339,25 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number): 
     { cells: [{ text: "Studios & 1-Bedroom", bold: true }, { text: fmtQty(data.num_studios_1bed) }, { text: fmt(data.xrf_price_studios_1bed) }, { text: fmt(studiosTotal || null) }], height: 30 },
     { cells: [{ text: "2 & 3-Bedroom", bold: true }, { text: fmtQty(data.num_2_3bed) }, { text: fmt(data.xrf_price_2_3bed) }, { text: fmt(bedsTotal || null) }], height: 30 },
     { cells: [{ text: "Common Area\n(i.e. staircases, laundry room,\nlobby, gym, public hallways\nand spaces)", bold: true, size: 8 }, { text: fmtQty(data.num_common_spaces) }, { text: "TBD" }, { text: "TBD" }], height: 58 },
-    { cells: [{ text: "New York State Tax\n8.88%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
+    { cells: [{ text: taxLabel, bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 30 },
   ], colW);
 
   y += 25;
   addSignatureBlock(doc, y);
-  addFooter(doc);
+  addFooter(doc, biz);
 
   doc.end();
   return bufferPromise;
 }
 
-export async function generateDustSwabsProposal(data: ProposalData, taxRate: number): Promise<Buffer> {
+export async function generateDustSwabsProposal(data: ProposalData, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
+  const biz = {
+    businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
+    businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
+    businessPhone: business?.businessPhone || PROPOSAL_DEFAULTS.businessPhone,
+  };
+  const bizLLC = biz.businessName.includes("LLC") ? biz.businessName : `${biz.businessName} LLC`;
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
@@ -350,8 +376,10 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
+  const taxLabel = `New York State Tax\n${(taxRate * 100).toFixed(2)}%`;
+
   // PAGE 1
-  addHeader(doc);
+  addHeader(doc, biz);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
     client: data.client_company ?? "",
@@ -369,7 +397,7 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
     "A Licensed EPA Lead Inspector or Risk Assessor will conduct lead dust wipe sampling within the tenant space in accordance with NYC Local Law 31 and HPD requirements.",
     "Dust wipe samples will be collected from required surfaces, including floors, window sills, and window wells, following NYC DOHMH and HUD protocols.",
     "Samples will be analyzed by a NYSDOH-certified laboratory using EPA-approved analytical methods to determine lead dust levels and clearance compliance.",
-    "Upon completion of sampling and receipt of laboratory results, Lion Environmental LLC will provide signed documentation verifying that the apartment has been tested in accordance with NYC Local Law 31.",
+    `Upon completion of sampling and receipt of laboratory results, ${bizLLC} will provide signed documentation verifying that the apartment has been tested in accordance with NYC Local Law 31.`,
   ].forEach((b) => {
     doc.text("  \u2022   " + b, LEFT, y, { width: CONTENT_WIDTH });
     y = doc.y + 5;
@@ -383,7 +411,7 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
     { cells: [{ text: "Site Visit by EPA certified\nLead Inspector or Risk\nAssessor", size: 9 }, { text: "1" }, { text: fmt(siteVisitRate) }, { text: fmt(siteVisitTotal || null) }], height: 42 },
     { cells: [{ text: "Project management &\nReport Preparation", size: 9 }, { text: "1" }, { text: fmt(projMgmtRate) }, { text: fmt(projMgmtTotal || null) }], height: 35 },
     { cells: [{ text: "Lead Dust Wipes:\n(24 Hour Turn Around Time)", size: 9 }, { text: fmtQty(numWipes) }, { text: fmt(wipeRate) }, { text: fmt(wipesTotal || null) }], height: 35 },
-    { cells: [{ text: "New York State Tax\n8.88%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
+    { cells: [{ text: taxLabel, bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 28 },
   ], colW);
 
@@ -395,24 +423,29 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
   doc.font("Helvetica-Bold").text("actual number of samples collected and analyzed ", { continued: true });
   doc.font("Helvetica").text("during the course of the work.");
 
-  addFooter(doc);
+  addFooter(doc, biz);
 
   // PAGE 2 - Terms + Signature
   doc.addPage();
-  addHeader(doc);
+  addHeader(doc, biz);
   y = 155;
 
   y = addAccessScheduling(doc, y);
   y = addPaymentTerms(doc, y, 60);
   y += 10;
   addSignatureBlock(doc, y);
-  addFooter(doc);
+  addFooter(doc, biz);
 
   doc.end();
   return bufferPromise;
 }
 
-export async function generateAsbestosProposal(data: ProposalData, taxRate: number): Promise<Buffer> {
+export async function generateAsbestosProposal(data: ProposalData, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
+  const biz = {
+    businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
+    businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
+    businessPhone: business?.businessPhone || PROPOSAL_DEFAULTS.businessPhone,
+  };
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
@@ -429,8 +462,10 @@ export async function generateAsbestosProposal(data: ProposalData, taxRate: numb
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
+  const taxLabel = `New York State Tax\n${(taxRate * 100).toFixed(2)}%`;
+
   // PAGE 1
-  addHeader(doc);
+  addHeader(doc, biz);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
     client: data.client_company ?? "",
@@ -468,7 +503,7 @@ export async function generateAsbestosProposal(data: ProposalData, taxRate: numb
     { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Unit Rate", bold: true }, { text: "Total", bold: true }], height: 26 },
     { cells: [{ text: "Site Visit by certified\nAsbestos inspector", size: 9 }, { text: "1" }, { text: fmt(siteVisitRate) }, { text: fmt(siteVisitTotal || null) }], height: 35 },
     { cells: [{ text: "Asbestos Surface Wipe\nSampling:\n(24 Hour Turn Around Time)", size: 9 }, { text: fmtQty(numSamples) }, { text: fmt(sampleRate) }, { text: fmt(samplesTotal || null) }], height: 42 },
-    { cells: [{ text: "New York State Tax\n8.88%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
+    { cells: [{ text: taxLabel, bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 28 },
   ], colW);
 
@@ -480,28 +515,28 @@ export async function generateAsbestosProposal(data: ProposalData, taxRate: numb
   doc.font("Helvetica-Bold").text("actual number of samples collected and analyzed ", { continued: true });
   doc.font("Helvetica").text("during the course of the work.");
 
-  addFooter(doc);
+  addFooter(doc, biz);
 
   // PAGE 2 - Terms + Signature
   doc.addPage();
-  addHeader(doc);
+  addHeader(doc, biz);
   y = 155;
 
   y = addAccessScheduling(doc, y);
   y = addPaymentTerms(doc, y, 14);
   y += 10;
   addSignatureBlock(doc, y);
-  addFooter(doc);
+  addFooter(doc, biz);
 
   doc.end();
   return bufferPromise;
 }
 
-export async function generateProposals(data: ProposalData, taxRate: number): Promise<GeneratedProposal[]> {
+export async function generateProposals(data: ProposalData, taxRate: number, business?: ProposalBusinessInfo): Promise<GeneratedProposal[]> {
   const proposals: GeneratedProposal[] = [];
 
   if (data.has_xrf) {
-    const buffer = await generateXRFProposal(data, taxRate);
+    const buffer = await generateXRFProposal(data, taxRate, business);
     proposals.push({
       type: "xrf",
       buffer,
@@ -510,7 +545,7 @@ export async function generateProposals(data: ProposalData, taxRate: number): Pr
   }
 
   if (data.has_dust_swab) {
-    const buffer = await generateDustSwabsProposal(data, taxRate);
+    const buffer = await generateDustSwabsProposal(data, taxRate, business);
     proposals.push({
       type: "dust_swab",
       buffer,
@@ -519,7 +554,7 @@ export async function generateProposals(data: ProposalData, taxRate: number): Pr
   }
 
   if (data.has_asbestos) {
-    const buffer = await generateAsbestosProposal(data, taxRate);
+    const buffer = await generateAsbestosProposal(data, taxRate, business);
     proposals.push({
       type: "asbestos",
       buffer,

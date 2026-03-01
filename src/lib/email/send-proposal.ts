@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { renderSignature } from "./signature";
+import { renderSignature, type SignatureInfo } from "./signature";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -24,6 +24,9 @@ type SendProposalParams = {
   senderName: string;
   subjectTemplate?: string;
   bodyTemplate?: string;
+  businessName?: string;
+  businessPhone?: string;
+  businessEmail?: string;
 };
 
 const DEFAULT_SUBJECT = "Proposal \u2014 {{address}}";
@@ -50,6 +53,9 @@ export async function sendProposalEmail({
   senderName,
   subjectTemplate,
   bodyTemplate,
+  businessName,
+  businessPhone,
+  businessEmail,
 }: SendProposalParams) {
   const vars: Record<string, string> = {
     address: buildingAddress || `Job #${jobNumber}`,
@@ -72,7 +78,7 @@ export async function sendProposalEmail({
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         ${bodyHtml}
-        ${renderSignature(senderName)}
+        ${renderSignature({ senderName, businessName, businessPhone, businessEmail })}
       </div>
     `,
     attachments: attachments.map((a) => ({

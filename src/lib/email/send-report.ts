@@ -1,5 +1,5 @@
 import nodemailer from "nodemailer";
-import { renderSignature } from "./signature";
+import { renderSignature, type SignatureInfo } from "./signature";
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -17,7 +17,7 @@ Please find attached the {{service_type}} report for the property at {{address}}
 
 If you have any questions about this report, please don't hesitate to reach out.
 
-Thank you for choosing Lion Environmental!`;
+Thank you for choosing us!`;
 
 type ReportAttachment = {
   buffer: Buffer;
@@ -34,6 +34,9 @@ type SendReportParams = {
   senderName: string;
   subjectTemplate?: string;
   bodyTemplate?: string;
+  businessName?: string;
+  businessPhone?: string;
+  businessEmail?: string;
 };
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -72,6 +75,9 @@ export async function sendReportEmail({
   senderName,
   subjectTemplate,
   bodyTemplate,
+  businessName,
+  businessPhone,
+  businessEmail,
 }: SendReportParams) {
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Inspection";
 
@@ -112,7 +118,7 @@ export async function sendReportEmail({
           </tr>
         </table>
         ${bodyHtml}
-        ${renderSignature(senderName)}
+        ${renderSignature({ senderName, businessName, businessPhone, businessEmail })}
       </div>
     `,
     attachments: attachments.map((a) => ({

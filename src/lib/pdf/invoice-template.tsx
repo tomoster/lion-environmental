@@ -206,13 +206,41 @@ export type JobData = {
   asbestos_site_visit_rate: number | null;
 };
 
+export type InvoiceBusinessInfo = {
+  businessName?: string;
+  businessAddress?: string;
+  businessPhone?: string;
+  businessEmail?: string;
+  businessZelle?: string;
+  businessCheckAddress?: string;
+};
+
+const BIZ_DEFAULTS = {
+  businessName: "Lion Environmental LLC",
+  businessAddress: "1500 Teaneck Rd #448\nTeaneck, NJ 07666",
+  businessPhone: "(201) 375-2797",
+  businessEmail: "lionenvironmentalllc@gmail.com",
+  businessZelle: "2013752797",
+  businessCheckAddress: "1500 Teaneck Rd #448, Teaneck, NJ 07666",
+};
+
 export function InvoiceDocument({
   invoice,
   job,
+  business,
 }: {
   invoice: InvoiceData;
   job: JobData;
+  business?: InvoiceBusinessInfo;
 }) {
+  const biz = {
+    name: business?.businessName || BIZ_DEFAULTS.businessName,
+    address: business?.businessAddress || BIZ_DEFAULTS.businessAddress,
+    phone: business?.businessPhone || BIZ_DEFAULTS.businessPhone,
+    email: business?.businessEmail || BIZ_DEFAULTS.businessEmail,
+    zelle: business?.businessZelle || BIZ_DEFAULTS.businessZelle,
+    checkAddress: business?.businessCheckAddress || BIZ_DEFAULTS.businessCheckAddress,
+  };
   const invoiceDateStr = invoice.date_sent ?? invoice.created_at;
 
   return (
@@ -220,12 +248,11 @@ export function InvoiceDocument({
       <Page size="LETTER" style={styles.page}>
         <View style={styles.header}>
           <View>
-            <Text style={styles.businessName}>Lion Environmental LLC</Text>
+            <Text style={styles.businessName}>{biz.name}</Text>
             <Text style={styles.businessInfo}>
-              1500 Teaneck Rd #448{"\n"}
-              Teaneck, NJ 07666{"\n"}
-              (201) 375-2797{"\n"}
-              lionenvironmentalllc@gmail.com
+              {biz.address}{"\n"}
+              {biz.phone}{"\n"}
+              {biz.email}
             </Text>
           </View>
           <View>
@@ -356,9 +383,9 @@ export function InvoiceDocument({
         <View style={styles.paymentSection}>
           <Text style={styles.paymentTitle}>Payment Instructions</Text>
           <Text style={styles.paymentLine}>
-            Zelle: 2013752797{"\n"}
-            Check payable to: Lion Environmental LLC{"\n"}
-            Mail to: 1500 Teaneck Rd #448, Teaneck, NJ 07666
+            Zelle: {biz.zelle}{"\n"}
+            Check payable to: {biz.name}{"\n"}
+            Mail to: {biz.checkAddress}
           </Text>
         </View>
 
@@ -372,8 +399,9 @@ export function InvoiceDocument({
 
 export async function renderInvoiceToBuffer(
   invoice: InvoiceData,
-  job: JobData
+  job: JobData,
+  business?: InvoiceBusinessInfo
 ): Promise<Buffer> {
-  const element = <InvoiceDocument invoice={invoice} job={job} />;
+  const element = <InvoiceDocument invoice={invoice} job={job} business={business} />;
   return renderToBuffer(element) as Promise<Buffer>;
 }
