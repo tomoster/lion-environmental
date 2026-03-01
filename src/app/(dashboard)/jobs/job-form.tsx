@@ -24,14 +24,6 @@ type Worker = {
   active: boolean | null;
 };
 
-type PricingDefaults = {
-  xrf_price_per_unit: number;
-  xrf_price_per_common_space: number;
-  dust_swab_site_visit: number;
-  dust_swab_report: number;
-  dust_swab_wipe_rate: number;
-};
-
 type DurationDefaults = {
   xrf_duration_per_unit: number;
   xrf_duration_per_common_space: number;
@@ -41,7 +33,6 @@ type DurationDefaults = {
 
 type JobFormProps = {
   workers: Worker[];
-  pricingDefaults?: PricingDefaults;
   durationDefaults?: DurationDefaults;
   defaultValues?: {
     client_company?: string;
@@ -52,7 +43,7 @@ type JobFormProps = {
   onSuccess?: () => void;
 };
 
-export function JobForm({ workers, pricingDefaults, durationDefaults, defaultValues, onSuccess }: JobFormProps) {
+export function JobForm({ workers, durationDefaults, defaultValues, onSuccess }: JobFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [xrfChecked, setXrfChecked] = useState(true);
@@ -66,14 +57,6 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
   const anyServiceChecked = xrfChecked || dustSwabChecked || asbestosChecked;
 
   const services = { has_xrf: xrfChecked, has_dust_swab: dustSwabChecked, has_asbestos: asbestosChecked };
-
-  const pricing = {
-    xrf_price_per_unit: pricingDefaults?.xrf_price_per_unit ?? 0,
-    xrf_price_per_common_space: pricingDefaults?.xrf_price_per_common_space ?? 0,
-    dust_swab_site_visit: pricingDefaults?.dust_swab_site_visit ?? 375,
-    dust_swab_report: pricingDefaults?.dust_swab_report ?? 135,
-    dust_swab_wipe_rate: pricingDefaults?.dust_swab_wipe_rate ?? 20,
-  };
 
   const duration = {
     xrf_duration_per_unit: durationDefaults?.xrf_duration_per_unit ?? 45,
@@ -101,9 +84,6 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
       }
     });
   }
-
-  const dustSwabTotal =
-    pricing.dust_swab_site_visit + pricing.dust_swab_report + numWipes * pricing.dust_swab_wipe_rate;
 
   return (
     <form action={handleSubmit} className="space-y-4">
@@ -203,7 +183,7 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
       {xrfChecked && (
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="num_units">Units</Label>
+            <Label htmlFor="num_units">Total Units</Label>
             <Input
               id="num_units"
               name="num_units"
@@ -212,18 +192,6 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
               placeholder="0"
               value={numUnits || ""}
               onChange={(e) => setNumUnits(Number(e.target.value))}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="price_per_unit">Price / Unit ($)</Label>
-            <Input
-              id="price_per_unit"
-              name="price_per_unit"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={pricing.xrf_price_per_unit || ""}
-              placeholder="0.00"
             />
           </div>
           <div className="space-y-1.5">
@@ -238,37 +206,11 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
               onChange={(e) => setNumCommonSpaces(Number(e.target.value))}
             />
           </div>
-          <div className="space-y-1.5">
-            <Label htmlFor="price_per_common_space">Price / Common Space ($)</Label>
-            <Input
-              id="price_per_common_space"
-              name="price_per_common_space"
-              type="number"
-              min="0"
-              step="0.01"
-              defaultValue={pricing.xrf_price_per_common_space || ""}
-              placeholder="0.00"
-            />
-          </div>
         </div>
       )}
 
       {dustSwabChecked && (
-        <div className="space-y-3">
-          <div className="rounded-md border bg-muted/40 p-3 text-sm space-y-1">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Site visit</span>
-              <span>${pricing.dust_swab_site_visit}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Report</span>
-              <span>${pricing.dust_swab_report}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Per wipe</span>
-              <span>${pricing.dust_swab_wipe_rate}</span>
-            </div>
-          </div>
+        <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="num_wipes">Number of Wipes</Label>
             <Input
@@ -277,13 +219,9 @@ export function JobForm({ workers, pricingDefaults, durationDefaults, defaultVal
               type="number"
               min="0"
               placeholder="0"
-              value={numWipes}
+              value={numWipes || ""}
               onChange={(e) => setNumWipes(Number(e.target.value))}
             />
-          </div>
-          <div className="flex justify-between text-sm font-medium">
-            <span>Estimated total</span>
-            <span>${dustSwabTotal.toFixed(2)}</span>
           </div>
         </div>
       )}
