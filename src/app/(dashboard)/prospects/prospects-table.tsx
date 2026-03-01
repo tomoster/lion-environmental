@@ -66,6 +66,7 @@ const STATUS_LABELS: Record<string, string> = {
   followup: "Follow-up",
   confirmed: "Confirmed",
   lost: "Lost",
+  archived: "Archived",
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -76,6 +77,7 @@ const STATUS_COLORS: Record<string, string> = {
   followup: "bg-orange-100 text-orange-700 border-orange-200",
   confirmed: "bg-green-100 text-green-700 border-green-200",
   lost: "bg-red-100 text-red-700 border-red-200",
+  archived: "bg-gray-50 text-gray-400 border-gray-200",
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -418,6 +420,7 @@ export function ProspectsTable({
               <SelectItem value="followup">Follow-up</SelectItem>
               <SelectItem value="confirmed">Confirmed</SelectItem>
               <SelectItem value="lost">Lost</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>
         </div>
