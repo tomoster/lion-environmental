@@ -44,3 +44,21 @@ Write as final section of tonight's knowledge file:
 ```
 
 One recommendation only. If you have two good ones, pick the bolder one.
+---
+
+## Before Starting
+
+Check if today's knowledge file already exists:
+```bash
+TODAY=$(date +%Y-%m-%d)
+ls knowledge/${TODAY}-*.md 2>/dev/null && echo "FILE_EXISTS"
+```
+If a file for today already exists, read it and exit. Do not re-run research or overwrite.
+
+## After Writing
+
+Append a one-liner to today's daily memory file so Memory Maintenance has something to work with:
+```bash
+echo "- [$(date +%H:%M)] Research complete: wrote knowledge/$(date +%Y-%m-%d)-[topic].md — [one sentence summary of sharpest finding]" >> /Users/openclaw/.openclaw/workspace/memory/$(date +%Y-%m-%d).md
+```
+
