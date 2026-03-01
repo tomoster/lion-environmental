@@ -7,6 +7,7 @@ interface ProspectsPageProps {
   searchParams: Promise<{
     search?: string;
     status?: string;
+    step?: string;
     page?: string;
   }>;
 }
@@ -14,7 +15,7 @@ interface ProspectsPageProps {
 export default async function ProspectsPage({
   searchParams,
 }: ProspectsPageProps) {
-  const { search, status, page: pageParam } = await searchParams;
+  const { search, status, step, page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
@@ -39,6 +40,13 @@ export default async function ProspectsPage({
     query = query.eq("status", status);
   } else {
     query = query.not("status", "in", '("archived","converted")');
+  }
+
+  if (step) {
+    const stepNum = parseInt(step, 10);
+    if (stepNum >= 0 && stepNum <= 4) {
+      query = query.eq("seq_step", stepNum);
+    }
   }
 
   const todayStart = new Date();
@@ -83,6 +91,7 @@ export default async function ProspectsPage({
         prospects={prospects ?? []}
         search={search ?? ""}
         statusFilter={status ?? ""}
+        stepFilter={step ?? ""}
         page={page}
         totalCount={count ?? 0}
         pageSize={PAGE_SIZE}

@@ -54,6 +54,7 @@ interface ProspectsTableProps {
   prospects: Prospect[];
   search: string;
   statusFilter: string;
+  stepFilter: string;
   page: number;
   totalCount: number;
   pageSize: number;
@@ -337,6 +338,7 @@ export function ProspectsTable({
   prospects,
   search,
   statusFilter,
+  stepFilter,
   page,
   totalCount,
   pageSize,
@@ -371,6 +373,13 @@ export function ProspectsTable({
   function handleStatusChange(value: string) {
     navigateWithParams({
       status: value === "all" ? null : value,
+      page: null,
+    });
+  }
+
+  function handleStepChange(value: string) {
+    navigateWithParams({
+      step: value === "all" ? null : value,
       page: null,
     });
   }
@@ -410,6 +419,22 @@ export function ProspectsTable({
               <SelectItem value="bounced">Bounced</SelectItem>
               <SelectItem value="converted">Converted</SelectItem>
               <SelectItem value="archived">Archived</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={stepFilter || "all"}
+            onValueChange={handleStepChange}
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="All steps" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All steps</SelectItem>
+              <SelectItem value="0">No emails</SelectItem>
+              <SelectItem value="1">Step 1</SelectItem>
+              <SelectItem value="2">Step 2</SelectItem>
+              <SelectItem value="3">Step 3</SelectItem>
+              <SelectItem value="4">Step 4</SelectItem>
             </SelectContent>
           </Select>
         </div>
