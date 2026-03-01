@@ -8,12 +8,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const SERVICE_LABELS: Record<string, string> = {
-  xrf: "Lead Paint Testing (XRF)",
-  dust_swab: "Dust Wipe Sampling",
-  asbestos: "Asbestos Testing",
-};
-
 type ProposalAttachment = {
   buffer: Buffer;
   filename: string;
@@ -27,7 +21,24 @@ type SendProposalParams = {
   buildingAddress: string;
   attachments: ProposalAttachment[];
   senderName: string;
+  subjectTemplate?: string;
+  bodyTemplate?: string;
 };
+
+const DEFAULT_SUBJECT = "Proposal \u2014 {{address}}";
+
+const DEFAULT_BODY = `Hi,
+
+Thank you for reaching out. Please find attached our proposal for {{address}}.
+
+Once you've had a chance to review, let us know a good time to schedule the work. We're looking forward to working with you!`;
+
+function interpolate(
+  template: string,
+  vars: Record<string, string>
+): string {
+  return template.replace(/\{\{(\w+)\}\}/g, (_, key) => vars[key] ?? "");
+}
 
 export async function sendProposalEmail({
   to,
@@ -36,12 +47,22 @@ export async function sendProposalEmail({
   buildingAddress,
   attachments,
   senderName,
+  subjectTemplate,
+  bodyTemplate,
 }: SendProposalParams) {
-  const serviceList = attachments
-    .map((a) => SERVICE_LABELS[a.type] ?? a.type)
-    .join(", ");
+  const vars: Record<string, string> = {
+    address: buildingAddress || `Job #${jobNumber}`,
+    job_number: String(jobNumber),
+    company: clientCompany,
+  };
 
-  const subject = `Proposal \u2014 ${buildingAddress || `Job #${jobNumber}`}`;
+  const subject = interpolate(subjectTemplate || DEFAULT_SUBJECT, vars);
+  const bodyText = interpolate(bodyTemplate || DEFAULT_BODY, vars);
+
+  const bodyHtml = bodyText
+    .split("\n\n")
+    .map((p) => `<p style="color: #555;">${p.replace(/\n/g, "<br/>")}</p>`)
+    .join("\n");
 
   const info = await transporter.sendMail({
     from: `${senderName} <${process.env.GMAIL_USER}>`,
@@ -49,13 +70,7 @@ export async function sendProposalEmail({
     subject,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <p style="color: #333;">Hi,</p>
-        <p style="color: #555;">
-          Thank you for reaching out. Please find attached our proposal${attachments.length > 1 ? "s" : ""} for <strong>${buildingAddress || `Job #${jobNumber}`}</strong>.
-        </p>
-        <p style="color: #555;">
-          Once you've had a chance to review, let us know a good time to schedule the work. We're looking forward to working with you!
-        </p>
+        ${bodyHtml}
         <p style="color: #666; margin-top: 20px;">
           Best,<br/>
           ${senderName}<br/>

@@ -171,11 +171,14 @@ export async function updateJob(id: string, formData: FormData): Promise<{ propo
       if (fullJob && fullJob.client_email && (fullJob.has_xrf || fullJob.has_dust_swab || fullJob.has_asbestos)) {
         const proposals = await generateProposals(fullJob);
         if (proposals.length > 0) {
-          const { data: senderSetting } = await supabase
+          const { data: settingsRows } = await supabase
             .from("settings")
-            .select("value")
-            .eq("key", "sender_name")
-            .maybeSingle();
+            .select("key, value")
+            .in("key", ["sender_name", "proposal_email_subject", "proposal_email_body"]);
+
+          const s: Record<string, string> = Object.fromEntries(
+            (settingsRows ?? []).map(({ key, value }) => [key, value])
+          );
 
           await sendProposalEmail({
             to: fullJob.client_email,
@@ -183,7 +186,9 @@ export async function updateJob(id: string, formData: FormData): Promise<{ propo
             clientCompany: fullJob.client_company ?? "",
             buildingAddress: fullJob.building_address ?? "",
             attachments: proposals,
-            senderName: senderSetting?.value ?? "Lion Environmental",
+            senderName: s.sender_name ?? "Lion Environmental",
+            subjectTemplate: s.proposal_email_subject,
+            bodyTemplate: s.proposal_email_body,
           });
         }
       }
