@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
-import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
+import { MoreHorizontalIcon, PlusIcon, UploadIcon, SearchIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -430,11 +430,17 @@ export function ProspectsTable({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/prospects/apollo">Lead Finder</Link>
+          <Button size="sm" asChild>
+            <Link href="/prospects/apollo">
+              <SearchIcon className="mr-1.5 h-4 w-4" />
+              Lead Finder
+            </Link>
           </Button>
-          <Button variant="outline" size="sm" asChild>
-            <Link href="/prospects/import">Import</Link>
+          <Button size="sm" asChild>
+            <Link href="/prospects/import">
+              <UploadIcon className="mr-1.5 h-4 w-4" />
+              Import
+            </Link>
           </Button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
