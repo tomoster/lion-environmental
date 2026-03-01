@@ -22,19 +22,25 @@ Write to knowledge/YYYY-MM-DD-[topic].md. Update _sources.md.
 
 ## Phase 2: Ideate
 
-Based on tonight's research, identify ONE concrete recommendation:
-- New outreach angle triggered by a regulation deadline or news event
-- New lead segment worth targeting (building type, neighborhood, compliance deadline)
-- Cold email template improvement based on a specific pain point found tonight
-- Process improvement for the funnel (follow-up timing, subject line test, etc.)
+Based on tonight's research — and anything else you know about the current state of all projects — identify ONE concrete opportunity worth flagging to Tom.
 
-Write recommendation as final section:
+**No boundaries.** It does not have to be related to this project. It can be:
+- A new business idea triggered by something in the research
+- A cross-project connection nobody has noticed
+- A tool, API, or platform worth exploiting
+- A market inefficiency, regulatory gap, or timing play
+- Something completely outside current projects that fits the infrastructure
+
+The only filter: it should be specific, actionable, and ideally something Junior can own or Tom can act on in 48 hours.
+
+Write as final section of tonight's knowledge file:
 ```
 ## Tonight's Recommendation
-**What:** [one sentence]
-**Why now:** [specific regulation, deadline, or news that makes this timely]
-**How:** [exact first step]
-**Impact:** [High/Med/Low] | **Effort:** [Hours/Days/Weeks] | **Junior can own:** [Yes/Partial/No]
+**What:** [one sentence — specific, not vague]
+**Why now:** [what triggered this — research finding, pattern, timing]
+**How:** [exact first step to execute]
+**Who executes:** Junior autonomously / Tom makes one call / Tom decides first
+**Impact:** [High/Med/Low] | **Effort:** [Hours/Days/Weeks]
 ```
 
-One recommendation only.
+One recommendation only. If you have two good ones, pick the bolder one.
