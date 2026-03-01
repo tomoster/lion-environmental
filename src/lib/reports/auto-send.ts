@@ -7,11 +7,14 @@ type AutoSendResult = {
 };
 
 function getExpectedCount(
-  reportType: "xrf" | "dust_swab",
-  job: { num_units: number | null; num_common_spaces: number | null; num_wipes: number | null }
+  reportType: "xrf" | "dust_swab" | "asbestos",
+  job: { num_studios_1bed: number | null; num_2_3bed: number | null; num_common_spaces: number | null; num_wipes: number | null; num_asbestos_samples: number | null }
 ): number {
   if (reportType === "xrf") {
-    return (job.num_units ?? 0) + (job.num_common_spaces ?? 0);
+    return (job.num_studios_1bed ?? 0) + (job.num_2_3bed ?? 0) + (job.num_common_spaces ?? 0);
+  }
+  if (reportType === "asbestos") {
+    return job.num_asbestos_samples ?? 0;
   }
   return job.num_wipes ?? 0;
 }
@@ -25,7 +28,7 @@ export async function autoSendReports(
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, report_status, dust_swab_status, num_units, num_common_spaces, num_wipes")
+    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, report_status, dust_swab_status, asbestos_status, num_studios_1bed, num_2_3bed, num_common_spaces, num_wipes, num_asbestos_samples")
     .eq("id", jobId)
     .single();
 
@@ -57,6 +60,7 @@ export async function autoSendReports(
   const reportsByType = {
     xrf: (allReports ?? []).filter((r) => r.report_type === "xrf"),
     dust_swab: (allReports ?? []).filter((r) => r.report_type === "dust_swab"),
+    asbestos: (allReports ?? []).filter((r) => r.report_type === "asbestos"),
   };
 
   const reportTypes = [
@@ -73,6 +77,13 @@ export async function autoSendReports(
       has: job.has_dust_swab,
       status: job.dust_swab_status,
       statusColumn: "dust_swab_status",
+    },
+    {
+      label: "Asbestos",
+      type: "asbestos" as const,
+      has: job.has_asbestos,
+      status: job.asbestos_status,
+      statusColumn: "asbestos_status",
     },
   ];
 

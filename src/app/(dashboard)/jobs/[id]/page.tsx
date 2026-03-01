@@ -27,6 +27,13 @@ const DUST_SWAB_STATUS_LABELS: Record<string, string> = {
   sent: "Sent",
 };
 
+const ASBESTOS_STATUS_LABELS: Record<string, string> = {
+  not_started: "Not Started",
+  writing: "Writing",
+  uploaded: "Uploaded",
+  sent: "Sent",
+};
+
 type PageProps = {
   params: Promise<{ id: string }>;
 };
@@ -198,6 +205,7 @@ export default async function JobDetailPage({ params }: PageProps) {
         hasAsbestos={job.has_asbestos}
         xrfReportStatus={job.report_status}
         dustSwabReportStatus={job.dust_swab_status ?? "not_started"}
+        asbestosReportStatus={job.asbestos_status ?? "not_started"}
         dispatchAction={dispatchJobWithId}
         markPaidAction={markClientPaidWithId}
         sendProposalAction={sendProposalWithId}
@@ -221,6 +229,7 @@ export default async function JobDetailPage({ params }: PageProps) {
         officeWorkers={officeWorkers ?? []}
         xrfStatusLabels={XRF_STATUS_LABELS}
         dustSwabStatusLabels={DUST_SWAB_STATUS_LABELS}
+        asbestosStatusLabels={ASBESTOS_STATUS_LABELS}
         pricingSummary={{
           xrfSubtotal,
           dustSwabSubtotal,

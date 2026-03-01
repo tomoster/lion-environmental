@@ -230,6 +230,7 @@ export type Database = {
         Row: {
           asbestos_sample_rate: number | null
           asbestos_site_visit_rate: number | null
+          asbestos_status: string
           building_address: string | null
           client_company: string | null
           client_email: string | null
@@ -255,8 +256,6 @@ export type Database = {
           num_wipes: number | null
           price_per_common_space: number | null
           price_per_unit: number | null
-          xrf_price_2_3bed: number | null
-          xrf_price_studios_1bed: number | null
           proposal_sent_at: string | null
           prospect_id: string | null
           report_status: string
@@ -266,10 +265,13 @@ export type Database = {
           updated_at: string | null
           wipe_rate: number | null
           worker_id: string | null
+          xrf_price_2_3bed: number | null
+          xrf_price_studios_1bed: number | null
         }
         Insert: {
           asbestos_sample_rate?: number | null
           asbestos_site_visit_rate?: number | null
+          asbestos_status?: string
           building_address?: string | null
           client_company?: string | null
           client_email?: string | null
@@ -310,6 +312,7 @@ export type Database = {
         Update: {
           asbestos_sample_rate?: number | null
           asbestos_site_visit_rate?: number | null
+          asbestos_status?: string
           building_address?: string | null
           client_company?: string | null
           client_email?: string | null

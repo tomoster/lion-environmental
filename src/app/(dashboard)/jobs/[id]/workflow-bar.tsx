@@ -17,6 +17,7 @@ type WorkflowBarProps = {
   hasAsbestos: boolean;
   xrfReportStatus: string;
   dustSwabReportStatus: string;
+  asbestosReportStatus: string;
   dispatchAction: () => Promise<void>;
   markPaidAction: () => Promise<void>;
   sendProposalAction: () => Promise<{ error?: string }>;
@@ -62,7 +63,8 @@ function getDescription(props: WorkflowBarProps): string {
 
     const xrfDone = !hasXrf || xrfReportStatus === "sent";
     const dustSwabDone = !hasDustSwab || dustSwabReportStatus === "sent";
-    const allDone = xrfDone && dustSwabDone && !hasAsbestos;
+    const asbestosDone = !hasAsbestos || props.asbestosReportStatus === "sent";
+    const allDone = xrfDone && dustSwabDone && asbestosDone;
 
     if (allDone) return "All done — reports sent to client";
     return "Paid — upload reports below, they'll auto-send to client";

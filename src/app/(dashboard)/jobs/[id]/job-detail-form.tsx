@@ -52,6 +52,7 @@ type JobDetailFormProps = {
     asbestos_site_visit_rate: number | null;
     report_status: string;
     dust_swab_status: string | null;
+    asbestos_status: string | null;
     report_writer_id: string | null;
     notes: string | null;
   };
@@ -72,6 +73,7 @@ type JobDetailFormProps = {
   officeWorkers: { id: string; name: string }[];
   xrfStatusLabels: Record<string, string>;
   dustSwabStatusLabels: Record<string, string>;
+  asbestosStatusLabels: Record<string, string>;
   pricingSummary: {
     xrfSubtotal: number;
     dustSwabSubtotal: number;
@@ -110,6 +112,7 @@ export function JobDetailForm({
   officeWorkers,
   xrfStatusLabels,
   dustSwabStatusLabels,
+  asbestosStatusLabels,
   pricingSummary,
   uploadActions,
   jobReports,
@@ -605,7 +608,7 @@ export function JobDetailForm({
             forceMount
             className="data-[state=inactive]:hidden space-y-4 pt-4"
           >
-            {(xrfChecked || dustSwabChecked) && (
+            {(xrfChecked || dustSwabChecked || asbestosChecked) && (
               <div className="grid grid-cols-2 gap-4">
                 {xrfChecked && (
                   <div className="space-y-1.5">
@@ -651,6 +654,28 @@ export function JobDetailForm({
                     </Select>
                   </div>
                 )}
+                {asbestosChecked && (
+                  <div className="space-y-1.5">
+                    <Label htmlFor="asbestos_status">Asbestos Status</Label>
+                    <Select
+                      name="asbestos_status"
+                      defaultValue={job.asbestos_status ?? "not_started"}
+                    >
+                      <SelectTrigger id="asbestos_status" className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(asbestosStatusLabels).map(
+                          ([value, label]) => (
+                            <SelectItem key={value} value={value}>
+                              {label}
+                            </SelectItem>
+                          )
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             )}
 
@@ -666,6 +691,13 @@ export function JobDetailForm({
                 type="hidden"
                 name="dust_swab_status"
                 value={job.dust_swab_status ?? "not_started"}
+              />
+            )}
+            {!asbestosChecked && (
+              <input
+                type="hidden"
+                name="asbestos_status"
+                value={job.asbestos_status ?? "not_started"}
               />
             )}
 

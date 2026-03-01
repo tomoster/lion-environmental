@@ -56,7 +56,7 @@ export async function updateJob(id: string, formData: FormData): Promise<void> {
 
   const { data: currentJob } = await supabase
     .from("jobs")
-    .select("job_status, start_time, report_status, dust_swab_status")
+    .select("job_status, start_time, report_status, dust_swab_status, asbestos_status")
     .eq("id", id)
     .single();
 
@@ -139,6 +139,12 @@ export async function updateJob(id: string, formData: FormData): Promise<void> {
       const locked = ["uploaded", "sent"];
       return locked.includes(dbVal) && !locked.includes(formVal) ? dbVal : formVal;
     })(),
+    asbestos_status: (() => {
+      const formVal = (formData.get("asbestos_status") as string) || "not_started";
+      const dbVal = currentJob?.asbestos_status ?? "not_started";
+      const locked = ["uploaded", "sent"];
+      return locked.includes(dbVal) && !locked.includes(formVal) ? dbVal : formVal;
+    })(),
     updated_at: new Date().toISOString(),
   };
 
@@ -217,6 +223,7 @@ export async function uploadReport(jobId: string, reportType: "xrf" | "dust_swab
   const statusColumnMap: Record<string, string> = {
     xrf: "report_status",
     dust_swab: "dust_swab_status",
+    asbestos: "asbestos_status",
   };
   const statusColumn = statusColumnMap[reportType];
 
