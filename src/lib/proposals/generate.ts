@@ -381,7 +381,8 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
 
   // PAGE 2 - Terms + Signature
   doc.addPage();
-  y = 60;
+  addHeader(doc);
+  y = 155;
 
   y = addAccessScheduling(doc, y);
   y = addPaymentTerms(doc, y, 60);
@@ -465,7 +466,8 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
 
   // PAGE 2 - Terms + Signature
   doc.addPage();
-  y = 60;
+  addHeader(doc);
+  y = 155;
 
   y = addAccessScheduling(doc, y);
   y = addPaymentTerms(doc, y, 14);
