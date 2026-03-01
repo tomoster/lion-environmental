@@ -266,7 +266,7 @@ function generateXRFProposal() {
     { cells: [{ text: "Studios & 1-Bedroom", bold: true }, { text: "{{num_studios}}" }, { text: "{{price_studios}}" }, { text: "{{studios_total}}" }], height: 30 },
     { cells: [{ text: "2 & 3-Bedroom", bold: true }, { text: "{{num_2_3bed}}" }, { text: "{{price_2_3bed}}" }, { text: "{{beds_total}}" }], height: 30 },
     { cells: [{ text: "Common Area\n(i.e. staircases, laundry room,\nlobby, gym, public hallways\nand spaces)", bold: true, size: 8 }, { text: "{{num_common}}" }, { text: "{{price_per_common}}" }, { text: "{{common_total}}" }], height: 58 },
-    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
+    { cells: [{ text: "New York State Tax\n8.88%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: "{{total}}", bold: true }], height: 30 },
   ], colW);
 
@@ -318,7 +318,7 @@ function generateDustSwabsProposal() {
     { cells: [{ text: "Site Visit by EPA certified\nLead Inspector or Risk\nAssessor", size: 9 }, { text: "1" }, { text: "{{site_visit_rate}}" }, { text: "{{site_visit_total}}" }], height: 42 },
     { cells: [{ text: "Project management &\nReport Preparation", size: 9 }, { text: "1" }, { text: "{{proj_mgmt_rate}}" }, { text: "{{proj_mgmt_total}}" }], height: 35 },
     { cells: [{ text: "Lead Dust Wipes:\n(24 Hour Turn Around Time)", size: 9 }, { text: "{{num_wipes}}" }, { text: "{{wipe_rate}}" }, { text: "{{wipes_total}}" }], height: 35 },
-    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
+    { cells: [{ text: "New York State Tax\n8.88%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: "{{total}}", bold: true }], height: 28 },
   ], colW);
 
@@ -393,7 +393,7 @@ function generateAsbestosProposal() {
     { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Unit Rate", bold: true }, { text: "Total", bold: true }], height: 26 },
     { cells: [{ text: "Site Visit by certified\nAsbestos inspector", size: 9 }, { text: "1" }, { text: "{{site_visit_rate}}" }, { text: "{{site_visit_total}}" }], height: 35 },
     { cells: [{ text: "Asbestos Surface Wipe\nSampling:\n(24 Hour Turn Around Time)", size: 9 }, { text: "{{num_samples}}" }, { text: "{{sample_rate}}" }, { text: "{{samples_total}}" }], height: 42 },
-    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
+    { cells: [{ text: "New York State Tax\n8.88%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: "{{total}}", bold: true }], height: 28 },
   ], colW);
 

@@ -193,9 +193,19 @@ export type JobData = {
   has_asbestos: boolean;
   num_units: number | null;
   price_per_unit: number | null;
+  num_studios_1bed: number | null;
+  xrf_price_studios_1bed: number | null;
+  num_2_3bed: number | null;
+  xrf_price_2_3bed: number | null;
   num_common_spaces: number | null;
   price_per_common_space: number | null;
   num_wipes: number | null;
+  wipe_rate: number | null;
+  dust_swab_site_visit_rate: number | null;
+  dust_swab_proj_mgmt_rate: number | null;
+  num_asbestos_samples: number | null;
+  asbestos_sample_rate: number | null;
+  asbestos_site_visit_rate: number | null;
 };
 
 export function InvoiceDocument({
@@ -257,29 +267,46 @@ export function InvoiceDocument({
 
           {job.has_xrf && (
             <>
-              <View style={styles.tableRow}>
-                <Text style={styles.colDescription}>
-                  Unit Inspections ({job.num_units ?? 0} units{" "}
-                  {formatCurrency(job.price_per_unit ?? 0)}/unit)
-                </Text>
-                <Text style={styles.colAmount}>
-                  {formatCurrency(
-                    (job.num_units ?? 0) * (job.price_per_unit ?? 0)
-                  )}
-                </Text>
-              </View>
-              <View style={styles.tableRow}>
-                <Text style={styles.colDescription}>
-                  Common Space Inspections ({job.num_common_spaces ?? 0} spaces{" "}
-                  {formatCurrency(job.price_per_common_space ?? 0)}/space)
-                </Text>
-                <Text style={styles.colAmount}>
-                  {formatCurrency(
-                    (job.num_common_spaces ?? 0) *
-                      (job.price_per_common_space ?? 0)
-                  )}
-                </Text>
-              </View>
+              {(job.num_studios_1bed ?? 0) > 0 && (
+                <View style={styles.tableRow}>
+                  <Text style={styles.colDescription}>
+                    Studios & 1-Bed Inspections ({job.num_studios_1bed} units{" "}
+                    {formatCurrency(job.xrf_price_studios_1bed ?? 0)}/unit)
+                  </Text>
+                  <Text style={styles.colAmount}>
+                    {formatCurrency(
+                      (job.num_studios_1bed ?? 0) * (job.xrf_price_studios_1bed ?? 0)
+                    )}
+                  </Text>
+                </View>
+              )}
+              {(job.num_2_3bed ?? 0) > 0 && (
+                <View style={styles.tableRow}>
+                  <Text style={styles.colDescription}>
+                    2 & 3-Bed Inspections ({job.num_2_3bed} units{" "}
+                    {formatCurrency(job.xrf_price_2_3bed ?? 0)}/unit)
+                  </Text>
+                  <Text style={styles.colAmount}>
+                    {formatCurrency(
+                      (job.num_2_3bed ?? 0) * (job.xrf_price_2_3bed ?? 0)
+                    )}
+                  </Text>
+                </View>
+              )}
+              {(job.num_common_spaces ?? 0) > 0 && (
+                <View style={styles.tableRow}>
+                  <Text style={styles.colDescription}>
+                    Common Space Inspections ({job.num_common_spaces} spaces{" "}
+                    {formatCurrency(job.price_per_common_space ?? 0)}/space)
+                  </Text>
+                  <Text style={styles.colAmount}>
+                    {formatCurrency(
+                      (job.num_common_spaces ?? 0) *
+                        (job.price_per_common_space ?? 0)
+                    )}
+                  </Text>
+                </View>
+              )}
             </>
           )}
 
@@ -287,18 +314,35 @@ export function InvoiceDocument({
             <>
               <View style={styles.tableRow}>
                 <Text style={styles.colDescription}>Site Visit</Text>
-                <Text style={styles.colAmount}>{formatCurrency(375)}</Text>
+                <Text style={styles.colAmount}>{formatCurrency(job.dust_swab_site_visit_rate ?? 0)}</Text>
               </View>
               <View style={styles.tableRow}>
-                <Text style={styles.colDescription}>Report</Text>
-                <Text style={styles.colAmount}>{formatCurrency(135)}</Text>
+                <Text style={styles.colDescription}>Project Management & Report</Text>
+                <Text style={styles.colAmount}>{formatCurrency(job.dust_swab_proj_mgmt_rate ?? 0)}</Text>
               </View>
               <View style={styles.tableRow}>
                 <Text style={styles.colDescription}>
-                  Wipe Samples ({job.num_wipes ?? 0} $20/wipe)
+                  Wipe Samples ({job.num_wipes ?? 0} {formatCurrency(job.wipe_rate ?? 0)}/wipe)
                 </Text>
                 <Text style={styles.colAmount}>
-                  {formatCurrency((job.num_wipes ?? 0) * 20)}
+                  {formatCurrency((job.num_wipes ?? 0) * (job.wipe_rate ?? 0))}
+                </Text>
+              </View>
+            </>
+          )}
+
+          {job.has_asbestos && (
+            <>
+              <View style={styles.tableRow}>
+                <Text style={styles.colDescription}>Site Visit</Text>
+                <Text style={styles.colAmount}>{formatCurrency(job.asbestos_site_visit_rate ?? 0)}</Text>
+              </View>
+              <View style={styles.tableRow}>
+                <Text style={styles.colDescription}>
+                  Asbestos Samples ({job.num_asbestos_samples ?? 0} {formatCurrency(job.asbestos_sample_rate ?? 0)}/sample)
+                </Text>
+                <Text style={styles.colAmount}>
+                  {formatCurrency((job.num_asbestos_samples ?? 0) * (job.asbestos_sample_rate ?? 0))}
                 </Text>
               </View>
             </>

@@ -1,9 +1,11 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { generateInvoiceForJob, generateAndStorePdfForInvoice } from "@/lib/invoices/generate";
+import { autoSendReports } from "@/lib/reports/auto-send";
 
 export async function generateInvoice(jobId: string) {
   const supabase = await createClient();
@@ -14,6 +16,12 @@ export async function generateInvoice(jobId: string) {
 
 export async function markAsPaid(id: string): Promise<void> {
   const supabase = await createClient();
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("job_id")
+    .eq("id", id)
+    .single();
 
   const { error } = await supabase
     .from("invoices")
@@ -28,12 +36,23 @@ export async function markAsPaid(id: string): Promise<void> {
     throw new Error(error.message);
   }
 
+  if (invoice?.job_id) {
+    const adminClient = createAdminClient();
+    await autoSendReports(adminClient, invoice.job_id);
+  }
+
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${id}`);
 }
 
 export async function updateInvoiceStatus(id: string, status: string): Promise<void> {
   const supabase = await createClient();
+
+  const { data: invoice } = await supabase
+    .from("invoices")
+    .select("job_id")
+    .eq("id", id)
+    .single();
 
   const updateData: Record<string, string> = {
     status,
@@ -55,6 +74,11 @@ export async function updateInvoiceStatus(id: string, status: string): Promise<v
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  if (status === "paid" && invoice?.job_id) {
+    const adminClient = createAdminClient();
+    await autoSendReports(adminClient, invoice.job_id);
   }
 
   revalidatePath("/invoices");

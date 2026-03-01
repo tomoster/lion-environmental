@@ -142,7 +142,7 @@ export async function sendInvoiceForId(
   const { data: invoice, error: invoiceError } = await supabase
     .from("invoices")
     .select(
-      "*, jobs(has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, client_email)"
+      "*, jobs(has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate, client_email)"
     )
     .eq("id", invoiceId)
     .single();
@@ -157,9 +157,19 @@ export async function sendInvoiceForId(
     has_asbestos: boolean;
     num_units: number | null;
     price_per_unit: number | null;
+    num_studios_1bed: number | null;
+    xrf_price_studios_1bed: number | null;
+    num_2_3bed: number | null;
+    xrf_price_2_3bed: number | null;
     num_common_spaces: number | null;
     price_per_common_space: number | null;
     num_wipes: number | null;
+    wipe_rate: number | null;
+    dust_swab_site_visit_rate: number | null;
+    dust_swab_proj_mgmt_rate: number | null;
+    num_asbestos_samples: number | null;
+    asbestos_sample_rate: number | null;
+    asbestos_site_visit_rate: number | null;
     client_email: string | null;
   } | null;
 
@@ -196,9 +206,19 @@ export async function sendInvoiceForId(
       has_asbestos: job.has_asbestos,
       num_units: job.num_units,
       price_per_unit: job.price_per_unit,
+      num_studios_1bed: job.num_studios_1bed,
+      xrf_price_studios_1bed: job.xrf_price_studios_1bed,
+      num_2_3bed: job.num_2_3bed,
+      xrf_price_2_3bed: job.xrf_price_2_3bed,
       num_common_spaces: job.num_common_spaces,
       price_per_common_space: job.price_per_common_space,
       num_wipes: job.num_wipes,
+      wipe_rate: job.wipe_rate,
+      dust_swab_site_visit_rate: job.dust_swab_site_visit_rate,
+      dust_swab_proj_mgmt_rate: job.dust_swab_proj_mgmt_rate,
+      num_asbestos_samples: job.num_asbestos_samples,
+      asbestos_sample_rate: job.asbestos_sample_rate,
+      asbestos_site_visit_rate: job.asbestos_site_visit_rate,
     }
   );
 

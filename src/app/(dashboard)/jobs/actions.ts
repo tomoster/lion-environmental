@@ -146,11 +146,7 @@ export async function updateJob(id: string, formData: FormData): Promise<{ propo
     updated_at: new Date().toISOString(),
   };
 
-  if (wasNotDispatched) {
-    data.job_status = "proposal_sent";
-    (data as Record<string, unknown>).proposal_sent_at = new Date().toISOString();
-    (data as Record<string, unknown>).complete_reminder_sent = false;
-  } else if (startTime !== currentJob?.start_time) {
+  if (!wasNotDispatched && startTime !== currentJob?.start_time) {
     (data as Record<string, unknown>).complete_reminder_sent = false;
   }
 
@@ -167,6 +163,8 @@ export async function updateJob(id: string, formData: FormData): Promise<{ propo
         .select("job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
         .eq("id", id)
         .single();
+
+      let emailSent = false;
 
       if (fullJob && fullJob.client_email && (fullJob.has_xrf || fullJob.has_dust_swab || fullJob.has_asbestos)) {
         const proposals = await generateProposals(fullJob);
@@ -190,7 +188,16 @@ export async function updateJob(id: string, formData: FormData): Promise<{ propo
             subjectTemplate: s.proposal_email_subject,
             bodyTemplate: s.proposal_email_body,
           });
+          emailSent = true;
         }
+      }
+
+      if (emailSent) {
+        await supabase.from("jobs").update({
+          job_status: "proposal_sent",
+          proposal_sent_at: new Date().toISOString(),
+          complete_reminder_sent: false,
+        }).eq("id", id);
       }
     } catch (e) {
       console.error("Proposal generation/email failed:", e);
