@@ -128,12 +128,15 @@ export function ProspectForm({ prospect, onSuccess }: ProspectFormProps) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="new">New</SelectItem>
+              <SelectItem value="emailing">Emailing</SelectItem>
+              <SelectItem value="no_response">No Response</SelectItem>
+              <SelectItem value="replied">Replied</SelectItem>
               <SelectItem value="called">Called</SelectItem>
-              <SelectItem value="qualified">Qualified</SelectItem>
-              <SelectItem value="pricing_sent">Pricing Sent</SelectItem>
-              <SelectItem value="followup">Follow-up</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="lost">Lost</SelectItem>
+              <SelectItem value="interested">Interested</SelectItem>
+              <SelectItem value="not_interested">Not Interested</SelectItem>
+              <SelectItem value="bounced">Bounced</SelectItem>
+              <SelectItem value="converted">Converted</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>
         </div>

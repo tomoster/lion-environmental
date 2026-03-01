@@ -33,12 +33,12 @@ export default async function ProspectsPage({
     );
   }
 
-  if (status === "archived") {
-    query = query.eq("status", "archived");
+  if (status === "archived" || status === "converted") {
+    query = query.eq("status", status);
   } else if (status && status !== "all") {
     query = query.eq("status", status);
   } else {
-    query = query.neq("status", "archived");
+    query = query.not("status", "in", '("archived","converted")');
   }
 
   const todayStart = new Date();

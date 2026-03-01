@@ -86,7 +86,6 @@ export async function POST(request: NextRequest) {
     google_rating: number | null;
     status: string;
     source: string;
-    seq_status: string;
     seq_step: number;
     next_send: string | null;
   }> = [];
@@ -127,9 +126,8 @@ export async function POST(request: NextRequest) {
       building_address: row.address?.trim() || null,
       website: row.website?.trim() || null,
       google_rating: row.totalScore ?? null,
-      status: "new",
+      status: hasEmail ? "emailing" : "new",
       source: "apify",
-      seq_status: hasEmail ? "active" : "not_started",
       seq_step: hasEmail ? 1 : 0,
       next_send: hasEmail ? nextBusinessDaySend() : null,
     });

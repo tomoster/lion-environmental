@@ -272,6 +272,12 @@ export async function createJobFromProspect(prospectId: string) {
     throw new Error(error.message);
   }
 
+  await supabase
+    .from("prospects")
+    .update({ status: "converted", next_send: null })
+    .eq("id", prospectId);
+
   revalidatePath("/jobs");
+  revalidatePath("/prospects");
   redirect(`/jobs/${job.id}`);
 }

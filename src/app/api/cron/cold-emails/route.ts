@@ -153,7 +153,7 @@ export async function GET(request: NextRequest) {
   const { data: prospects } = await supabase
     .from("prospects")
     .select("*")
-    .eq("seq_status", "active")
+    .eq("status", "emailing")
     .not("email", "is", null)
     .lte("next_send", new Date().toISOString())
     .order("seq_step", { ascending: false })
@@ -177,7 +177,7 @@ export async function GET(request: NextRequest) {
     if (suppressed.has(email)) {
       await supabase
         .from("prospects")
-        .update({ seq_status: "unsubscribed" })
+        .update({ status: "not_interested" })
         .eq("id", prospect.id);
       continue;
     }
@@ -227,7 +227,7 @@ export async function GET(request: NextRequest) {
         await supabase
           .from("prospects")
           .update({
-            seq_status: "completed",
+            status: "no_response",
             seq_step: 4,
             next_send: null,
           })
@@ -270,7 +270,7 @@ export async function GET(request: NextRequest) {
       if (isBounce) {
         await supabase
           .from("prospects")
-          .update({ seq_status: "bounced" })
+          .update({ status: "bounced" })
           .eq("id", prospect.id);
 
         await supabase

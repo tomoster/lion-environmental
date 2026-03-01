@@ -89,7 +89,6 @@ export async function POST(request: NextRequest) {
     source: string;
     building_address: string | null;
     status: string;
-    seq_status: string;
     seq_step: number;
     next_send: string | null;
   }> = [];
@@ -136,8 +135,7 @@ export async function POST(request: NextRequest) {
       apollo_id: lead.apollo_id || null,
       source: lead.source,
       building_address: lead.location?.trim() || null,
-      status: "new",
-      seq_status: hasEmail ? "active" : "not_started",
+      status: hasEmail ? "emailing" : "new",
       seq_step: hasEmail ? 1 : 0,
       next_send: hasEmail ? nextBusinessDaySend() : null,
     });

@@ -50,22 +50,28 @@ function daysOverdue(dueDateStr: string | null): number {
 
 const PROSPECT_STATUS_LABELS: Record<string, string> = {
   new: "New",
+  emailing: "Emailing",
+  no_response: "No Response",
+  replied: "Replied",
   called: "Called",
-  qualified: "Qualified",
-  pricing_sent: "Pricing Sent",
-  followup: "Follow-up",
-  confirmed: "Confirmed",
-  lost: "Lost",
+  interested: "Interested",
+  not_interested: "Not Interested",
+  bounced: "Bounced",
+  converted: "Converted",
+  archived: "Archived",
 };
 
 const PROSPECT_STATUS_COLORS: Record<string, string> = {
   new: "bg-gray-100 text-gray-700 border-gray-200",
-  called: "bg-blue-100 text-blue-700 border-blue-200",
-  qualified: "bg-purple-100 text-purple-700 border-purple-200",
-  pricing_sent: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  followup: "bg-orange-100 text-orange-700 border-orange-200",
-  confirmed: "bg-green-100 text-green-700 border-green-200",
-  lost: "bg-red-100 text-red-700 border-red-200",
+  emailing: "bg-blue-100 text-blue-700 border-blue-200",
+  no_response: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  replied: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  called: "bg-purple-100 text-purple-700 border-purple-200",
+  interested: "bg-green-100 text-green-700 border-green-200",
+  not_interested: "bg-red-100 text-red-700 border-red-200",
+  bounced: "bg-orange-100 text-orange-700 border-orange-200",
+  converted: "bg-teal-100 text-teal-700 border-teal-200",
+  archived: "bg-gray-50 text-gray-400 border-gray-200",
 };
 
 const DISPATCH_STATUS_LABELS: Record<string, string> = {
@@ -86,7 +92,7 @@ function dispatchBadgeClass(status: string): string {
   }
 }
 
-const PIPELINE_STATUSES = ["new", "called", "qualified", "pricing_sent", "followup"];
+const PIPELINE_STATUSES = ["new", "emailing", "replied", "called", "interested"];
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -113,7 +119,7 @@ export default async function DashboardPage() {
     supabase
       .from("prospects")
       .select("id", { count: "exact", head: true })
-      .not("status", "in", '("confirmed","lost")'),
+      .not("status", "in", '("converted","not_interested","bounced","no_response","archived")'),
     supabase
       .from("jobs")
       .select("id", { count: "exact", head: true })

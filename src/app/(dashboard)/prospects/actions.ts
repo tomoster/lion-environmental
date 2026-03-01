@@ -16,7 +16,6 @@ export async function createProspect(formData: FormData) {
     next_followup: (formData.get("next_followup") as string) || null,
     source: (formData.get("source") as string) || "manual",
     notes: (formData.get("notes") as string) || null,
-    seq_status: "not_started",
     seq_step: 0,
   });
 
@@ -46,8 +45,7 @@ export async function updateProspect(id: string, formData: FormData) {
     updated_at: new Date().toISOString(),
   };
 
-  if (newStatus === "lost" || newStatus === "archived") {
-    updates.seq_status = "paused";
+  if (newStatus !== "emailing") {
     updates.next_send = null;
   }
 
@@ -90,7 +88,7 @@ export async function startEmailSequence(id: string) {
   const { error } = await supabase
     .from("prospects")
     .update({
-      seq_status: "active",
+      status: "emailing",
       seq_step: 1,
       next_send: nextSend.toISOString(),
     })
@@ -122,10 +120,30 @@ export async function pauseEmailSequence(id: string) {
 
   const { error } = await supabase
     .from("prospects")
-    .update({
-      seq_status: "paused",
-      next_send: null,
-    })
+    .update({ next_send: null })
+    .eq("id", id);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/prospects");
+  return { success: true };
+}
+
+export async function resumeEmailSequence(id: string) {
+  const supabase = await createClient();
+
+  const nextSend = new Date();
+  nextSend.setDate(nextSend.getDate() + 1);
+  nextSend.setUTCHours(14, Math.floor(Math.random() * 60), 0, 0);
+  const day = nextSend.getUTCDay();
+  if (day === 6) nextSend.setDate(nextSend.getDate() + 2);
+  if (day === 0) nextSend.setDate(nextSend.getDate() + 1);
+
+  const { error } = await supabase
+    .from("prospects")
+    .update({ next_send: nextSend.toISOString() })
     .eq("id", id);
 
   if (error) {

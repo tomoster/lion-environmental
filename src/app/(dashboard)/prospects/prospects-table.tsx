@@ -44,6 +44,7 @@ import {
   getEmailLog,
   startEmailSequence,
   pauseEmailSequence,
+  resumeEmailSequence,
 } from "./actions";
 import { createJobFromProspect } from "../jobs/actions";
 
@@ -60,23 +61,27 @@ interface ProspectsTableProps {
 
 const STATUS_LABELS: Record<string, string> = {
   new: "New",
+  emailing: "Emailing",
+  no_response: "No Response",
+  replied: "Replied",
   called: "Called",
-  qualified: "Qualified",
-  pricing_sent: "Pricing Sent",
-  followup: "Follow-up",
-  confirmed: "Confirmed",
-  lost: "Lost",
+  interested: "Interested",
+  not_interested: "Not Interested",
+  bounced: "Bounced",
+  converted: "Converted",
   archived: "Archived",
 };
 
 const STATUS_COLORS: Record<string, string> = {
   new: "bg-gray-100 text-gray-700 border-gray-200",
-  called: "bg-blue-100 text-blue-700 border-blue-200",
-  qualified: "bg-purple-100 text-purple-700 border-purple-200",
-  pricing_sent: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  followup: "bg-orange-100 text-orange-700 border-orange-200",
-  confirmed: "bg-green-100 text-green-700 border-green-200",
-  lost: "bg-red-100 text-red-700 border-red-200",
+  emailing: "bg-blue-100 text-blue-700 border-blue-200",
+  no_response: "bg-yellow-100 text-yellow-700 border-yellow-200",
+  replied: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  called: "bg-purple-100 text-purple-700 border-purple-200",
+  interested: "bg-green-100 text-green-700 border-green-200",
+  not_interested: "bg-red-100 text-red-700 border-red-200",
+  bounced: "bg-orange-100 text-orange-700 border-orange-200",
+  converted: "bg-teal-100 text-teal-700 border-teal-200",
   archived: "bg-gray-50 text-gray-400 border-gray-200",
 };
 
@@ -91,43 +96,10 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-const SEQ_LABELS: Record<string, string> = {
-  not_started: "—",
-  active: "Active",
-  paused: "Paused",
-  completed: "Done",
-  bounced: "Bounced",
-  replied: "Replied",
-  unsubscribed: "Unsub",
-};
-
-const SEQ_COLORS: Record<string, string> = {
-  active: "bg-blue-100 text-blue-700 border-blue-200",
-  paused: "bg-gray-100 text-gray-600 border-gray-200",
-  completed: "bg-green-100 text-green-700 border-green-200",
-  bounced: "bg-red-100 text-red-700 border-red-200",
-  replied: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  unsubscribed: "bg-orange-100 text-orange-700 border-orange-200",
-};
-
-function SeqBadge({ status, step }: { status: string; step: number }) {
-  if (status === "not_started") return <span className="text-muted-foreground">—</span>;
-  const label = status === "active" ? `Step ${step}` : (SEQ_LABELS[status] ?? status);
-  const colorClass = SEQ_COLORS[status] ?? "bg-gray-100 text-gray-600 border-gray-200";
-  return (
-    <Badge className={`${colorClass} text-xs`} variant="outline">
-      {label}
-    </Badge>
-  );
-}
-
-const SEQ_CHIP_COLORS: Record<string, string> = {
-  active: "text-blue-600",
-  paused: "text-gray-500",
-  completed: "text-green-600",
+const EMAIL_CHIP_COLORS: Record<string, string> = {
+  emailing: "text-blue-600",
+  no_response: "text-gray-500",
   bounced: "text-red-600",
-  replied: "text-emerald-600",
-  unsubscribed: "text-orange-600",
 };
 
 function EmailHistoryDialog({ prospect }: { prospect: Prospect }) {
@@ -152,15 +124,15 @@ function EmailHistoryDialog({ prospect }: { prospect: Prospect }) {
     setLoading(false);
   }
 
-  if (!prospect.seq_status || prospect.seq_status === "not_started") {
+  if (!prospect.seq_step || prospect.seq_step === 0) {
     return null;
   }
 
-  const chipColor = SEQ_CHIP_COLORS[prospect.seq_status] ?? "text-gray-500";
-  const chipLabel =
-    prospect.seq_status === "active"
-      ? `Step ${prospect.seq_step}`
-      : (SEQ_LABELS[prospect.seq_status] ?? prospect.seq_status);
+  const chipColor = EMAIL_CHIP_COLORS[prospect.status] ?? "text-gray-500";
+  let chipLabel = "";
+  if (prospect.status === "emailing") {
+    chipLabel = prospect.next_send ? `Step ${prospect.seq_step}` : "Paused";
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -274,10 +246,20 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
     });
   }
 
-  const canStartSeq =
-    prospect.email &&
-    (prospect.seq_status === "not_started" || prospect.seq_status === "paused");
-  const canPauseSeq = prospect.seq_status === "active";
+  function handleResumeSequence() {
+    startTransition(async () => {
+      const result = await resumeEmailSequence(prospect.id);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Email sequence resumed.");
+      }
+    });
+  }
+
+  const canStartSeq = prospect.email && prospect.status === "new";
+  const canPauseSeq = prospect.status === "emailing" && !!prospect.next_send;
+  const canResumeSeq = prospect.status === "emailing" && !prospect.next_send;
 
   return (
     <TableRow>
@@ -322,7 +304,12 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
               )}
               {canPauseSeq && (
                 <DropdownMenuItem onSelect={handlePauseSequence}>
-                  Pause Email Sequence
+                  Pause Emails
+                </DropdownMenuItem>
+              )}
+              {canResumeSeq && (
+                <DropdownMenuItem onSelect={handleResumeSequence}>
+                  Resume Emails
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -414,12 +401,14 @@ export function ProspectsTable({
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
               <SelectItem value="new">New</SelectItem>
+              <SelectItem value="emailing">Emailing</SelectItem>
+              <SelectItem value="no_response">No Response</SelectItem>
+              <SelectItem value="replied">Replied</SelectItem>
               <SelectItem value="called">Called</SelectItem>
-              <SelectItem value="qualified">Qualified</SelectItem>
-              <SelectItem value="pricing_sent">Pricing Sent</SelectItem>
-              <SelectItem value="followup">Follow-up</SelectItem>
-              <SelectItem value="confirmed">Confirmed</SelectItem>
-              <SelectItem value="lost">Lost</SelectItem>
+              <SelectItem value="interested">Interested</SelectItem>
+              <SelectItem value="not_interested">Not Interested</SelectItem>
+              <SelectItem value="bounced">Bounced</SelectItem>
+              <SelectItem value="converted">Converted</SelectItem>
               <SelectItem value="archived">Archived</SelectItem>
             </SelectContent>
           </Select>
