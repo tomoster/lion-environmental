@@ -1,72 +1,29 @@
-import PDFDocument from "pdfkit";
-import path from "path";
-import fs from "fs";
+const PDFDocument = require("pdfkit");
+const fs = require("fs");
+const path = require("path");
 
-const LOGO_PATH = path.join(process.cwd(), "public", "images", "lion-logo.png");
+const LOGO_PATH = path.join(__dirname, "..", "public", "images", "lion-logo.png");
+const OUTPUT_DIR = path.join(__dirname, "..");
 
 const PAGE_WIDTH = 612;
 const LEFT = 72;
 const RIGHT = PAGE_WIDTH - 72;
 const CONTENT_WIDTH = RIGHT - LEFT; // 468
 
-const TAX_RATE = 0.0888;
-
-type ProposalData = {
-  job_number: number;
-  client_company: string | null;
-  building_address: string | null;
-  num_units: number | null;
-  has_xrf: boolean;
-  has_dust_swab: boolean;
-  has_asbestos: boolean;
-  price_per_unit: number | null;
-  num_studios_1bed: number | null;
-  xrf_price_studios_1bed: number | null;
-  num_2_3bed: number | null;
-  xrf_price_2_3bed: number | null;
-  num_common_spaces: number | null;
-  price_per_common_space: number | null;
-  num_wipes: number | null;
-  wipe_rate: number | null;
-  dust_swab_site_visit_rate: number | null;
-  dust_swab_proj_mgmt_rate: number | null;
-  num_asbestos_samples: number | null;
-  asbestos_sample_rate: number | null;
-  asbestos_site_visit_rate: number | null;
-};
-
-type GeneratedProposal = {
-  type: "xrf" | "dust_swab" | "asbestos";
-  buffer: Buffer;
-  filename: string;
-};
-
-function fmt(val: number | null | undefined): string {
-  if (val == null) return "TBD";
-  return `$${val.toFixed(2)}`;
-}
-
-function fmtQty(val: number | null | undefined): string {
-  if (val == null) return "TBD";
-  return String(val);
-}
-
-function createDoc(): InstanceType<typeof PDFDocument> {
+function createDoc() {
   return new PDFDocument({
     size: "LETTER",
     margins: { top: 50, bottom: 80, left: LEFT, right: 72 },
   });
 }
 
-function addHeader(doc: InstanceType<typeof PDFDocument>) {
-  if (fs.existsSync(LOGO_PATH)) {
-    doc.image(LOGO_PATH, PAGE_WIDTH / 2 - 40, 35, { width: 80 });
-  }
+function addHeader(doc) {
+  doc.image(LOGO_PATH, PAGE_WIDTH / 2 - 40, 35, { width: 80 });
   doc.fontSize(20).font("Helvetica-Bold");
   doc.text("Lion Environmental", LEFT, 120, { width: CONTENT_WIDTH, align: "center" });
 }
 
-function addFooter(doc: InstanceType<typeof PDFDocument>) {
+function addFooter(doc) {
   const saved = doc.page.margins.bottom;
   doc.page.margins.bottom = 0;
   doc.fontSize(8).font("Helvetica").fillColor("#000000");
@@ -79,39 +36,40 @@ function addFooter(doc: InstanceType<typeof PDFDocument>) {
   doc.page.margins.bottom = saved;
 }
 
-function drawInfoBox(doc: InstanceType<typeof PDFDocument>, data: { client: string; date: string; address: string; units: string }) {
+function drawInfoBox(doc, data) {
   const y = 155;
   const midX = LEFT + CONTENT_WIDTH / 2;
-  const rowH = 30;
+  const rowH = 22;
 
   doc.lineWidth(0.5).strokeColor("#000000").fillColor("#000000");
+
+  // Outer box - 2 rows
   doc.rect(LEFT, y, CONTENT_WIDTH, rowH * 2).stroke();
+  // Horizontal divider
   doc.moveTo(LEFT, y + rowH).lineTo(RIGHT, y + rowH).stroke();
+  // Vertical divider
   doc.moveTo(midX, y).lineTo(midX, y + rowH * 2).stroke();
 
   doc.font("Helvetica-Bold").fontSize(9);
-  doc.text("Client:", LEFT + 5, y + 5, { lineBreak: false });
-  doc.font("Helvetica").fontSize(8).text(data.client || "", LEFT + 48, y + 5, { width: midX - LEFT - 55 });
-  doc.font("Helvetica-Bold").fontSize(9).text("Date:", midX + 5, y + 5, { lineBreak: false });
-  doc.font("Helvetica").text(data.date || "", midX + 40, y + 5, { lineBreak: false });
+  doc.text("Client:", LEFT + 5, y + 6, { lineBreak: false });
+  doc.font("Helvetica").text(data.client || "", LEFT + 48, y + 6, { width: midX - LEFT - 55, lineBreak: false });
+  doc.font("Helvetica-Bold").text("Date:", midX + 5, y + 6, { lineBreak: false });
+  doc.font("Helvetica").text(data.date || "", midX + 40, y + 6, { lineBreak: false });
 
-  doc.font("Helvetica-Bold").fontSize(9).text("Project Address:", LEFT + 5, y + rowH + 5, { lineBreak: false });
-  doc.font("Helvetica").fontSize(8).text(data.address || "", LEFT + 95, y + rowH + 5, { width: midX - LEFT - 102 });
-  doc.font("Helvetica-Bold").fontSize(9).text("Units:", midX + 5, y + rowH + 5, { lineBreak: false });
-  doc.font("Helvetica").text(data.units || "", midX + 40, y + rowH + 5, { lineBreak: false });
+  doc.font("Helvetica-Bold").text("Project Address:", LEFT + 5, y + rowH + 6, { lineBreak: false });
+  doc.font("Helvetica").text(data.address || "", LEFT + 95, y + rowH + 6, { width: midX - LEFT - 102, lineBreak: false });
+  doc.font("Helvetica-Bold").text("Units:", midX + 5, y + rowH + 6, { lineBreak: false });
+  doc.font("Helvetica").text(data.units || "", midX + 40, y + rowH + 6, { lineBreak: false });
 
   return y + rowH * 2 + 15;
 }
 
-function drawProposalNumber(doc: InstanceType<typeof PDFDocument>, num: string) {
+function drawProposalNumber(doc, num) {
   doc.font("Helvetica-Bold").fontSize(11);
   doc.text(`Proposal #${num}`, RIGHT - 110, 130, { width: 110, align: "right", lineBreak: false });
 }
 
-type TableCell = { text: string; bold?: boolean; size?: number; align?: "left" | "center" | "right" | "justify" };
-type TableRow = { cells: TableCell[]; height?: number };
-
-function drawTable(doc: InstanceType<typeof PDFDocument>, y: number, rows: TableRow[], colWidths: number[]) {
+function drawTable(doc, y, rows, colWidths) {
   const colX = [LEFT];
   for (let i = 0; i < colWidths.length - 1; i++) {
     colX.push(colX[i] + colWidths[i]);
@@ -121,17 +79,21 @@ function drawTable(doc: InstanceType<typeof PDFDocument>, y: number, rows: Table
 
   rows.forEach((row) => {
     const rowH = row.height || 28;
+
+    // Full row outline
     doc.rect(LEFT, y, CONTENT_WIDTH, rowH).stroke();
 
+    // Column dividers
     for (let c = 1; c < colX.length; c++) {
       doc.moveTo(colX[c], y).lineTo(colX[c], y + rowH).stroke();
     }
 
+    // Cell text
     row.cells.forEach((cell, ci) => {
       const font = cell.bold ? "Helvetica-Bold" : "Helvetica";
       const size = cell.size || 9;
       doc.font(font).fontSize(size).fillColor("#000000");
-      const align: "left" | "center" | "right" | "justify" = cell.align || (ci >= 1 ? "center" : "left");
+      const align = cell.align || (ci >= 1 ? "center" : "left");
       const padX = 6;
       const textLines = (cell.text || "").split("\n").length;
       const textHeight = textLines * (size + 2);
@@ -148,7 +110,7 @@ function drawTable(doc: InstanceType<typeof PDFDocument>, y: number, rows: Table
   return y;
 }
 
-function addAccessScheduling(doc: InstanceType<typeof PDFDocument>, y: number) {
+function addAccessScheduling(doc, y) {
   doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
   doc.text("Access and Scheduling:", LEFT, y, { width: CONTENT_WIDTH });
   y += 18;
@@ -162,7 +124,7 @@ function addAccessScheduling(doc: InstanceType<typeof PDFDocument>, y: number) {
   return doc.y + 15;
 }
 
-function addPaymentTerms(doc: InstanceType<typeof PDFDocument>, y: number, days: number) {
+function addPaymentTerms(doc, y, days) {
   doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
   doc.text("Payment Terms:", LEFT, y, { width: CONTENT_WIDTH });
   y += 18;
@@ -181,7 +143,7 @@ function addPaymentTerms(doc: InstanceType<typeof PDFDocument>, y: number, days:
   return doc.y + 15;
 }
 
-function addSignatureBlock(doc: InstanceType<typeof PDFDocument>, y: number) {
+function addSignatureBlock(doc, y) {
   doc.font("Helvetica-Bold").fontSize(12).fillColor("#000000");
   doc.text("This correctly sets forth understanding of the client. Client Agrees to all Terms and Conditions.", LEFT, y, { width: CONTENT_WIDTH });
   y = doc.y + 30;
@@ -201,41 +163,21 @@ function addSignatureBlock(doc: InstanceType<typeof PDFDocument>, y: number) {
   doc.moveTo(LEFT + 45, y + 13).lineTo(lineEnd, y + 13).stroke();
 }
 
-function docToBuffer(doc: InstanceType<typeof PDFDocument>): Promise<Buffer> {
-  return new Promise((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    doc.on("data", (chunk: Buffer) => chunks.push(chunk));
-    doc.on("end", () => resolve(Buffer.concat(chunks)));
-    doc.on("error", reject);
-  });
-}
-
-function todayFormatted(): string {
-  return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-}
-
-export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
+// ============================================================
+// 1. XRF LEAD INSPECTION PROPOSAL (LL31)
+// ============================================================
+function generateXRFProposal() {
   const doc = createDoc();
-  const bufferPromise = docToBuffer(doc);
-
-  const proposalNum = String(data.job_number);
-  const date = todayFormatted();
-
-  const studiosTotal = (data.num_studios_1bed ?? 0) * (data.xrf_price_studios_1bed ?? 0);
-  const bedsTotal = (data.num_2_3bed ?? 0) * (data.xrf_price_2_3bed ?? 0);
-  const commonTotal = (data.num_common_spaces ?? 0) * (data.price_per_common_space ?? 0);
-  const subtotal = studiosTotal + bedsTotal + commonTotal;
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax;
+  doc.pipe(fs.createWriteStream(path.join(OUTPUT_DIR, "sample-proposal-xrf.pdf")));
 
   // PAGE 1
   addHeader(doc);
-  drawProposalNumber(doc, proposalNum);
+  drawProposalNumber(doc, "{{proposal_num}}");
   let y = drawInfoBox(doc, {
-    client: data.client_company ?? "",
-    date,
-    address: data.building_address ?? "",
-    units: fmtQty(data.num_units),
+    client: "{{client_company}}",
+    date: "{{date}}",
+    address: "{{building_address}}",
+    units: "{{num_units}}",
   });
 
   doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
@@ -244,7 +186,7 @@ export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
 
   doc.font("Helvetica-Bold").fontSize(9.5).text("Overview: ", LEFT, y, { continued: true });
   doc.font("Helvetica").text(
-    "New York City\u2019s Local Law 31 of 2020 introduced new lead inspection requirements for landlords and building owners, enforced by the NYC Department of Housing Preservation & Development (HPD)."
+    "New York City's Local Law 31 of 2020 introduced new lead inspection requirements for landlords and building owners, enforced by the NYC Department of Housing Preservation & Development (HPD)."
   );
   y = doc.y + 6;
 
@@ -321,11 +263,11 @@ export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
 
   y = drawTable(doc, y, [
     { cells: [{ text: "", bold: true }, { text: "Quantity", bold: true }, { text: "Price", bold: true }, { text: "Total", bold: true }], height: 26 },
-    { cells: [{ text: "Studios & 1-Bedroom", bold: true }, { text: fmtQty(data.num_studios_1bed) }, { text: fmt(data.xrf_price_studios_1bed) }, { text: fmt(studiosTotal || null) }], height: 30 },
-    { cells: [{ text: "2 & 3-Bedroom", bold: true }, { text: fmtQty(data.num_2_3bed) }, { text: fmt(data.xrf_price_2_3bed) }, { text: fmt(bedsTotal || null) }], height: 30 },
-    { cells: [{ text: "Common Area\n(i.e. staircases, laundry room,\nlobby, gym, public hallways\nand spaces)", bold: true, size: 8 }, { text: fmtQty(data.num_common_spaces) }, { text: fmt(data.price_per_common_space) }, { text: fmt(commonTotal || null) }], height: 58 },
-    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
-    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 30 },
+    { cells: [{ text: "Studios & 1-Bedroom", bold: true }, { text: "{{num_studios}}" }, { text: "{{price_studios}}" }, { text: "{{studios_total}}" }], height: 30 },
+    { cells: [{ text: "2 & 3-Bedroom", bold: true }, { text: "{{num_2_3bed}}" }, { text: "{{price_2_3bed}}" }, { text: "{{beds_total}}" }], height: 30 },
+    { cells: [{ text: "Common Area\n(i.e. staircases, laundry room,\nlobby, gym, public hallways\nand spaces)", bold: true, size: 8 }, { text: "{{num_common}}" }, { text: "{{price_per_common}}" }, { text: "{{common_total}}" }], height: 58 },
+    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
+    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: "{{total}}", bold: true }], height: 30 },
   ], colW);
 
   y += 25;
@@ -333,36 +275,24 @@ export async function generateXRFProposal(data: ProposalData): Promise<Buffer> {
   addFooter(doc);
 
   doc.end();
-  return bufferPromise;
+  console.log("Generated: sample-proposal-xrf.pdf");
 }
 
-export async function generateDustSwabsProposal(data: ProposalData): Promise<Buffer> {
+// ============================================================
+// 2. LEAD DUST SWABS PROPOSAL
+// ============================================================
+function generateDustSwabsProposal() {
   const doc = createDoc();
-  const bufferPromise = docToBuffer(doc);
-
-  const proposalNum = String(data.job_number);
-  const date = todayFormatted();
-
-  const siteVisitRate = data.dust_swab_site_visit_rate;
-  const projMgmtRate = data.dust_swab_proj_mgmt_rate;
-  const wipeRate = data.wipe_rate;
-  const numWipes = data.num_wipes;
-
-  const siteVisitTotal = siteVisitRate ?? 0;
-  const projMgmtTotal = projMgmtRate ?? 0;
-  const wipesTotal = (numWipes ?? 0) * (wipeRate ?? 0);
-  const subtotal = siteVisitTotal + projMgmtTotal + wipesTotal;
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax;
+  doc.pipe(fs.createWriteStream(path.join(OUTPUT_DIR, "sample-proposal-dust-swabs.pdf")));
 
   // PAGE 1
   addHeader(doc);
-  drawProposalNumber(doc, proposalNum);
+  drawProposalNumber(doc, "{{proposal_num}}");
   let y = drawInfoBox(doc, {
-    client: data.client_company ?? "",
-    date,
-    address: data.building_address ?? "",
-    units: fmtQty(data.num_units),
+    client: "{{client_company}}",
+    date: "{{date}}",
+    address: "{{building_address}}",
+    units: "{{num_units}}",
   });
 
   doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
@@ -385,11 +315,11 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
 
   y = drawTable(doc, y, [
     { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Unit Rate", bold: true }, { text: "Total", bold: true }], height: 26 },
-    { cells: [{ text: "Site Visit by EPA certified\nLead Inspector or Risk\nAssessor", size: 9 }, { text: "1" }, { text: fmt(siteVisitRate) }, { text: fmt(siteVisitTotal || null) }], height: 42 },
-    { cells: [{ text: "Project management &\nReport Preparation", size: 9 }, { text: "1" }, { text: fmt(projMgmtRate) }, { text: fmt(projMgmtTotal || null) }], height: 35 },
-    { cells: [{ text: "Lead Dust Wipes:\n(24 Hour Turn Around Time)", size: 9 }, { text: fmtQty(numWipes) }, { text: fmt(wipeRate) }, { text: fmt(wipesTotal || null) }], height: 35 },
-    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
-    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 28 },
+    { cells: [{ text: "Site Visit by EPA certified\nLead Inspector or Risk\nAssessor", size: 9 }, { text: "1" }, { text: "{{site_visit_rate}}" }, { text: "{{site_visit_total}}" }], height: 42 },
+    { cells: [{ text: "Project management &\nReport Preparation", size: 9 }, { text: "1" }, { text: "{{proj_mgmt_rate}}" }, { text: "{{proj_mgmt_total}}" }], height: 35 },
+    { cells: [{ text: "Lead Dust Wipes:\n(24 Hour Turn Around Time)", size: 9 }, { text: "{{num_wipes}}" }, { text: "{{wipe_rate}}" }, { text: "{{wipes_total}}" }], height: 35 },
+    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
+    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: "{{total}}", bold: true }], height: 28 },
   ], colW);
 
   y += 15;
@@ -414,34 +344,24 @@ export async function generateDustSwabsProposal(data: ProposalData): Promise<Buf
   addFooter(doc);
 
   doc.end();
-  return bufferPromise;
+  console.log("Generated: sample-proposal-dust-swabs.pdf");
 }
 
-export async function generateAsbestosProposal(data: ProposalData): Promise<Buffer> {
+// ============================================================
+// 3. ASBESTOS TESTING PROPOSAL
+// ============================================================
+function generateAsbestosProposal() {
   const doc = createDoc();
-  const bufferPromise = docToBuffer(doc);
-
-  const proposalNum = String(data.job_number);
-  const date = todayFormatted();
-
-  const siteVisitRate = data.asbestos_site_visit_rate;
-  const numSamples = data.num_asbestos_samples;
-  const sampleRate = data.asbestos_sample_rate;
-
-  const siteVisitTotal = siteVisitRate ?? 0;
-  const samplesTotal = (numSamples ?? 0) * (sampleRate ?? 0);
-  const subtotal = siteVisitTotal + samplesTotal;
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax;
+  doc.pipe(fs.createWriteStream(path.join(OUTPUT_DIR, "sample-proposal-asbestos.pdf")));
 
   // PAGE 1
   addHeader(doc);
-  drawProposalNumber(doc, proposalNum);
+  drawProposalNumber(doc, "{{proposal_num}}");
   let y = drawInfoBox(doc, {
-    client: data.client_company ?? "",
-    date,
-    address: data.building_address ?? "",
-    units: fmtQty(data.num_units),
+    client: "{{client_company}}",
+    date: "{{date}}",
+    address: "{{building_address}}",
+    units: "{{num_units}}",
   });
 
   doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000");
@@ -471,10 +391,10 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
 
   y = drawTable(doc, y, [
     { cells: [{ text: "Description", bold: true }, { text: "Quantity", bold: true }, { text: "Unit Rate", bold: true }, { text: "Total", bold: true }], height: 26 },
-    { cells: [{ text: "Site Visit by certified\nAsbestos inspector", size: 9 }, { text: "1" }, { text: fmt(siteVisitRate) }, { text: fmt(siteVisitTotal || null) }], height: 35 },
-    { cells: [{ text: "Asbestos Surface Wipe\nSampling:\n(24 Hour Turn Around Time)", size: 9 }, { text: fmtQty(numSamples) }, { text: fmt(sampleRate) }, { text: fmt(samplesTotal || null) }], height: 42 },
-    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
-    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 28 },
+    { cells: [{ text: "Site Visit by certified\nAsbestos inspector", size: 9 }, { text: "1" }, { text: "{{site_visit_rate}}" }, { text: "{{site_visit_total}}" }], height: 35 },
+    { cells: [{ text: "Asbestos Surface Wipe\nSampling:\n(24 Hour Turn Around Time)", size: 9 }, { text: "{{num_samples}}" }, { text: "{{sample_rate}}" }, { text: "{{samples_total}}" }], height: 42 },
+    { cells: [{ text: "New York State Tax\n8.8%", bold: true }, { text: "" }, { text: "" }, { text: "{{tax}}" }], height: 30 },
+    { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: "{{total}}", bold: true }], height: 28 },
   ], colW);
 
   y += 15;
@@ -499,38 +419,9 @@ export async function generateAsbestosProposal(data: ProposalData): Promise<Buff
   addFooter(doc);
 
   doc.end();
-  return bufferPromise;
+  console.log("Generated: sample-proposal-asbestos.pdf");
 }
 
-export async function generateProposals(data: ProposalData): Promise<GeneratedProposal[]> {
-  const proposals: GeneratedProposal[] = [];
-
-  if (data.has_xrf) {
-    const buffer = await generateXRFProposal(data);
-    proposals.push({
-      type: "xrf",
-      buffer,
-      filename: `proposal-xrf-job-${data.job_number}.pdf`,
-    });
-  }
-
-  if (data.has_dust_swab) {
-    const buffer = await generateDustSwabsProposal(data);
-    proposals.push({
-      type: "dust_swab",
-      buffer,
-      filename: `proposal-dust-swab-job-${data.job_number}.pdf`,
-    });
-  }
-
-  if (data.has_asbestos) {
-    const buffer = await generateAsbestosProposal(data);
-    proposals.push({
-      type: "asbestos",
-      buffer,
-      filename: `proposal-asbestos-job-${data.job_number}.pdf`,
-    });
-  }
-
-  return proposals;
-}
+generateXRFProposal();
+generateDustSwabsProposal();
+generateAsbestosProposal();

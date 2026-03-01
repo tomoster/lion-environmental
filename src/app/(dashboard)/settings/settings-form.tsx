@@ -344,18 +344,32 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="xrf_price_per_unit">Price / Unit ($)</Label>
+                <Label htmlFor="xrf_price_studios_1bed">Price / Studio & 1-Bed ($)</Label>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">$</span>
                   <Input
-                    id="xrf_price_per_unit"
-                    name="xrf_price_per_unit"
+                    id="xrf_price_studios_1bed"
+                    name="xrf_price_studios_1bed"
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={settings.xrf_price_per_unit ?? ""}
+                    defaultValue={settings.xrf_price_studios_1bed ?? "150"}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="xrf_price_2_3bed">Price / 2-3 Bed ($)</Label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="xrf_price_2_3bed"
+                    name="xrf_price_2_3bed"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    defaultValue={settings.xrf_price_2_3bed ?? "165"}
                   />
                 </div>
               </div>
@@ -369,7 +383,7 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                     type="number"
                     step="0.01"
                     min="0"
-                    defaultValue={settings.xrf_price_per_common_space ?? ""}
+                    defaultValue={settings.xrf_price_per_common_space ?? "110"}
                   />
                 </div>
               </div>

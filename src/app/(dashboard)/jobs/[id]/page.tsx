@@ -127,6 +127,7 @@ export default async function JobDetailPage({ params }: PageProps) {
     .select("key, value")
     .in("key", [
       "xrf_price_per_unit", "xrf_price_per_common_space",
+      "xrf_price_studios_1bed", "xrf_price_2_3bed",
       "dust_swab_wipe_rate", "dust_swab_site_visit_rate", "dust_swab_proj_mgmt_rate",
       "asbestos_sample_rate", "asbestos_site_visit_rate",
     ]);
@@ -137,7 +138,9 @@ export default async function JobDetailPage({ params }: PageProps) {
   }
 
   const defaultPricePerUnit = job.price_per_unit ?? (settingsMap.xrf_price_per_unit ? Number(settingsMap.xrf_price_per_unit) : null);
-  const defaultPricePerCommonSpace = job.price_per_common_space ?? (settingsMap.xrf_price_per_common_space ? Number(settingsMap.xrf_price_per_common_space) : null);
+  const defaultPricePerCommonSpace = job.price_per_common_space ?? (settingsMap.xrf_price_per_common_space ? Number(settingsMap.xrf_price_per_common_space) : 110);
+  const defaultPriceStudios1Bed = job.xrf_price_studios_1bed ?? (settingsMap.xrf_price_studios_1bed ? Number(settingsMap.xrf_price_studios_1bed) : 150);
+  const defaultPrice2_3Bed = job.xrf_price_2_3bed ?? (settingsMap.xrf_price_2_3bed ? Number(settingsMap.xrf_price_2_3bed) : 165);
   const defaultWipeRate = job.wipe_rate ?? (settingsMap.dust_swab_wipe_rate ? Number(settingsMap.dust_swab_wipe_rate) : 20);
   const defaultDustSwabSiteVisitRate = job.dust_swab_site_visit_rate ?? (settingsMap.dust_swab_site_visit_rate ? Number(settingsMap.dust_swab_site_visit_rate) : 375);
   const defaultDustSwabProjMgmtRate = job.dust_swab_proj_mgmt_rate ?? (settingsMap.dust_swab_proj_mgmt_rate ? Number(settingsMap.dust_swab_proj_mgmt_rate) : 135);
@@ -163,7 +166,8 @@ export default async function JobDetailPage({ params }: PageProps) {
   }
 
   const xrfSubtotal = job.has_xrf
-    ? (job.num_units ?? 0) * (defaultPricePerUnit ?? 0) +
+    ? (job.num_studios_1bed ?? 0) * (defaultPriceStudios1Bed ?? 0) +
+      (job.num_2_3bed ?? 0) * (defaultPrice2_3Bed ?? 0) +
       (job.num_common_spaces ?? 0) * (defaultPricePerCommonSpace ?? 0)
     : 0;
 
@@ -263,6 +267,8 @@ export default async function JobDetailPage({ params }: PageProps) {
             job={job}
             defaultPricePerUnit={defaultPricePerUnit}
             defaultPricePerCommonSpace={defaultPricePerCommonSpace}
+            defaultPriceStudios1Bed={defaultPriceStudios1Bed}
+            defaultPrice2_3Bed={defaultPrice2_3Bed}
             defaultWipeRate={defaultWipeRate}
             defaultDustSwabSiteVisitRate={defaultDustSwabSiteVisitRate}
             defaultDustSwabProjMgmtRate={defaultDustSwabProjMgmtRate}
@@ -373,12 +379,22 @@ export default async function JobDetailPage({ params }: PageProps) {
                 <>
                   <div className="space-y-1.5">
                     <div className="flex justify-between text-muted-foreground">
-                      <span>Units</span>
-                      <span>{job.num_units ?? 0} x {formatCurrency(defaultPricePerUnit ?? 0)}</span>
+                      <span>Studios/1-Bed</span>
+                      <span>{job.num_studios_1bed ?? 0} x {formatCurrency(defaultPriceStudios1Bed ?? 0)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span></span>
-                      <span>{formatCurrency((job.num_units ?? 0) * (defaultPricePerUnit ?? 0))}</span>
+                      <span>{formatCurrency((job.num_studios_1bed ?? 0) * (defaultPriceStudios1Bed ?? 0))}</span>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>2-3 Bed</span>
+                      <span>{job.num_2_3bed ?? 0} x {formatCurrency(defaultPrice2_3Bed ?? 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span></span>
+                      <span>{formatCurrency((job.num_2_3bed ?? 0) * (defaultPrice2_3Bed ?? 0))}</span>
                     </div>
                   </div>
                   <div className="space-y-1.5">

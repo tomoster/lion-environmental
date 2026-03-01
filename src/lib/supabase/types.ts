@@ -247,12 +247,16 @@ export type Database = {
           job_number: number
           job_status: string
           notes: string | null
+          num_2_3bed: number | null
           num_asbestos_samples: number | null
           num_common_spaces: number | null
+          num_studios_1bed: number | null
           num_units: number | null
           num_wipes: number | null
           price_per_common_space: number | null
           price_per_unit: number | null
+          xrf_price_2_3bed: number | null
+          xrf_price_studios_1bed: number | null
           proposal_sent_at: string | null
           prospect_id: string | null
           report_status: string
@@ -283,8 +287,10 @@ export type Database = {
           job_number?: number
           job_status?: string
           notes?: string | null
+          num_2_3bed?: number | null
           num_asbestos_samples?: number | null
           num_common_spaces?: number | null
+          num_studios_1bed?: number | null
           num_units?: number | null
           num_wipes?: number | null
           price_per_common_space?: number | null
@@ -298,6 +304,8 @@ export type Database = {
           updated_at?: string | null
           wipe_rate?: number | null
           worker_id?: string | null
+          xrf_price_2_3bed?: number | null
+          xrf_price_studios_1bed?: number | null
         }
         Update: {
           asbestos_sample_rate?: number | null
@@ -319,8 +327,10 @@ export type Database = {
           job_number?: number
           job_status?: string
           notes?: string | null
+          num_2_3bed?: number | null
           num_asbestos_samples?: number | null
           num_common_spaces?: number | null
+          num_studios_1bed?: number | null
           num_units?: number | null
           num_wipes?: number | null
           price_per_common_space?: number | null
@@ -334,6 +344,8 @@ export type Database = {
           updated_at?: string | null
           wipe_rate?: number | null
           worker_id?: string | null
+          xrf_price_2_3bed?: number | null
+          xrf_price_studios_1bed?: number | null
         }
         Relationships: [
           {

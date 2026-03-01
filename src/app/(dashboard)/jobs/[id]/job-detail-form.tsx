@@ -33,6 +33,8 @@ type JobDetailFormProps = {
     start_time: string | null;
     estimated_end_time: string | null;
     num_units: number | null;
+    num_studios_1bed: number | null;
+    num_2_3bed: number | null;
     num_common_spaces: number | null;
     num_wipes: number | null;
     wipe_rate: number | null;
@@ -49,6 +51,8 @@ type JobDetailFormProps = {
   };
   defaultPricePerUnit: number | null;
   defaultPricePerCommonSpace: number | null;
+  defaultPriceStudios1Bed: number | null;
+  defaultPrice2_3Bed: number | null;
   defaultWipeRate: number | null;
   defaultDustSwabSiteVisitRate: number | null;
   defaultDustSwabProjMgmtRate: number | null;
@@ -70,6 +74,8 @@ export function JobDetailForm({
   job,
   defaultPricePerUnit,
   defaultPricePerCommonSpace,
+  defaultPriceStudios1Bed,
+  defaultPrice2_3Bed,
   defaultWipeRate,
   defaultDustSwabSiteVisitRate,
   defaultDustSwabProjMgmtRate,
@@ -202,7 +208,7 @@ export function JobDetailForm({
           {xrfChecked && (
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="num_units"># Units</Label>
+                <Label htmlFor="num_units"># Units (total)</Label>
                 <Input
                   id="num_units"
                   name="num_units"
@@ -211,15 +217,47 @@ export function JobDetailForm({
                   defaultValue={job.num_units ?? ""}
                 />
               </div>
+              <div />
               <div className="space-y-1.5">
-                <Label htmlFor="price_per_unit">$/Unit</Label>
+                <Label htmlFor="num_studios_1bed"># Studios/1-Bed</Label>
                 <Input
-                  id="price_per_unit"
-                  name="price_per_unit"
+                  id="num_studios_1bed"
+                  name="num_studios_1bed"
+                  type="number"
+                  min="0"
+                  defaultValue={job.num_studios_1bed ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="xrf_price_studios_1bed">$/Studio & 1-Bed</Label>
+                <Input
+                  id="xrf_price_studios_1bed"
+                  name="xrf_price_studios_1bed"
                   type="number"
                   min="0"
                   step="0.01"
-                  defaultValue={defaultPricePerUnit ?? ""}
+                  defaultValue={defaultPriceStudios1Bed ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="num_2_3bed"># 2-3 Bed</Label>
+                <Input
+                  id="num_2_3bed"
+                  name="num_2_3bed"
+                  type="number"
+                  min="0"
+                  defaultValue={job.num_2_3bed ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="xrf_price_2_3bed">$/2-3 Bed</Label>
+                <Input
+                  id="xrf_price_2_3bed"
+                  name="xrf_price_2_3bed"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={defaultPrice2_3Bed ?? ""}
                 />
               </div>
               <div className="space-y-1.5">
