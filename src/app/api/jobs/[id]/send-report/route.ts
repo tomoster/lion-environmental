@@ -13,13 +13,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
   const { id } = await params;
   const body = await request.json();
-  const reportType: "xrf" | "dust_swab" = body.reportType ?? "xrf";
+  const reportType: "xrf" | "dust_swab" | "asbestos" = body.reportType ?? "xrf";
 
   const supabase = createAdminClient();
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos")
+    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, report_status, dust_swab_status, asbestos_status")
     .eq("id", id)
     .single();
 
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       bodyTemplate: settingsMap["report_email_body"],
     });
 
-    const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
+    const statusColumn = reportType === "xrf" ? "report_status" : reportType === "dust_swab" ? "dust_swab_status" : "asbestos_status";
     await supabase
       .from("jobs")
       .update({
