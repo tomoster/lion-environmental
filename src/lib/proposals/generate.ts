@@ -78,7 +78,7 @@ function addFooter(doc: InstanceType<typeof PDFDocument>) {
 function drawInfoBox(doc: InstanceType<typeof PDFDocument>, data: { client: string; date: string; address: string; units: string }) {
   const y = 155;
   const midX = LEFT + CONTENT_WIDTH / 2;
-  const rowH = 22;
+  const rowH = 30;
 
   doc.lineWidth(0.5).strokeColor("#000000").fillColor("#000000");
   doc.rect(LEFT, y, CONTENT_WIDTH, rowH * 2).stroke();
@@ -86,15 +86,15 @@ function drawInfoBox(doc: InstanceType<typeof PDFDocument>, data: { client: stri
   doc.moveTo(midX, y).lineTo(midX, y + rowH * 2).stroke();
 
   doc.font("Helvetica-Bold").fontSize(9);
-  doc.text("Client:", LEFT + 5, y + 6, { lineBreak: false });
-  doc.font("Helvetica").text(data.client || "", LEFT + 48, y + 6, { width: midX - LEFT - 55, lineBreak: false });
-  doc.font("Helvetica-Bold").text("Date:", midX + 5, y + 6, { lineBreak: false });
-  doc.font("Helvetica").text(data.date || "", midX + 40, y + 6, { lineBreak: false });
+  doc.text("Client:", LEFT + 5, y + 5, { lineBreak: false });
+  doc.font("Helvetica").fontSize(8).text(data.client || "", LEFT + 48, y + 5, { width: midX - LEFT - 55 });
+  doc.font("Helvetica-Bold").fontSize(9).text("Date:", midX + 5, y + 5, { lineBreak: false });
+  doc.font("Helvetica").text(data.date || "", midX + 40, y + 5, { lineBreak: false });
 
-  doc.font("Helvetica-Bold").text("Project Address:", LEFT + 5, y + rowH + 6, { lineBreak: false });
-  doc.font("Helvetica").text(data.address || "", LEFT + 95, y + rowH + 6, { width: midX - LEFT - 102, lineBreak: false });
-  doc.font("Helvetica-Bold").text("Units:", midX + 5, y + rowH + 6, { lineBreak: false });
-  doc.font("Helvetica").text(data.units || "", midX + 40, y + rowH + 6, { lineBreak: false });
+  doc.font("Helvetica-Bold").fontSize(9).text("Project Address:", LEFT + 5, y + rowH + 5, { lineBreak: false });
+  doc.font("Helvetica").fontSize(8).text(data.address || "", LEFT + 95, y + rowH + 5, { width: midX - LEFT - 102 });
+  doc.font("Helvetica-Bold").fontSize(9).text("Units:", midX + 5, y + rowH + 5, { lineBreak: false });
+  doc.font("Helvetica").text(data.units || "", midX + 40, y + rowH + 5, { lineBreak: false });
 
   return y + rowH * 2 + 15;
 }
