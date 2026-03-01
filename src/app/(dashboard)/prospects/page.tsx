@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
 import { ProspectsTable } from "./prospects-table";
 
 const PAGE_SIZE = 50;
@@ -52,11 +54,21 @@ export default async function ProspectsPage({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Prospects</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Manage your leads and sales pipeline.
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold">Prospects</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Manage your leads and sales pipeline.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/prospects/apollo">Lead Finder</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/prospects/import">Import</Link>
+          </Button>
+        </div>
       </div>
 
       <ProspectsTable
