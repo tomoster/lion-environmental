@@ -254,8 +254,6 @@ export type Database = {
           num_studios_1bed: number | null
           num_units: number | null
           num_wipes: number | null
-          price_per_common_space: number | null
-          price_per_unit: number | null
           proposal_sent_at: string | null
           prospect_id: string | null
           report_status: string
@@ -295,8 +293,6 @@ export type Database = {
           num_studios_1bed?: number | null
           num_units?: number | null
           num_wipes?: number | null
-          price_per_common_space?: number | null
-          price_per_unit?: number | null
           proposal_sent_at?: string | null
           prospect_id?: string | null
           report_status?: string
@@ -336,8 +332,6 @@ export type Database = {
           num_studios_1bed?: number | null
           num_units?: number | null
           num_wipes?: number | null
-          price_per_common_space?: number | null
-          price_per_unit?: number | null
           proposal_sent_at?: string | null
           prospect_id?: string | null
           report_status?: string
@@ -385,7 +379,6 @@ export type Database = {
           google_rating: number | null
           id: string
           job_title: string | null
-          lead_type: string | null
           linkedin: string | null
           next_followup: string | null
           next_send: string | null
@@ -408,7 +401,6 @@ export type Database = {
           google_rating?: number | null
           id?: string
           job_title?: string | null
-          lead_type?: string | null
           linkedin?: string | null
           next_followup?: string | null
           next_send?: string | null
@@ -431,7 +423,6 @@ export type Database = {
           google_rating?: number | null
           id?: string
           job_title?: string | null
-          lead_type?: string | null
           linkedin?: string | null
           next_followup?: string | null
           next_send?: string | null
