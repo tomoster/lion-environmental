@@ -127,7 +127,6 @@ export async function updateJob(id: string, formData: FormData): Promise<void> {
       const v = formData.get("report_writer_id") as string;
       return v && v !== "unassigned" ? v : null;
     })(),
-    job_status: formData.get("job_status") as string,
     report_status: (() => {
       const formVal = formData.get("report_status") as string;
       const dbVal = currentJob?.report_status ?? "not_started";
@@ -170,7 +169,7 @@ export async function deleteJob(id: string) {
   redirect("/jobs");
 }
 
-export async function uploadReport(jobId: string, reportType: "xrf" | "dust_swab", formData: FormData) {
+export async function uploadReport(jobId: string, reportType: "xrf" | "dust_swab" | "asbestos", formData: FormData) {
   const supabase = await createClient();
 
   const file = formData.get("file") as File;
@@ -202,29 +201,41 @@ export async function uploadReport(jobId: string, reportType: "xrf" | "dust_swab
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("num_units, num_common_spaces, num_wipes")
+    .select("num_studios_1bed, num_2_3bed, num_common_spaces, num_wipes, num_asbestos_samples")
     .eq("id", jobId)
     .single();
 
-  const expected = reportType === "xrf"
-    ? (job?.num_units ?? 0) + (job?.num_common_spaces ?? 0)
-    : (job?.num_wipes ?? 0);
+  let expected = 0;
+  if (reportType === "xrf") {
+    expected = (job?.num_studios_1bed ?? 0) + (job?.num_2_3bed ?? 0) + (job?.num_common_spaces ?? 0);
+  } else if (reportType === "dust_swab") {
+    expected = job?.num_wipes ?? 0;
+  } else if (reportType === "asbestos") {
+    expected = job?.num_asbestos_samples ?? 0;
+  }
 
-  const { count: uploadedCount } = await supabase
-    .from("job_reports")
-    .select("id", { count: "exact", head: true })
-    .eq("job_id", jobId)
-    .eq("report_type", reportType);
+  const statusColumnMap: Record<string, string> = {
+    xrf: "report_status",
+    dust_swab: "dust_swab_status",
+  };
+  const statusColumn = statusColumnMap[reportType];
 
-  if (expected > 0 && (uploadedCount ?? 0) >= expected) {
-    const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
-    await supabase
-      .from("jobs")
-      .update({
-        [statusColumn]: "uploaded",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", jobId);
+  if (statusColumn && expected > 0) {
+    const { count: uploadedCount } = await supabase
+      .from("job_reports")
+      .select("id", { count: "exact", head: true })
+      .eq("job_id", jobId)
+      .eq("report_type", reportType);
+
+    if ((uploadedCount ?? 0) >= expected) {
+      await supabase
+        .from("jobs")
+        .update({
+          [statusColumn]: "uploaded",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", jobId);
+    }
   }
 
   const adminClient = createAdminClient();

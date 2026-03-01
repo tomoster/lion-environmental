@@ -17,14 +17,6 @@ import { formatServiceTypes } from "@/lib/service-type-utils";
 
 const TAX_RATE = 0.0888;
 
-const JOB_STATUS_LABELS: Record<string, string> = {
-  not_dispatched: "Not Dispatched",
-  proposal_sent: "Proposal Sent",
-  open: "Open",
-  assigned: "Assigned",
-  completed: "Completed",
-};
-
 const XRF_STATUS_LABELS: Record<string, string> = {
   not_started: "Not Started",
   writing: "Writing",
@@ -41,17 +33,6 @@ const DUST_SWAB_STATUS_LABELS: Record<string, string> = {
   sent: "Sent",
 };
 
-function dispatchBadgeClass(status: string): string {
-  switch (status) {
-    case "not_dispatched": return "bg-zinc-100 text-zinc-700 border-zinc-200";
-    case "proposal_sent": return "bg-purple-100 text-purple-700 border-purple-200";
-    case "open": return "bg-blue-100 text-blue-700 border-blue-200";
-    case "assigned": return "bg-yellow-100 text-yellow-700 border-yellow-200";
-    case "completed": return "bg-green-100 text-green-700 border-green-200";
-    default: return "bg-zinc-100 text-zinc-700 border-zinc-200";
-  }
-}
-
 function reportBadgeClass(status: string): string {
   switch (status) {
     case "not_started": return "bg-zinc-100 text-zinc-700 border-zinc-200";
@@ -62,23 +43,6 @@ function reportBadgeClass(status: string): string {
     case "results_received": return "bg-purple-100 text-purple-700 border-purple-200";
     default: return "bg-zinc-100 text-zinc-700 border-zinc-200";
   }
-}
-
-function formatDate(date: string | null): string {
-  if (!date) return "\u2014";
-  return new Date(date + "T00:00:00").toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function formatTime12h(time: string | null): string {
-  if (!time) return "\u2014";
-  const [h, m] = time.split(":").map(Number);
-  const period = h >= 12 ? "pm" : "am";
-  const hour12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
-  return `${hour12}:${m.toString().padStart(2, "0")}${period}`;
 }
 
 function formatCurrency(value: number): string {
@@ -196,6 +160,7 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   const uploadXrfReport = uploadReport.bind(null, id, "xrf");
   const uploadDustSwabReport = uploadReport.bind(null, id, "dust_swab");
+  const uploadAsbestosReport = uploadReport.bind(null, id, "asbestos");
   const markClientPaidWithId = markClientPaid.bind(null, id);
 
   return (
@@ -230,9 +195,6 @@ export default async function JobDetailPage({ params }: PageProps) {
         <h1 className="text-2xl font-semibold">
           {job.client_company ?? "Unnamed Job"} — Job #{job.job_number}
         </h1>
-        <Badge variant="outline" className={dispatchBadgeClass(job.job_status)}>
-          {JOB_STATUS_LABELS[job.job_status] ?? job.job_status}
-        </Badge>
         {job.has_xrf && (
           <Badge variant="outline" className={reportBadgeClass(job.report_status)}>
             XRF: {XRF_STATUS_LABELS[job.report_status] ?? job.report_status}
@@ -280,14 +242,13 @@ export default async function JobDetailPage({ params }: PageProps) {
             workerData={workerData}
             availability={availability}
             officeWorkers={officeWorkers ?? []}
-            jobStatusLabels={JOB_STATUS_LABELS}
             xrfStatusLabels={XRF_STATUS_LABELS}
             dustSwabStatusLabels={DUST_SWAB_STATUS_LABELS}
           />
 
           {job.has_xrf && (() => {
             const xrfReports = (jobReports ?? []).filter((r) => r.report_type === "xrf");
-            const expectedXrf = (job.num_units ?? 0) + (job.num_common_spaces ?? 0);
+            const expectedXrf = (job.num_studios_1bed ?? 0) + (job.num_2_3bed ?? 0) + (job.num_common_spaces ?? 0);
             return (
               <Card>
                 <CardHeader>
@@ -359,6 +320,49 @@ export default async function JobDetailPage({ params }: PageProps) {
                     <p className="text-sm text-muted-foreground">No dust swab reports uploaded yet.</p>
                   )}
                   <form action={uploadDustSwabReport}>
+                    <div className="flex items-center gap-3">
+                      <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                      <Button type="submit" variant="outline" size="sm">
+                        Upload
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            );
+          })()}
+
+          {job.has_asbestos && (() => {
+            const asbestosReports = (jobReports ?? []).filter((r) => r.report_type === "asbestos");
+            const expectedAsbestos = job.num_asbestos_samples ?? 0;
+            return (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">
+                    Asbestos Reports{expectedAsbestos > 0 ? ` (${asbestosReports.length} of ${expectedAsbestos} uploaded)` : ` (${asbestosReports.length} uploaded)`}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {asbestosReports.length > 0 ? (
+                    <ul className="space-y-1.5">
+                      {asbestosReports.map((r) => (
+                        <li key={r.id} className="flex items-center gap-2 text-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-muted-foreground shrink-0"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg>
+                          <a
+                            href={`/api/reports/${r.file_path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline truncate"
+                          >
+                            {r.original_filename}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">No asbestos reports uploaded yet.</p>
+                  )}
+                  <form action={uploadAsbestosReport}>
                     <div className="flex items-center gap-3">
                       <Input name="file" type="file" accept=".pdf,.doc,.docx" />
                       <Button type="submit" variant="outline" size="sm">
@@ -480,24 +484,6 @@ export default async function JobDetailPage({ params }: PageProps) {
                 <span className="text-muted-foreground">Service</span>
                 <span>{formatServiceTypes(job)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Scan date</span>
-                <span>{formatDate(job.scan_date)}</span>
-              </div>
-              {job.start_time && (
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Time</span>
-                  <span>
-                    {formatTime12h(job.start_time)}
-                    {job.estimated_end_time ? ` \u2013 ${formatTime12h(job.estimated_end_time)}` : ""}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Worker</span>
-                <span>{workerData?.name ?? "Unassigned"}</span>
-              </div>
-              <Separator />
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Created</span>
                 <span>

@@ -43,7 +43,6 @@ type JobDetailFormProps = {
     num_asbestos_samples: number | null;
     asbestos_sample_rate: number | null;
     asbestos_site_visit_rate: number | null;
-    job_status: string;
     report_status: string;
     dust_swab_status: string | null;
     report_writer_id: string | null;
@@ -64,7 +63,6 @@ type JobDetailFormProps = {
     unavailable: { worker: { id: string; name: string }; reason: string }[];
   };
   officeWorkers: { id: string; name: string }[];
-  jobStatusLabels: Record<string, string>;
   xrfStatusLabels: Record<string, string>;
   dustSwabStatusLabels: Record<string, string>;
 };
@@ -84,7 +82,6 @@ export function JobDetailForm({
   workerData,
   availability,
   officeWorkers,
-  jobStatusLabels,
   xrfStatusLabels,
   dustSwabStatusLabels,
 }: JobDetailFormProps) {
@@ -404,27 +401,6 @@ export function JobDetailForm({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="job_status">Job Status</Label>
-              <Select
-                name="job_status"
-                defaultValue={job.job_status}
-              >
-                <SelectTrigger id="job_status" className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(jobStatusLabels).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label htmlFor="report_writer_id">Report Writer</Label>
               <Select
