@@ -58,6 +58,7 @@ type JobDetailFormProps = {
   };
   defaultPriceStudios1Bed: number | null;
   defaultPrice2_3Bed: number | null;
+  defaultPricePerCommonSpace: number | null;
   defaultWipeRate: number | null;
   defaultDustSwabSiteVisitRate: number | null;
   defaultDustSwabProjMgmtRate: number | null;
@@ -99,6 +100,7 @@ export function JobDetailForm({
   job,
   defaultPriceStudios1Bed,
   defaultPrice2_3Bed,
+  defaultPricePerCommonSpace,
   defaultWipeRate,
   defaultDustSwabSiteVisitRate,
   defaultDustSwabProjMgmtRate,
@@ -417,7 +419,14 @@ export function JobDetailForm({
                         className="h-8 text-right text-sm"
                         defaultValue={job.num_common_spaces ?? ""}
                       />
-                      <span className="text-center text-sm text-muted-foreground">—</span>
+                      <Input
+                        name="xrf_price_per_common_space"
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="h-8 text-right text-sm"
+                        defaultValue={defaultPricePerCommonSpace ?? ""}
+                      />
                     </div>
                   </div>
                 </div>

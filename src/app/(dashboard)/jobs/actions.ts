@@ -105,6 +105,7 @@ export async function updateJob(id: string, formData: FormData): Promise<void> {
     num_2_3bed: formData.get("num_2_3bed") ? Number(formData.get("num_2_3bed")) : null,
     xrf_price_2_3bed: formData.get("xrf_price_2_3bed") ? Number(formData.get("xrf_price_2_3bed")) : null,
     num_common_spaces: formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : null,
+    xrf_price_per_common_space: formData.get("xrf_price_per_common_space") ? Number(formData.get("xrf_price_per_common_space")) : null,
     num_wipes: formData.get("num_wipes") ? Number(formData.get("num_wipes")) : null,
     wipe_rate: formData.get("wipe_rate") ? Number(formData.get("wipe_rate")) : null,
     dust_swab_site_visit_rate: formData.get("dust_swab_site_visit_rate") ? Number(formData.get("dust_swab_site_visit_rate")) : null,

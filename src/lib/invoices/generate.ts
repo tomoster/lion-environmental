@@ -9,7 +9,7 @@ export async function generateInvoiceForJob(
       supabase
         .from("jobs")
         .select(
-          "id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate"
+          "id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate"
         )
         .eq("id", jobId)
         .single(),
@@ -31,7 +31,8 @@ export async function generateInvoiceForJob(
   if (job.has_xrf) {
     subtotal +=
       (job.num_studios_1bed ?? 0) * (job.xrf_price_studios_1bed ?? 0) +
-      (job.num_2_3bed ?? 0) * (job.xrf_price_2_3bed ?? 0);
+      (job.num_2_3bed ?? 0) * (job.xrf_price_2_3bed ?? 0) +
+      (job.num_common_spaces ?? 0) * (job.xrf_price_per_common_space ?? 0);
   }
 
   if (job.has_dust_swab) {
@@ -88,7 +89,7 @@ export async function generateAndStorePdfForInvoice(
   const { data: invoice, error: invoiceError } = await supabase
     .from("invoices")
     .select(
-      "*, jobs(has_xrf, has_dust_swab, has_asbestos, num_units, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate)"
+      "*, jobs(has_xrf, has_dust_swab, has_asbestos, num_units, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate)"
     )
     .eq("id", invoiceId)
     .single();
@@ -107,6 +108,7 @@ export async function generateAndStorePdfForInvoice(
     num_2_3bed: number | null;
     xrf_price_2_3bed: number | null;
     num_common_spaces: number | null;
+    xrf_price_per_common_space: number | null;
     num_wipes: number | null;
     wipe_rate: number | null;
     dust_swab_site_visit_rate: number | null;
@@ -141,6 +143,7 @@ export async function generateAndStorePdfForInvoice(
       num_2_3bed: job?.num_2_3bed ?? null,
       xrf_price_2_3bed: job?.xrf_price_2_3bed ?? null,
       num_common_spaces: job?.num_common_spaces ?? null,
+      xrf_price_per_common_space: job?.xrf_price_per_common_space ?? null,
       num_wipes: job?.num_wipes ?? null,
       wipe_rate: job?.wipe_rate ?? null,
       dust_swab_site_visit_rate: job?.dust_swab_site_visit_rate ?? null,

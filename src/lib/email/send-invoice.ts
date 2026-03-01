@@ -154,7 +154,7 @@ export async function sendInvoiceForId(
   const { data: invoice, error: invoiceError } = await supabase
     .from("invoices")
     .select(
-      "*, jobs(has_xrf, has_dust_swab, has_asbestos, num_units, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate, client_email)"
+      "*, jobs(has_xrf, has_dust_swab, has_asbestos, num_units, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate, client_email)"
     )
     .eq("id", invoiceId)
     .single();
@@ -173,6 +173,7 @@ export async function sendInvoiceForId(
     num_2_3bed: number | null;
     xrf_price_2_3bed: number | null;
     num_common_spaces: number | null;
+    xrf_price_per_common_space: number | null;
     num_wipes: number | null;
     wipe_rate: number | null;
     dust_swab_site_visit_rate: number | null;
@@ -225,6 +226,7 @@ export async function sendInvoiceForId(
       num_2_3bed: job.num_2_3bed,
       xrf_price_2_3bed: job.xrf_price_2_3bed,
       num_common_spaces: job.num_common_spaces,
+      xrf_price_per_common_space: job.xrf_price_per_common_space,
       num_wipes: job.num_wipes,
       wipe_rate: job.wipe_rate,
       dust_swab_site_visit_rate: job.dust_swab_site_visit_rate,

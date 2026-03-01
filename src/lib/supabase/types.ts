@@ -264,6 +264,7 @@ export type Database = {
           wipe_rate: number | null
           worker_id: string | null
           xrf_price_2_3bed: number | null
+          xrf_price_per_common_space: number | null
           xrf_price_studios_1bed: number | null
         }
         Insert: {
@@ -303,6 +304,7 @@ export type Database = {
           wipe_rate?: number | null
           worker_id?: string | null
           xrf_price_2_3bed?: number | null
+          xrf_price_per_common_space?: number | null
           xrf_price_studios_1bed?: number | null
         }
         Update: {
@@ -342,6 +344,7 @@ export type Database = {
           wipe_rate?: number | null
           worker_id?: string | null
           xrf_price_2_3bed?: number | null
+          xrf_price_per_common_space?: number | null
           xrf_price_studios_1bed?: number | null
         }
         Relationships: [

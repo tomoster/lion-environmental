@@ -22,6 +22,7 @@ type ProposalData = {
   num_2_3bed: number | null;
   xrf_price_2_3bed: number | null;
   num_common_spaces: number | null;
+  xrf_price_per_common_space: number | null;
   num_wipes: number | null;
   wipe_rate: number | null;
   dust_swab_site_visit_rate: number | null;
@@ -237,7 +238,8 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number, b
 
   const studiosTotal = (data.num_studios_1bed ?? 0) * (data.xrf_price_studios_1bed ?? 0);
   const bedsTotal = (data.num_2_3bed ?? 0) * (data.xrf_price_2_3bed ?? 0);
-  const subtotal = studiosTotal + bedsTotal;
+  const commonTotal = (data.num_common_spaces ?? 0) * (data.xrf_price_per_common_space ?? 0);
+  const subtotal = studiosTotal + bedsTotal + commonTotal;
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
@@ -338,7 +340,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number, b
     { cells: [{ text: "", bold: true }, { text: "Quantity", bold: true }, { text: "Price", bold: true }, { text: "Total", bold: true }], height: 26 },
     { cells: [{ text: "Studios & 1-Bedroom", bold: true }, { text: fmtQty(data.num_studios_1bed) }, { text: fmt(data.xrf_price_studios_1bed) }, { text: fmt(studiosTotal || null) }], height: 30 },
     { cells: [{ text: "2 & 3-Bedroom", bold: true }, { text: fmtQty(data.num_2_3bed) }, { text: fmt(data.xrf_price_2_3bed) }, { text: fmt(bedsTotal || null) }], height: 30 },
-    { cells: [{ text: "Common Area\n(i.e. staircases, laundry room,\nlobby, gym, public hallways\nand spaces)", bold: true, size: 8 }, { text: fmtQty(data.num_common_spaces) }, { text: "TBD" }, { text: "TBD" }], height: 58 },
+    { cells: [{ text: "Common Area\n(i.e. staircases, laundry room,\nlobby, gym, public hallways\nand spaces)", bold: true, size: 8 }, { text: fmtQty(data.num_common_spaces) }, { text: fmt(data.xrf_price_per_common_space) }, { text: fmt(commonTotal || null) }], height: 58 },
     { cells: [{ text: taxLabel, bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(tax) : "TBD" }], height: 30 },
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 30 },
   ], colW);

@@ -387,30 +387,30 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="dust_swab_site_visit">Site Visit ($)</Label>
+                  <Label htmlFor="dust_swab_site_visit_rate">Site Visit ($)</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">$</span>
                     <Input
-                      id="dust_swab_site_visit"
-                      name="dust_swab_site_visit"
+                      id="dust_swab_site_visit_rate"
+                      name="dust_swab_site_visit_rate"
                       type="number"
                       step="0.01"
                       min="0"
-                      defaultValue={settings.dust_swab_site_visit ?? ""}
+                      defaultValue={settings.dust_swab_site_visit_rate ?? ""}
                     />
                   </div>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="dust_swab_report">Report ($)</Label>
+                  <Label htmlFor="dust_swab_proj_mgmt_rate">Report ($)</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">$</span>
                     <Input
-                      id="dust_swab_report"
-                      name="dust_swab_report"
+                      id="dust_swab_proj_mgmt_rate"
+                      name="dust_swab_proj_mgmt_rate"
                       type="number"
                       step="0.01"
                       min="0"
-                      defaultValue={settings.dust_swab_report ?? ""}
+                      defaultValue={settings.dust_swab_proj_mgmt_rate ?? ""}
                     />
                   </div>
                 </div>
@@ -460,10 +460,43 @@ export function SettingsForm({ settings }: SettingsFormProps) {
             <CardHeader>
               <CardTitle>Asbestos Testing</CardTitle>
               <CardDescription>
-                Duration estimate for asbestos testing jobs. Pricing TBD.
+                Default pricing and duration estimates for asbestos testing jobs.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="asbestos_site_visit_rate">Site Visit ($)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <Input
+                      id="asbestos_site_visit_rate"
+                      name="asbestos_site_visit_rate"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      defaultValue={settings.asbestos_site_visit_rate ?? ""}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="asbestos_sample_rate">Sample Rate ($/sample)</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <Input
+                      id="asbestos_sample_rate"
+                      name="asbestos_sample_rate"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      defaultValue={settings.asbestos_sample_rate ?? ""}
+                    />
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
+                      / sample
+                    </span>
+                  </div>
+                </div>
+              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="asbestos_duration">Duration (min)</Label>
                 <div className="flex items-center gap-2">

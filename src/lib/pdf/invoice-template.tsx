@@ -197,6 +197,7 @@ export type JobData = {
   num_2_3bed: number | null;
   xrf_price_2_3bed: number | null;
   num_common_spaces: number | null;
+  xrf_price_per_common_space: number | null;
   num_wipes: number | null;
   wipe_rate: number | null;
   dust_swab_site_visit_rate: number | null;
@@ -314,6 +315,19 @@ export function InvoiceDocument({
                   <Text style={styles.colAmount}>
                     {formatCurrency(
                       (job.num_2_3bed ?? 0) * (job.xrf_price_2_3bed ?? 0)
+                    )}
+                  </Text>
+                </View>
+              )}
+              {(job.num_common_spaces ?? 0) > 0 && (job.xrf_price_per_common_space ?? 0) > 0 && (
+                <View style={styles.tableRow}>
+                  <Text style={styles.colDescription}>
+                    Common Spaces ({job.num_common_spaces} spaces{" "}
+                    {formatCurrency(job.xrf_price_per_common_space ?? 0)}/space)
+                  </Text>
+                  <Text style={styles.colAmount}>
+                    {formatCurrency(
+                      (job.num_common_spaces ?? 0) * (job.xrf_price_per_common_space ?? 0)
                     )}
                   </Text>
                 </View>

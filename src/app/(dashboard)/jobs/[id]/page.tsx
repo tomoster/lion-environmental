@@ -84,7 +84,7 @@ export default async function JobDetailPage({ params }: PageProps) {
     settingsMap[s.key] = s.value;
   }
 
-  const defaultPricePerCommonSpace = settingsMap.xrf_price_per_common_space ? Number(settingsMap.xrf_price_per_common_space) : 110;
+  const defaultPricePerCommonSpace = job.xrf_price_per_common_space ?? (settingsMap.xrf_price_per_common_space ? Number(settingsMap.xrf_price_per_common_space) : 110);
   const defaultPriceStudios1Bed = job.xrf_price_studios_1bed ?? (settingsMap.xrf_price_studios_1bed ? Number(settingsMap.xrf_price_studios_1bed) : 150);
   const defaultPrice2_3Bed = job.xrf_price_2_3bed ?? (settingsMap.xrf_price_2_3bed ? Number(settingsMap.xrf_price_2_3bed) : 165);
   const defaultWipeRate = job.wipe_rate ?? (settingsMap.dust_swab_wipe_rate ? Number(settingsMap.dust_swab_wipe_rate) : 20);
@@ -216,6 +216,7 @@ export default async function JobDetailPage({ params }: PageProps) {
         job={job}
         defaultPriceStudios1Bed={defaultPriceStudios1Bed}
         defaultPrice2_3Bed={defaultPrice2_3Bed}
+        defaultPricePerCommonSpace={defaultPricePerCommonSpace}
         defaultWipeRate={defaultWipeRate}
         defaultDustSwabSiteVisitRate={defaultDustSwabSiteVisitRate}
         defaultDustSwabProjMgmtRate={defaultDustSwabProjMgmtRate}
