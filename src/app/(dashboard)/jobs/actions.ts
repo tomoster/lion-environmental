@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { calculateEndTime } from "@/lib/scheduling-utils";
 import { autoSendReports } from "@/lib/reports/auto-send";
+import { getExpectedReportCount } from "@/lib/reports/expected-counts";
 
 export async function createJob(formData: FormData) {
   const supabase = await createClient();
@@ -211,14 +212,7 @@ export async function uploadReport(jobId: string, reportType: "xrf" | "dust_swab
     .eq("id", jobId)
     .single();
 
-  let expected = 0;
-  if (reportType === "xrf") {
-    expected = (job?.num_studios_1bed ?? 0) + (job?.num_2_3bed ?? 0) + (job?.num_common_spaces ?? 0);
-  } else if (reportType === "dust_swab") {
-    expected = job?.num_wipes ?? 0;
-  } else if (reportType === "asbestos") {
-    expected = job?.num_asbestos_samples ?? 0;
-  }
+  const expected = job ? getExpectedReportCount(reportType, job) : 0;
 
   const statusColumnMap: Record<string, string> = {
     xrf: "report_status",

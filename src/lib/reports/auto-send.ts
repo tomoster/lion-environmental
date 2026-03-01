@@ -1,23 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendReportEmail } from "@/lib/email/send-report";
+import { getExpectedReportCount } from "@/lib/reports/expected-counts";
 
 type AutoSendResult = {
   sent: string[];
   pending: string[];
 };
-
-function getExpectedCount(
-  reportType: "xrf" | "dust_swab" | "asbestos",
-  job: { num_studios_1bed: number | null; num_2_3bed: number | null; num_common_spaces: number | null; num_wipes: number | null; num_asbestos_samples: number | null }
-): number {
-  if (reportType === "xrf") {
-    return (job.num_studios_1bed ?? 0) + (job.num_2_3bed ?? 0) + (job.num_common_spaces ?? 0);
-  }
-  if (reportType === "asbestos") {
-    return job.num_asbestos_samples ?? 0;
-  }
-  return job.num_wipes ?? 0;
-}
 
 export async function autoSendReports(
   supabase: SupabaseClient,
@@ -90,7 +78,7 @@ export async function autoSendReports(
   const required = reportTypes.filter((rt) => rt.has);
   const ready = required.filter((rt) => {
     const reports = reportsByType[rt.type];
-    const expected = getExpectedCount(rt.type, job);
+    const expected = getExpectedReportCount(rt.type, job);
     return rt.status === "uploaded" && reports.length > 0 && (expected === 0 || reports.length >= expected);
   });
   const alreadySent = required.filter((rt) => rt.status === "sent");
