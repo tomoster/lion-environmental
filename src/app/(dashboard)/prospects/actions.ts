@@ -16,6 +16,8 @@ export async function createProspect(formData: FormData) {
     next_followup: (formData.get("next_followup") as string) || null,
     source: (formData.get("source") as string) || "manual",
     notes: (formData.get("notes") as string) || null,
+    seq_status: "not_started",
+    seq_step: 0,
   });
 
   if (error) {
@@ -29,20 +31,29 @@ export async function createProspect(formData: FormData) {
 export async function updateProspect(id: string, formData: FormData) {
   const supabase = await createClient();
 
+  const newStatus = (formData.get("status") as string) || "new";
+
+  const updates: Record<string, unknown> = {
+    company: formData.get("company") as string,
+    contact_name: (formData.get("contact_name") as string) || null,
+    phone: (formData.get("phone") as string) || null,
+    email: (formData.get("email") as string) || null,
+    building_address: (formData.get("building_address") as string) || null,
+    status: newStatus,
+    next_followup: (formData.get("next_followup") as string) || null,
+    source: (formData.get("source") as string) || "manual",
+    notes: (formData.get("notes") as string) || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  if (newStatus === "lost" || newStatus === "archived") {
+    updates.seq_status = "paused";
+    updates.next_send = null;
+  }
+
   const { error } = await supabase
     .from("prospects")
-    .update({
-      company: formData.get("company") as string,
-      contact_name: (formData.get("contact_name") as string) || null,
-      phone: (formData.get("phone") as string) || null,
-      email: (formData.get("email") as string) || null,
-      building_address: (formData.get("building_address") as string) || null,
-      status: (formData.get("status") as string) || "new",
-      next_followup: (formData.get("next_followup") as string) || null,
-      source: (formData.get("source") as string) || "manual",
-      notes: (formData.get("notes") as string) || null,
-      updated_at: new Date().toISOString(),
-    })
+    .update(updates)
     .eq("id", id);
 
   if (error) {

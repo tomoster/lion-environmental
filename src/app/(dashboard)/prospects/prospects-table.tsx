@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
-import { MoreHorizontalIcon, PlusIcon, UploadIcon, SearchIcon } from "lucide-react";
+import { MailIcon, MoreHorizontalIcon, PlusIcon, UploadIcon, SearchIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -53,7 +53,6 @@ interface ProspectsTableProps {
   prospects: Prospect[];
   search: string;
   statusFilter: string;
-  seqFilter: string;
   page: number;
   totalCount: number;
   pageSize: number;
@@ -120,6 +119,15 @@ function SeqBadge({ status, step }: { status: string; step: number }) {
   );
 }
 
+const SEQ_CHIP_COLORS: Record<string, string> = {
+  active: "text-blue-600",
+  paused: "text-gray-500",
+  completed: "text-green-600",
+  bounced: "text-red-600",
+  replied: "text-emerald-600",
+  unsubscribed: "text-orange-600",
+};
+
 function EmailHistoryDialog({ prospect }: { prospect: Prospect }) {
   const [open, setOpen] = useState(false);
   const [logs, setLogs] = useState<
@@ -142,14 +150,25 @@ function EmailHistoryDialog({ prospect }: { prospect: Prospect }) {
     setLoading(false);
   }
 
-  if (prospect.seq_status === "not_started") {
-    return <span className="text-muted-foreground">—</span>;
+  if (!prospect.seq_status || prospect.seq_status === "not_started") {
+    return null;
   }
+
+  const chipColor = SEQ_CHIP_COLORS[prospect.seq_status] ?? "text-gray-500";
+  const chipLabel =
+    prospect.seq_status === "active"
+      ? `Step ${prospect.seq_step}`
+      : (SEQ_LABELS[prospect.seq_status] ?? prospect.seq_status);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <button type="button" onClick={handleOpen} className="cursor-pointer">
-        <SeqBadge status={prospect.seq_status} step={prospect.seq_step} />
+      <button
+        type="button"
+        onClick={handleOpen}
+        className={`inline-flex items-center gap-1 text-xs ${chipColor} cursor-pointer hover:underline`}
+      >
+        <MailIcon className="h-3 w-3" />
+        {chipLabel}
       </button>
       <DialogContent className="max-w-md">
         <DialogHeader>
@@ -271,10 +290,10 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
         {prospect.email ?? "—"}
       </TableCell>
       <TableCell>
-        <StatusBadge status={prospect.status} />
-      </TableCell>
-      <TableCell>
-        <EmailHistoryDialog prospect={prospect} />
+        <div className="flex items-center gap-1.5">
+          <StatusBadge status={prospect.status} />
+          <EmailHistoryDialog prospect={prospect} />
+        </div>
       </TableCell>
       <TableCell>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -329,7 +348,6 @@ export function ProspectsTable({
   prospects,
   search,
   statusFilter,
-  seqFilter,
   page,
   totalCount,
   pageSize,
@@ -368,13 +386,6 @@ export function ProspectsTable({
     });
   }
 
-  function handleSeqChange(value: string) {
-    navigateWithParams({
-      seq: value === "all" ? null : value,
-      page: null,
-    });
-  }
-
   function handlePageChange(newPage: number) {
     navigateWithParams({
       page: newPage === 1 ? null : String(newPage),
@@ -407,24 +418,6 @@ export function ProspectsTable({
               <SelectItem value="followup">Follow-up</SelectItem>
               <SelectItem value="confirmed">Confirmed</SelectItem>
               <SelectItem value="lost">Lost</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select
-            value={seqFilter || "all"}
-            onValueChange={handleSeqChange}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="All sequences" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All sequences</SelectItem>
-              <SelectItem value="not_started">Not started</SelectItem>
-              <SelectItem value="active">Active</SelectItem>
-              <SelectItem value="paused">Paused</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="bounced">Bounced</SelectItem>
-              <SelectItem value="replied">Replied</SelectItem>
-              <SelectItem value="unsubscribed">Unsubscribed</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -468,7 +461,6 @@ export function ProspectsTable({
               <TableHead>Phone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Seq</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -476,7 +468,7 @@ export function ProspectsTable({
             {prospects.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={7}
                   className="text-muted-foreground py-10 text-center text-sm"
                 >
                   No prospects found.
