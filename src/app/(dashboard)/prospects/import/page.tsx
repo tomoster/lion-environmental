@@ -319,7 +319,6 @@ export default function ImportProspectsPage() {
               linkedin: row.linkedin || null,
               apollo_id: row.apolloId || null,
               source: "apollo",
-              lead_type: "manager",
               location: row.location || null,
             })),
           }),

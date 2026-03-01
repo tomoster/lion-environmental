@@ -251,7 +251,6 @@ export default function ApolloSearchPage() {
       linkedin: p.linkedin,
       apollo_id: p.apollo_id,
       source: "apollo",
-      lead_type: "manager",
       location: p.location,
     }));
 

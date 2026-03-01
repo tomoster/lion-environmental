@@ -56,8 +56,6 @@ type JobDetailFormProps = {
     report_writer_id: string | null;
     notes: string | null;
   };
-  defaultPricePerUnit: number | null;
-  defaultPricePerCommonSpace: number | null;
   defaultPriceStudios1Bed: number | null;
   defaultPrice2_3Bed: number | null;
   defaultWipeRate: number | null;
@@ -99,7 +97,6 @@ type JobDetailFormProps = {
 export function JobDetailForm({
   action,
   job,
-  defaultPricePerCommonSpace,
   defaultPriceStudios1Bed,
   defaultPrice2_3Bed,
   defaultWipeRate,
@@ -420,14 +417,7 @@ export function JobDetailForm({
                         className="h-8 text-right text-sm"
                         defaultValue={job.num_common_spaces ?? ""}
                       />
-                      <Input
-                        name="price_per_common_space"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        className="h-8 text-right text-sm"
-                        defaultValue={defaultPricePerCommonSpace ?? ""}
-                      />
+                      <span className="text-center text-sm text-muted-foreground">—</span>
                     </div>
                   </div>
                 </div>

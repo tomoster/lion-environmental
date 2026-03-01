@@ -192,13 +192,11 @@ export type JobData = {
   has_dust_swab: boolean;
   has_asbestos: boolean;
   num_units: number | null;
-  price_per_unit: number | null;
   num_studios_1bed: number | null;
   xrf_price_studios_1bed: number | null;
   num_2_3bed: number | null;
   xrf_price_2_3bed: number | null;
   num_common_spaces: number | null;
-  price_per_common_space: number | null;
   num_wipes: number | null;
   wipe_rate: number | null;
   dust_swab_site_visit_rate: number | null;
@@ -289,20 +287,6 @@ export function InvoiceDocument({
                   <Text style={styles.colAmount}>
                     {formatCurrency(
                       (job.num_2_3bed ?? 0) * (job.xrf_price_2_3bed ?? 0)
-                    )}
-                  </Text>
-                </View>
-              )}
-              {(job.num_common_spaces ?? 0) > 0 && (
-                <View style={styles.tableRow}>
-                  <Text style={styles.colDescription}>
-                    Common Space Inspections ({job.num_common_spaces} spaces{" "}
-                    {formatCurrency(job.price_per_common_space ?? 0)}/space)
-                  </Text>
-                  <Text style={styles.colAmount}>
-                    {formatCurrency(
-                      (job.num_common_spaces ?? 0) *
-                        (job.price_per_common_space ?? 0)
                     )}
                   </Text>
                 </View>

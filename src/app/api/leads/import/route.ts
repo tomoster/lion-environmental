@@ -11,7 +11,6 @@ interface LeadInput {
   linkedin?: string | null;
   apollo_id?: string | null;
   source: string;
-  lead_type: string;
   location?: string | null;
 }
 
@@ -88,7 +87,6 @@ export async function POST(request: NextRequest) {
     linkedin: string | null;
     apollo_id: string | null;
     source: string;
-    lead_type: string;
     building_address: string | null;
     status: string;
     seq_status: string;
@@ -137,7 +135,6 @@ export async function POST(request: NextRequest) {
       linkedin: lead.linkedin?.trim() || null,
       apollo_id: lead.apollo_id || null,
       source: lead.source,
-      lead_type: lead.lead_type,
       building_address: lead.location?.trim() || null,
       status: "new",
       seq_status: hasEmail ? "active" : "not_started",

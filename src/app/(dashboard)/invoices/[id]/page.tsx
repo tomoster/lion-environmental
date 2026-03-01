@@ -61,7 +61,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   const { data: invoice } = await supabase
     .from("invoices")
     .select(
-      "*, jobs(id, job_number, has_xrf, has_dust_swab, has_asbestos, num_units, price_per_unit, num_common_spaces, price_per_common_space, num_wipes, client_email)"
+      "*, jobs(id, job_number, has_xrf, has_dust_swab, has_asbestos, num_units, num_wipes, client_email)"
     )
     .eq("id", id)
     .single();
@@ -75,9 +75,6 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
     has_dust_swab: boolean;
     has_asbestos: boolean;
     num_units: number | null;
-    price_per_unit: number | null;
-    num_common_spaces: number | null;
-    price_per_common_space: number | null;
     num_wipes: number | null;
     client_email: string | null;
   } | null;
@@ -226,35 +223,10 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                   </thead>
                   <tbody className="divide-y">
                     {job && job.has_xrf && (
-                      <>
-                        <tr>
-                          <td className="px-4 py-3">
-                            Unit Inspections ({job.num_units ?? 0} units{" "}
-                            {formatCurrency(job.price_per_unit ?? 0)}/unit)
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {formatCurrency(
-                              (job.num_units ?? 0) * (job.price_per_unit ?? 0)
-                            )}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-3">
-                            Common Space Inspections (
-                            {job.num_common_spaces ?? 0} spaces{" "}
-                            {formatCurrency(
-                              job.price_per_common_space ?? 0
-                            )}
-                            /space)
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {formatCurrency(
-                              (job.num_common_spaces ?? 0) *
-                                (job.price_per_common_space ?? 0)
-                            )}
-                          </td>
-                        </tr>
-                      </>
+                      <tr>
+                        <td className="px-4 py-3">XRF Inspections ({job.num_units ?? 0} units)</td>
+                        <td className="px-4 py-3 text-right">—</td>
+                      </tr>
                     )}
 
                     {job && job.has_dust_swab && (
