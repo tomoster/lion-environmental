@@ -285,49 +285,61 @@ export function JobDetailForm({
           )}
 
           {dustSwabChecked && (
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="num_wipes"># Wipes</Label>
-                <Input
-                  id="num_wipes"
-                  name="num_wipes"
-                  type="number"
-                  min="0"
-                  defaultValue={job.num_wipes ?? ""}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="wipe_rate">$/Wipe</Label>
-                <Input
-                  id="wipe_rate"
-                  name="wipe_rate"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  defaultValue={defaultWipeRate ?? ""}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dust_swab_site_visit_rate">Site Visit Rate</Label>
-                <Input
-                  id="dust_swab_site_visit_rate"
-                  name="dust_swab_site_visit_rate"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  defaultValue={defaultDustSwabSiteVisitRate ?? ""}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="dust_swab_proj_mgmt_rate">Proj Mgmt Rate</Label>
-                <Input
-                  id="dust_swab_proj_mgmt_rate"
-                  name="dust_swab_proj_mgmt_rate"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  defaultValue={defaultDustSwabProjMgmtRate ?? ""}
-                />
+            <div className="space-y-3">
+              <div className="rounded-md border">
+                <div className="grid grid-cols-[1fr_80px] gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                  <span>Description</span>
+                  <span className="text-right">Rate</span>
+                </div>
+                <div className="divide-y">
+                  <div className="grid grid-cols-[1fr_80px] items-center gap-2 px-3 py-2">
+                    <span className="text-sm">Site Visit (EPA Certified Inspector)</span>
+                    <Input
+                      id="dust_swab_site_visit_rate"
+                      name="dust_swab_site_visit_rate"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="h-8 text-right text-sm"
+                      defaultValue={defaultDustSwabSiteVisitRate ?? ""}
+                    />
+                  </div>
+                  <div className="grid grid-cols-[1fr_80px] items-center gap-2 px-3 py-2">
+                    <span className="text-sm">Project Mgmt & Report Prep</span>
+                    <Input
+                      id="dust_swab_proj_mgmt_rate"
+                      name="dust_swab_proj_mgmt_rate"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="h-8 text-right text-sm"
+                      defaultValue={defaultDustSwabProjMgmtRate ?? ""}
+                    />
+                  </div>
+                  <div className="grid grid-cols-[1fr_80px] items-center gap-2 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Lead Dust Wipes</span>
+                      <span className="text-xs text-muted-foreground">&times;</span>
+                      <Input
+                        id="num_wipes"
+                        name="num_wipes"
+                        type="number"
+                        min="0"
+                        className="h-8 w-16 text-sm"
+                        defaultValue={job.num_wipes ?? ""}
+                      />
+                    </div>
+                    <Input
+                      id="wipe_rate"
+                      name="wipe_rate"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      className="h-8 text-right text-sm"
+                      defaultValue={defaultWipeRate ?? ""}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
