@@ -93,6 +93,19 @@ export async function startEmailSequence(id: string) {
   return { success: true };
 }
 
+export async function getEmailLog(prospectId: string) {
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("email_log")
+    .select("id, step, subject, status, error, created_at")
+    .eq("prospect_id", prospectId)
+    .order("created_at", { ascending: false });
+
+  if (error) return { logs: [] as Array<{ id: string; step: number; subject: string; status: string; error: string | null; created_at: string }> };
+  return { logs: data ?? [] };
+}
+
 export async function pauseEmailSequence(id: string) {
   const supabase = await createClient();
 

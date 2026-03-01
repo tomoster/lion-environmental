@@ -3,8 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import Link from "next/link";
-import { MoreHorizontalIcon, PlusIcon, UploadIcon } from "lucide-react";
+import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +40,7 @@ import { Tables } from "@/lib/supabase/types";
 import { ProspectForm } from "./prospect-form";
 import {
   deleteProspect,
+  getEmailLog,
   startEmailSequence,
   pauseEmailSequence,
 } from "./actions";
@@ -118,6 +118,88 @@ function SeqBadge({ status, step }: { status: string; step: number }) {
   );
 }
 
+function EmailHistoryDialog({ prospect }: { prospect: Prospect }) {
+  const [open, setOpen] = useState(false);
+  const [logs, setLogs] = useState<
+    Array<{
+      id: string;
+      step: number;
+      subject: string;
+      status: string;
+      error: string | null;
+      created_at: string;
+    }>
+  >([]);
+  const [loading, setLoading] = useState(false);
+
+  async function handleOpen() {
+    setOpen(true);
+    setLoading(true);
+    const result = await getEmailLog(prospect.id);
+    setLogs(result.logs);
+    setLoading(false);
+  }
+
+  if (prospect.seq_status === "not_started") {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <button type="button" onClick={handleOpen} className="cursor-pointer">
+        <SeqBadge status={prospect.seq_status} step={prospect.seq_step} />
+      </button>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Email History — {prospect.company}</DialogTitle>
+        </DialogHeader>
+        {loading ? (
+          <p className="text-muted-foreground py-4 text-center text-sm">
+            Loading...
+          </p>
+        ) : logs.length === 0 ? (
+          <p className="text-muted-foreground py-4 text-center text-sm">
+            No emails sent yet.
+          </p>
+        ) : (
+          <div className="max-h-80 space-y-3 overflow-y-auto">
+            {logs.map((log) => (
+              <div
+                key={log.id}
+                className="flex items-start justify-between border-b pb-2 last:border-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">
+                    Step {log.step}: {log.subject}
+                  </p>
+                  {log.error && (
+                    <p className="text-destructive mt-0.5 text-xs">
+                      {log.error}
+                    </p>
+                  )}
+                  <p className="text-muted-foreground mt-0.5 text-xs">
+                    {new Date(log.created_at).toLocaleString()}
+                  </p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    log.status === "sent"
+                      ? "ml-2 bg-green-100 text-green-700 border-green-200"
+                      : "ml-2 bg-red-100 text-red-700 border-red-200"
+                  }
+                >
+                  {log.status}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function formatDate(dateStr: string | null) {
   if (!dateStr) return "—";
   const [year, month, day] = dateStr.split("-");
@@ -190,7 +272,7 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
         <StatusBadge status={prospect.status} />
       </TableCell>
       <TableCell>
-        <SeqBadge status={prospect.seq_status} step={prospect.seq_step} />
+        <EmailHistoryDialog prospect={prospect} />
       </TableCell>
       <TableCell>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -320,12 +402,6 @@ export function ProspectsTable({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/prospects/import">
-              <UploadIcon className="mr-1.5 h-4 w-4" />
-              Import Leads
-            </Link>
-          </Button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
               <Button>

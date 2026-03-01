@@ -39,7 +39,17 @@ export default async function ProspectsPage({
     query = query.neq("status", "archived");
   }
 
-  const { data: prospects, count, error } = await query;
+  const todayStart = new Date();
+  todayStart.setUTCHours(0, 0, 0, 0);
+  const [{ data: prospects, count, error }, { count: emailsSentToday }] =
+    await Promise.all([
+      query,
+      supabase
+        .from("email_log")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "sent")
+        .gte("created_at", todayStart.toISOString()),
+    ]);
 
   if (error) {
     return (
@@ -59,6 +69,11 @@ export default async function ProspectsPage({
           <h1 className="text-2xl font-semibold">Prospects</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Manage your leads and sales pipeline.
+            {(emailsSentToday ?? 0) > 0 && (
+              <span className="ml-2 text-xs">
+                · {emailsSentToday} email{emailsSentToday === 1 ? "" : "s"} sent today
+              </span>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
