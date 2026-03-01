@@ -1,18 +1,21 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
 import { ProspectsTable } from "./prospects-table";
 
 const PAGE_SIZE = 50;
 
 interface ProspectsPageProps {
-  searchParams: Promise<{ search?: string; status?: string; page?: string }>;
+  searchParams: Promise<{
+    search?: string;
+    status?: string;
+    seq?: string;
+    page?: string;
+  }>;
 }
 
 export default async function ProspectsPage({
   searchParams,
 }: ProspectsPageProps) {
-  const { search, status, page: pageParam } = await searchParams;
+  const { search, status, seq, page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
@@ -37,6 +40,10 @@ export default async function ProspectsPage({
     query = query.eq("status", status);
   } else {
     query = query.neq("status", "archived");
+  }
+
+  if (seq && seq !== "all") {
+    query = query.eq("seq_status", seq);
   }
 
   const todayStart = new Date();
@@ -64,32 +71,24 @@ export default async function ProspectsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">Prospects</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Manage your leads and sales pipeline.
-            {(emailsSentToday ?? 0) > 0 && (
-              <span className="ml-2 text-xs">
-                · {emailsSentToday} email{emailsSentToday === 1 ? "" : "s"} sent today
-              </span>
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" asChild>
-            <Link href="/prospects/apollo">Lead Finder</Link>
-          </Button>
-          <Button variant="outline" asChild>
-            <Link href="/prospects/import">Import</Link>
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold">Prospects</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Manage your leads and sales pipeline.
+          {(emailsSentToday ?? 0) > 0 && (
+            <span className="ml-2 text-xs">
+              · {emailsSentToday} email{emailsSentToday === 1 ? "" : "s"} sent
+              today
+            </span>
+          )}
+        </p>
       </div>
 
       <ProspectsTable
         prospects={prospects ?? []}
         search={search ?? ""}
         statusFilter={status ?? ""}
+        seqFilter={seq ?? ""}
         page={page}
         totalCount={count ?? 0}
         pageSize={PAGE_SIZE}

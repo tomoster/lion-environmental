@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import Link from "next/link";
 import { MoreHorizontalIcon, PlusIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,7 @@ interface ProspectsTableProps {
   prospects: Prospect[];
   search: string;
   statusFilter: string;
+  seqFilter: string;
   page: number;
   totalCount: number;
   pageSize: number;
@@ -327,6 +329,7 @@ export function ProspectsTable({
   prospects,
   search,
   statusFilter,
+  seqFilter,
   page,
   totalCount,
   pageSize,
@@ -365,6 +368,13 @@ export function ProspectsTable({
     });
   }
 
+  function handleSeqChange(value: string) {
+    navigateWithParams({
+      seq: value === "all" ? null : value,
+      page: null,
+    });
+  }
+
   function handlePageChange(newPage: number) {
     navigateWithParams({
       page: newPage === 1 ? null : String(newPage),
@@ -399,12 +409,36 @@ export function ProspectsTable({
               <SelectItem value="lost">Lost</SelectItem>
             </SelectContent>
           </Select>
+          <Select
+            value={seqFilter || "all"}
+            onValueChange={handleSeqChange}
+          >
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All sequences" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All sequences</SelectItem>
+              <SelectItem value="not_started">Not started</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="paused">Paused</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="bounced">Bounced</SelectItem>
+              <SelectItem value="replied">Replied</SelectItem>
+              <SelectItem value="unsubscribed">Unsubscribed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/prospects/apollo">Lead Finder</Link>
+          </Button>
+          <Button variant="outline" size="sm" asChild>
+            <Link href="/prospects/import">Import</Link>
+          </Button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button>
+              <Button size="sm">
                 <PlusIcon className="mr-1.5 h-4 w-4" />
                 Add Prospect
               </Button>
