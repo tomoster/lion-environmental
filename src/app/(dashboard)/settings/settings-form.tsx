@@ -226,6 +226,17 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                   />
                 </div>
                 <div className="space-y-1.5">
+                  <Label htmlFor="certification_number">
+                    EPA Certification #
+                  </Label>
+                  <Input
+                    id="certification_number"
+                    name="certification_number"
+                    defaultValue={settings.certification_number ?? ""}
+                    placeholder="LBP-F######-#"
+                  />
+                </div>
+                <div className="space-y-1.5">
                   <Label htmlFor="tax_rate">Tax Rate</Label>
                   <div className="flex items-center gap-2">
                     <Input

@@ -42,12 +42,14 @@ export type ProposalBusinessInfo = {
   businessName?: string;
   businessAddress?: string;
   businessPhone?: string;
+  certificationNumber?: string;
 };
 
 const PROPOSAL_DEFAULTS = {
   businessName: "Lion Environmental",
   businessAddress: "1500 Teaneck Rd #448, Teaneck, NJ 07666",
   businessPhone: "(201) 375-2797",
+  certificationNumber: "",
 };
 
 function fmt(val: number | null | undefined): string {
@@ -73,6 +75,10 @@ function addHeader(doc: InstanceType<typeof PDFDocument>, biz: Required<Proposal
   }
   doc.fontSize(20).font("Helvetica-Bold");
   doc.text(biz.businessName, LEFT, 120, { width: CONTENT_WIDTH, align: "center" });
+  if (biz.certificationNumber) {
+    doc.fontSize(9).font("Helvetica");
+    doc.text(`EPA Firm #: ${biz.certificationNumber}`, LEFT, 142, { width: CONTENT_WIDTH, align: "center" });
+  }
 }
 
 function addFooter(doc: InstanceType<typeof PDFDocument>, biz: Required<ProposalBusinessInfo>) {
@@ -89,7 +95,7 @@ function addFooter(doc: InstanceType<typeof PDFDocument>, biz: Required<Proposal
 }
 
 function drawInfoBox(doc: InstanceType<typeof PDFDocument>, data: { client: string; date: string; address: string; units: string }) {
-  const y = 155;
+  const y = 170;
   const midX = LEFT + CONTENT_WIDTH / 2;
   const rowH = 30;
 
@@ -114,7 +120,7 @@ function drawInfoBox(doc: InstanceType<typeof PDFDocument>, data: { client: stri
 
 function drawProposalNumber(doc: InstanceType<typeof PDFDocument>, num: string) {
   doc.font("Helvetica-Bold").fontSize(11);
-  doc.text(`Proposal #${num}`, RIGHT - 110, 130, { width: 110, align: "right", lineBreak: false });
+  doc.text(`Proposal #${num}`, RIGHT - 110, 145, { width: 110, align: "right", lineBreak: false });
 }
 
 type TableCell = { text: string; bold?: boolean; size?: number; align?: "left" | "center" | "right" | "justify" };
@@ -228,6 +234,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number, b
     businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
     businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
     businessPhone: business?.businessPhone || PROPOSAL_DEFAULTS.businessPhone,
+    certificationNumber: business?.certificationNumber || PROPOSAL_DEFAULTS.certificationNumber,
   };
   const bizLLC = biz.businessName.includes("LLC") ? biz.businessName : `${biz.businessName} LLC`;
   const doc = createDoc();
@@ -315,7 +322,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number, b
   // PAGE 2 - Access + Pricing table
   doc.addPage();
   addHeader(doc, biz);
-  y = 155;
+  y = 170;
 
   // Access & Scheduling Requirements
   doc.font("Helvetica-Bold").fontSize(10).fillColor("#000000");
@@ -358,6 +365,7 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
     businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
     businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
     businessPhone: business?.businessPhone || PROPOSAL_DEFAULTS.businessPhone,
+    certificationNumber: business?.certificationNumber || PROPOSAL_DEFAULTS.certificationNumber,
   };
   const bizLLC = biz.businessName.includes("LLC") ? biz.businessName : `${biz.businessName} LLC`;
   const doc = createDoc();
@@ -430,7 +438,7 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
   // PAGE 2 - Terms + Signature
   doc.addPage();
   addHeader(doc, biz);
-  y = 155;
+  y = 170;
 
   y = addAccessScheduling(doc, y);
   y = addPaymentTerms(doc, y, 60);
@@ -447,6 +455,7 @@ export async function generateAsbestosProposal(data: ProposalData, taxRate: numb
     businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
     businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
     businessPhone: business?.businessPhone || PROPOSAL_DEFAULTS.businessPhone,
+    certificationNumber: business?.certificationNumber || PROPOSAL_DEFAULTS.certificationNumber,
   };
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
@@ -522,7 +531,7 @@ export async function generateAsbestosProposal(data: ProposalData, taxRate: numb
   // PAGE 2 - Terms + Signature
   doc.addPage();
   addHeader(doc, biz);
-  y = 155;
+  y = 170;
 
   y = addAccessScheduling(doc, y);
   y = addPaymentTerms(doc, y, 14);

@@ -22,7 +22,7 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
     const { data: settingsRows } = await supabase
       .from("settings")
       .select("key, value")
-      .in("key", ["sender_name", "proposal_email_subject", "proposal_email_body", "tax_rate", "business_name", "business_phone", "business_email", "business_check_address", "email_signature"]);
+      .in("key", ["sender_name", "proposal_email_subject", "proposal_email_body", "tax_rate", "business_name", "business_phone", "business_email", "business_check_address", "email_signature", "certification_number"]);
 
     const s: Record<string, string> = Object.fromEntries(
       (settingsRows ?? []).map(({ key, value }) => [key, value])
@@ -34,6 +34,7 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
       businessName: s.business_name,
       businessAddress: s.business_check_address,
       businessPhone: s.business_phone,
+      certificationNumber: s.certification_number,
     });
     if (proposals.length === 0) return { error: "No proposals generated" };
 
