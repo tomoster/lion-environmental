@@ -102,21 +102,6 @@ export async function sendReportEmail({
     subject,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">${serviceLabel} Report</h2>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-          <tr>
-            <td style="padding: 8px 0; color: #666;">Job Number:</td>
-            <td style="padding: 8px 0; font-weight: bold;">#${jobNumber}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #666;">Service:</td>
-            <td style="padding: 8px 0; font-weight: bold;">${serviceLabel}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #666;">Property:</td>
-            <td style="padding: 8px 0; font-weight: bold;">${buildingAddress}</td>
-          </tr>
-        </table>
         ${bodyHtml}
         ${renderSignature({ senderName, businessName, businessPhone, businessEmail })}
       </div>

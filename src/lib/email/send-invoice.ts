@@ -14,15 +14,10 @@ function defaultInvoiceSubject(businessName: string) {
   return `Invoice #{{invoice_number}} from ${businessName}`;
 }
 
-function defaultInvoiceBody(businessName: string, zelle: string, checkAddress: string) {
+function defaultInvoiceBody() {
   return `Dear {{company}},
 
-Please find attached your invoice from ${businessName}.
-
-Payment Options:
-- Zelle: ${zelle}
-- Check payable to: ${businessName}
-- Mail to: ${checkAddress}
+Please find attached your invoice. All payment details are included in the PDF.
 
 If you have any questions, please don't hesitate to reach out.
 
@@ -108,7 +103,7 @@ export async function sendInvoiceEmail({
     vars
   );
   const bodyHtml = textToHtml(
-    replaceVars(bodyTemplate || defaultInvoiceBody(bizName, bizZelle, bizCheckAddr), vars)
+    replaceVars(bodyTemplate || defaultInvoiceBody(), vars)
   );
 
   const info = await transporter.sendMail({
@@ -117,21 +112,6 @@ export async function sendInvoiceEmail({
     subject,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">Invoice #${invoiceNumber}</h2>
-        <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
-          <tr>
-            <td style="padding: 8px 0; color: #666;">Invoice Number:</td>
-            <td style="padding: 8px 0; font-weight: bold;">#${invoiceNumber}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #666;">Amount Due:</td>
-            <td style="padding: 8px 0; font-weight: bold;">${formattedTotal}</td>
-          </tr>
-          <tr>
-            <td style="padding: 8px 0; color: #666;">Due Date:</td>
-            <td style="padding: 8px 0; font-weight: bold;">${formattedDue}</td>
-          </tr>
-        </table>
         ${bodyHtml}
         ${renderSignature({ senderName, businessName: bizName, businessPhone, businessEmail })}
       </div>

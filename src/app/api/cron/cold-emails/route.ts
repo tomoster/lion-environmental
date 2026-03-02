@@ -205,6 +205,10 @@ export async function GET(request: NextRequest) {
       subject = subject.replace(/,\s*$/, "");
       body = body.replace(/^Hi\s*,/, "Hi,");
     }
+    const coldSignature = settings["cold_email_signature"];
+    if (coldSignature) {
+      body += `\n\n${coldSignature}`;
+    }
     if (unsubscribeFooter) {
       body += `\n\n---\n${unsubscribeFooter}`;
     }

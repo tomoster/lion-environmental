@@ -27,12 +27,7 @@ const DEFAULT_INVOICE_SUBJECT =
 
 const DEFAULT_INVOICE_BODY = `Dear {{company}},
 
-Please find attached your invoice from Lion Environmental LLC.
-
-Payment Options:
-- Zelle: 2013752797
-- Check payable to: Lion Environmental LLC
-- Mail to: 1500 Teaneck Rd #448, Teaneck, NJ 07666
+Please find attached your invoice. All payment details are included in the PDF.
 
 If you have any questions, please don't hesitate to reach out.
 
@@ -66,11 +61,7 @@ Local Law 31 deadlines are putting a lot of pressure on NYC property managers ri
 
 We do full-building XRF inspections with certified reports ready in 48-72 hours.
 
-Worth a quick conversation about your portfolio?
-
-Avi Bursztyn
-Lion Environmental LLC
-(201) 375-2797`,
+Worth a quick conversation about your portfolio?`,
 
   `Hi {{first_name}},
 
@@ -78,11 +69,7 @@ Following up on my last note. NYC enforcement on Local Law 31 is picking up - vi
 
 We handle full-building inspections with certified reports, typically in 2-3 days. Happy to put together a quick quote if you want to see numbers.
 
-Worth it?
-
-Avi Bursztyn
-Lion Environmental LLC
-(201) 375-2797`,
+Worth it?`,
 
   `Hi {{first_name}},
 
@@ -90,18 +77,11 @@ Just wrapped up a 24-unit inspection in Jersey City - certified report delivered
 
 If your buildings still need to be checked off, happy to put together a quote. Faster turnaround than most.
 
-Worth a look?
-
-Avi Bursztyn
-Lion Environmental LLC
-(201) 375-2797`,
+Worth a look?`,
 
   `Hi {{first_name}},
 
-No worries if the timing isn't right. If lead paint testing or Local Law 31 compliance comes up down the road, I'm at (201) 375-2797.
-
-Avi Bursztyn
-Lion Environmental LLC`,
+No worries if the timing isn't right. If lead paint testing or Local Law 31 compliance comes up down the road, feel free to reach out anytime.`,
 ];
 
 const DEFAULT_COLD_EMAIL_STEPS_ROCKLAND = [
@@ -111,11 +91,7 @@ New York State requires lead paint inspections for pre-1980 rental properties - 
 
 We do full-building XRF inspections with certified reports in 48-72 hours.
 
-Worth a quick conversation about your properties?
-
-Avi Bursztyn
-Lion Environmental LLC
-(201) 375-2797`,
+Worth a quick conversation about your properties?`,
 
   `Hi {{first_name}},
 
@@ -123,11 +99,7 @@ Following up on my last note. With most Rockland County rentals built before 197
 
 The county grant ($40K per unit) requires an inspection first - worth getting ahead of it.
 
-Happy to put together a quick quote.
-
-Avi Bursztyn
-Lion Environmental LLC
-(201) 375-2797`,
+Happy to put together a quick quote.`,
 
   `Hi {{first_name}},
 
@@ -135,19 +107,16 @@ Just finished a property in New City - owner is applying for the Rockland County
 
 If you've been sitting on this, happy to get you a quote this week.
 
-Worth it?
-
-Avi Bursztyn
-Lion Environmental LLC
-(201) 375-2797`,
+Worth it?`,
 
   `Hi {{first_name}},
 
-No worries if the timing isn't right. If lead paint inspections or the Rockland County remediation grants ever come up, I'm at (201) 375-2797.
-
-Avi Bursztyn
-Lion Environmental LLC`,
+No worries if the timing isn't right. If lead paint inspections or the Rockland County remediation grants ever come up, feel free to reach out anytime.`,
 ];
+
+const DEFAULT_COLD_EMAIL_SIGNATURE = `Avi Bursztyn
+Lion Environmental LLC
+(201) 375-2797`;
 
 interface SettingsFormProps {
   settings: Record<string, string>;
@@ -522,225 +491,256 @@ export function SettingsForm({ settings }: SettingsFormProps) {
       </TabsContent>
 
       {/* ─── Email ─── */}
-      <TabsContent value="email" className="space-y-6">
-        <form onSubmit={proposalTpl.handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Proposal Email</CardTitle>
-              <CardDescription>
-                Sent automatically when a new job is saved. Available variables:{" "}
-                <code className="text-xs">{"{{address}}"}</code>,{" "}
-                <code className="text-xs">{"{{job_number}}"}</code>,{" "}
-                <code className="text-xs">{"{{company}}"}</code>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="proposal_email_subject">Subject Line</Label>
-                <Input
-                  id="proposal_email_subject"
-                  name="proposal_email_subject"
-                  defaultValue={
-                    settings.proposal_email_subject ?? DEFAULT_PROPOSAL_SUBJECT
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="proposal_email_body">Body</Label>
-                <Textarea
-                  id="proposal_email_body"
-                  name="proposal_email_body"
-                  rows={8}
-                  defaultValue={
-                    settings.proposal_email_body ?? DEFAULT_PROPOSAL_BODY
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  Proposal PDFs are attached automatically. Signature is added below.
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" disabled={proposalTpl.isPending}>
-                {proposalTpl.isPending ? "Saving..." : "Save Proposal Template"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
+      <TabsContent value="email">
+        <Tabs defaultValue="proposal">
+          <TabsList variant="line">
+            <TabsTrigger value="proposal">Proposal</TabsTrigger>
+            <TabsTrigger value="invoice">Invoice</TabsTrigger>
+            <TabsTrigger value="report">Report</TabsTrigger>
+            <TabsTrigger value="cold-email">Cold Email</TabsTrigger>
+          </TabsList>
 
-        <form onSubmit={invoiceTpl.handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Invoice Email</CardTitle>
-              <CardDescription>
-                Sent when an invoice is emailed to a client. Available variables:{" "}
-                <code className="text-xs">{"{{invoice_number}}"}</code>,{" "}
-                <code className="text-xs">{"{{company}}"}</code>,{" "}
-                <code className="text-xs">{"{{amount}}"}</code>,{" "}
-                <code className="text-xs">{"{{due_date}}"}</code>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="invoice_email_subject">Subject Line</Label>
-                <Input
-                  id="invoice_email_subject"
-                  name="invoice_email_subject"
-                  defaultValue={
-                    settings.invoice_email_subject ?? DEFAULT_INVOICE_SUBJECT
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="invoice_email_body">Body</Label>
-                <Textarea
-                  id="invoice_email_body"
-                  name="invoice_email_body"
-                  rows={10}
-                  defaultValue={
-                    settings.invoice_email_body ?? DEFAULT_INVOICE_BODY
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  The invoice details table and signature are added automatically.
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" disabled={invoiceTpl.isPending}>
-                {invoiceTpl.isPending ? "Saving..." : "Save Invoice Template"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
+          <TabsContent value="proposal" className="pt-4">
+            <form onSubmit={proposalTpl.handleSubmit}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Proposal Email</CardTitle>
+                  <CardDescription>
+                    Sent when a proposal is emailed. Variables:{" "}
+                    <code className="text-xs">{"{{address}}"}</code>,{" "}
+                    <code className="text-xs">{"{{job_number}}"}</code>,{" "}
+                    <code className="text-xs">{"{{company}}"}</code>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="proposal_email_subject">Subject Line</Label>
+                    <Input
+                      id="proposal_email_subject"
+                      name="proposal_email_subject"
+                      defaultValue={
+                        settings.proposal_email_subject ?? DEFAULT_PROPOSAL_SUBJECT
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="proposal_email_body">Body</Label>
+                    <Textarea
+                      id="proposal_email_body"
+                      name="proposal_email_body"
+                      rows={8}
+                      defaultValue={
+                        settings.proposal_email_body ?? DEFAULT_PROPOSAL_BODY
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Proposal PDFs are attached automatically. Signature is added below.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" disabled={proposalTpl.isPending}>
+                    {proposalTpl.isPending ? "Saving..." : "Save Proposal Template"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </form>
+          </TabsContent>
 
-        <form onSubmit={reportTpl.handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Report Email</CardTitle>
-              <CardDescription>
-                Sent when a report is emailed to a client. Available variables:{" "}
-                <code className="text-xs">{"{{job_number}}"}</code>,{" "}
-                <code className="text-xs">{"{{company}}"}</code>,{" "}
-                <code className="text-xs">{"{{address}}"}</code>,{" "}
-                <code className="text-xs">{"{{service_type}}"}</code>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="report_email_subject">Subject Line</Label>
-                <Input
-                  id="report_email_subject"
-                  name="report_email_subject"
-                  defaultValue={
-                    settings.report_email_subject ?? DEFAULT_REPORT_SUBJECT
-                  }
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="report_email_body">Body</Label>
-                <Textarea
-                  id="report_email_body"
-                  name="report_email_body"
-                  rows={8}
-                  defaultValue={
-                    settings.report_email_body ?? DEFAULT_REPORT_BODY
-                  }
-                />
-                <p className="text-xs text-muted-foreground">
-                  The report details table and signature are added automatically.
-                </p>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" disabled={reportTpl.isPending}>
-                {reportTpl.isPending ? "Saving..." : "Save Report Template"}
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
+          <TabsContent value="invoice" className="pt-4">
+            <form onSubmit={invoiceTpl.handleSubmit}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Invoice Email</CardTitle>
+                  <CardDescription>
+                    Sent when an invoice is emailed. Variables:{" "}
+                    <code className="text-xs">{"{{invoice_number}}"}</code>,{" "}
+                    <code className="text-xs">{"{{company}}"}</code>,{" "}
+                    <code className="text-xs">{"{{amount}}"}</code>,{" "}
+                    <code className="text-xs">{"{{due_date}}"}</code>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="invoice_email_subject">Subject Line</Label>
+                    <Input
+                      id="invoice_email_subject"
+                      name="invoice_email_subject"
+                      defaultValue={
+                        settings.invoice_email_subject ?? DEFAULT_INVOICE_SUBJECT
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="invoice_email_body">Body</Label>
+                    <Textarea
+                      id="invoice_email_body"
+                      name="invoice_email_body"
+                      rows={6}
+                      defaultValue={
+                        settings.invoice_email_body ?? DEFAULT_INVOICE_BODY
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Invoice PDF is attached automatically. Signature is added below.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" disabled={invoiceTpl.isPending}>
+                    {invoiceTpl.isPending ? "Saving..." : "Save Invoice Template"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </form>
+          </TabsContent>
 
-        <form onSubmit={coldEmail.handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Cold Email Sequence</CardTitle>
-              <CardDescription>
-                4-step outreach sequence. Templates auto-selected based on
-                prospect location. Variables:{" "}
-                <code className="text-xs">{"{{company}}"}</code>,{" "}
-                <code className="text-xs">{"{{first_name}}"}</code>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEmailLocation("nyc")}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    emailLocation === "nyc"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  NYC / Default
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEmailLocation("rockland")}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
-                    emailLocation === "rockland"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  Rockland County
-                </button>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor={`cold_email_subject_${emailLocation}`}>
-                  Subject Line
-                </Label>
-                <Input
-                  key={`subject_${emailLocation}`}
-                  id={`cold_email_subject_${emailLocation}`}
-                  name={`cold_email_subject_${emailLocation}`}
-                  defaultValue={
-                    settings[`cold_email_subject_${emailLocation}`] ??
-                    (emailLocation === "nyc"
-                      ? settings.cold_email_subject ?? DEFAULT_COLD_EMAIL_SUBJECT_NYC
-                      : DEFAULT_COLD_EMAIL_SUBJECT_ROCKLAND)
-                  }
-                />
-              </div>
-              {[1, 2, 3, 4].map((step) => (
-                <div key={`${step}_${emailLocation}`} className="space-y-1.5">
-                  <Label htmlFor={`cold_email_step_${step}_${emailLocation}`}>
-                    Step {step}
-                  </Label>
-                  <Textarea
-                    id={`cold_email_step_${step}_${emailLocation}`}
-                    name={`cold_email_step_${step}_${emailLocation}`}
-                    rows={7}
-                    defaultValue={
-                      settings[`cold_email_step_${step}_${emailLocation}`] ??
-                      (emailLocation === "nyc"
-                        ? settings[`cold_email_step_${step}`] ??
-                          DEFAULT_COLD_EMAIL_STEPS_NYC[step - 1] ?? ""
-                        : DEFAULT_COLD_EMAIL_STEPS_ROCKLAND[step - 1] ?? "")
-                    }
-                  />
-                </div>
-              ))}
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" disabled={coldEmail.isPending}>
-                {coldEmail.isPending
-                  ? "Saving..."
-                  : `Save ${emailLocation === "nyc" ? "NYC" : "Rockland"} Templates`}
-              </Button>
-            </CardFooter>
-          </Card>
-        </form>
+          <TabsContent value="report" className="pt-4">
+            <form onSubmit={reportTpl.handleSubmit}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Report Email</CardTitle>
+                  <CardDescription>
+                    Sent when a report is emailed. Variables:{" "}
+                    <code className="text-xs">{"{{job_number}}"}</code>,{" "}
+                    <code className="text-xs">{"{{company}}"}</code>,{" "}
+                    <code className="text-xs">{"{{address}}"}</code>,{" "}
+                    <code className="text-xs">{"{{service_type}}"}</code>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="report_email_subject">Subject Line</Label>
+                    <Input
+                      id="report_email_subject"
+                      name="report_email_subject"
+                      defaultValue={
+                        settings.report_email_subject ?? DEFAULT_REPORT_SUBJECT
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="report_email_body">Body</Label>
+                    <Textarea
+                      id="report_email_body"
+                      name="report_email_body"
+                      rows={8}
+                      defaultValue={
+                        settings.report_email_body ?? DEFAULT_REPORT_BODY
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Report PDFs are attached automatically. Signature is added below.
+                    </p>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" disabled={reportTpl.isPending}>
+                    {reportTpl.isPending ? "Saving..." : "Save Report Template"}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </form>
+          </TabsContent>
+
+          <TabsContent value="cold-email" className="pt-4">
+            <form onSubmit={coldEmail.handleSubmit}>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Cold Email Sequence</CardTitle>
+                  <CardDescription>
+                    4-step outreach sequence. Templates auto-selected based on
+                    prospect location. Variables:{" "}
+                    <code className="text-xs">{"{{company}}"}</code>,{" "}
+                    <code className="text-xs">{"{{first_name}}"}</code>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="cold_email_signature">Signature</Label>
+                    <Textarea
+                      id="cold_email_signature"
+                      name="cold_email_signature"
+                      rows={3}
+                      defaultValue={
+                        settings.cold_email_signature ?? DEFAULT_COLD_EMAIL_SIGNATURE
+                      }
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Appended automatically to every cold email step.
+                    </p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEmailLocation("nyc")}
+                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                        emailLocation === "nyc"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      NYC / Default
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEmailLocation("rockland")}
+                      className={`rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                        emailLocation === "rockland"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      Rockland County
+                    </button>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor={`cold_email_subject_${emailLocation}`}>
+                      Subject Line
+                    </Label>
+                    <Input
+                      key={`subject_${emailLocation}`}
+                      id={`cold_email_subject_${emailLocation}`}
+                      name={`cold_email_subject_${emailLocation}`}
+                      defaultValue={
+                        settings[`cold_email_subject_${emailLocation}`] ??
+                        (emailLocation === "nyc"
+                          ? settings.cold_email_subject ?? DEFAULT_COLD_EMAIL_SUBJECT_NYC
+                          : DEFAULT_COLD_EMAIL_SUBJECT_ROCKLAND)
+                      }
+                    />
+                  </div>
+                  {[1, 2, 3, 4].map((step) => (
+                    <div key={`${step}_${emailLocation}`} className="space-y-1.5">
+                      <Label htmlFor={`cold_email_step_${step}_${emailLocation}`}>
+                        Step {step}
+                      </Label>
+                      <Textarea
+                        id={`cold_email_step_${step}_${emailLocation}`}
+                        name={`cold_email_step_${step}_${emailLocation}`}
+                        rows={7}
+                        defaultValue={
+                          settings[`cold_email_step_${step}_${emailLocation}`] ??
+                          (emailLocation === "nyc"
+                            ? settings[`cold_email_step_${step}`] ??
+                              DEFAULT_COLD_EMAIL_STEPS_NYC[step - 1] ?? ""
+                            : DEFAULT_COLD_EMAIL_STEPS_ROCKLAND[step - 1] ?? "")
+                        }
+                      />
+                    </div>
+                  ))}
+                </CardContent>
+                <CardFooter>
+                  <Button type="submit" disabled={coldEmail.isPending}>
+                    {coldEmail.isPending
+                      ? "Saving..."
+                      : `Save ${emailLocation === "nyc" ? "NYC" : "Rockland"} Templates`}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </form>
+          </TabsContent>
+        </Tabs>
       </TabsContent>
     </Tabs>
   );
