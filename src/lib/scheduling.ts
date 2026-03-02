@@ -24,7 +24,7 @@ export async function getAvailableWorkers(
   scanDate: string,
   startTime: string | null,
   endTime: string | null,
-  excludeJobId?: string
+  excludePropertyId?: string
 ): Promise<AvailabilityResult> {
   const supabase = await createClient();
 
@@ -40,14 +40,14 @@ export async function getAvailableWorkers(
 
   const workerIds = workers.map((w) => w.id);
 
-  const [{ data: blocks }, { data: conflictingJobs }] = await Promise.all([
+  const [{ data: blocks }, { data: conflictingProps }] = await Promise.all([
     supabase
       .from("worker_availability")
       .select("*")
       .in("worker_id", workerIds),
     supabase
-      .from("jobs")
-      .select("id, job_number, worker_id, start_time, estimated_end_time")
+      .from("properties")
+      .select("id, worker_id, start_time, estimated_end_time, building_address, jobs(job_number)")
       .eq("scan_date", scanDate)
       .in("worker_id", workerIds),
   ]);
@@ -89,22 +89,24 @@ export async function getAvailableWorkers(
     }
 
     if (startTime && endTime) {
-      const workerJobs = (conflictingJobs ?? []).filter(
-        (j) =>
-          j.worker_id === worker.id &&
-          j.start_time &&
-          j.estimated_end_time &&
-          (excludeJobId ? j.id !== excludeJobId : true)
+      const workerProps = (conflictingProps ?? []).filter(
+        (p) =>
+          p.worker_id === worker.id &&
+          p.start_time &&
+          p.estimated_end_time &&
+          (excludePropertyId ? p.id !== excludePropertyId : true)
       );
 
-      const conflict = workerJobs.find((j) =>
-        timesOverlap(startTime, endTime, j.start_time!, j.estimated_end_time!)
+      const conflict = workerProps.find((p) =>
+        timesOverlap(startTime, endTime, p.start_time!, p.estimated_end_time!)
       );
 
       if (conflict) {
+        const jobNum = (conflict.jobs as { job_number: number } | null)?.job_number;
+        const label = jobNum ? `Job #${jobNum}` : (conflict.building_address ?? "another property");
         unavailable.push({
           worker,
-          reason: `Busy — Job #${conflict.job_number}, ${formatTime12h(conflict.start_time!)}–${formatTime12h(conflict.estimated_end_time!)}`,
+          reason: `Busy — ${label}, ${formatTime12h(conflict.start_time!)}–${formatTime12h(conflict.estimated_end_time!)}`,
         });
         continue;
       }

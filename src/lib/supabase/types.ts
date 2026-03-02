@@ -7,6 +7,8 @@ export type Json =
   | Json[]
 
 export type Database = {
+  // Allows to automatically instantiate createClient with right options
+  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
@@ -196,6 +198,7 @@ export type Database = {
           id: string
           job_id: string
           original_filename: string
+          property_id: string | null
           report_type: string
         }
         Insert: {
@@ -204,6 +207,7 @@ export type Database = {
           id?: string
           job_id: string
           original_filename: string
+          property_id?: string | null
           report_type: string
         }
         Update: {
@@ -212,6 +216,7 @@ export type Database = {
           id?: string
           job_id?: string
           original_filename?: string
+          property_id?: string | null
           report_type?: string
         }
         Relationships: [
@@ -220,6 +225,13 @@ export type Database = {
             columns: ["job_id"]
             isOneToOne: false
             referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_reports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
         ]
@@ -368,6 +380,136 @@ export type Database = {
           },
           {
             foreignKeyName: "jobs_worker_id_fkey"
+            columns: ["worker_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      properties: {
+        Row: {
+          asbestos_sample_rate: number | null
+          asbestos_site_visit_rate: number | null
+          asbestos_status: string
+          building_address: string | null
+          complete_reminder_sent: boolean
+          created_at: string | null
+          dispatch_message_ids: Json | null
+          dust_swab_proj_mgmt_rate: number | null
+          dust_swab_site_visit_rate: number | null
+          dust_swab_status: string | null
+          estimated_end_time: string | null
+          has_asbestos: boolean
+          has_dust_swab: boolean
+          has_xrf: boolean
+          id: string
+          job_id: string
+          num_2_3bed: number | null
+          num_asbestos_samples: number | null
+          num_common_spaces: number | null
+          num_studios_1bed: number | null
+          num_units: number | null
+          num_wipes: number | null
+          property_status: string
+          report_status: string
+          report_writer_id: string | null
+          scan_date: string | null
+          start_time: string | null
+          updated_at: string | null
+          wipe_rate: number | null
+          worker_id: string | null
+          xrf_price_2_3bed: number | null
+          xrf_price_per_common_space: number | null
+          xrf_price_studios_1bed: number | null
+        }
+        Insert: {
+          asbestos_sample_rate?: number | null
+          asbestos_site_visit_rate?: number | null
+          asbestos_status?: string
+          building_address?: string | null
+          complete_reminder_sent?: boolean
+          created_at?: string | null
+          dispatch_message_ids?: Json | null
+          dust_swab_proj_mgmt_rate?: number | null
+          dust_swab_site_visit_rate?: number | null
+          dust_swab_status?: string | null
+          estimated_end_time?: string | null
+          has_asbestos?: boolean
+          has_dust_swab?: boolean
+          has_xrf?: boolean
+          id?: string
+          job_id: string
+          num_2_3bed?: number | null
+          num_asbestos_samples?: number | null
+          num_common_spaces?: number | null
+          num_studios_1bed?: number | null
+          num_units?: number | null
+          num_wipes?: number | null
+          property_status?: string
+          report_status?: string
+          report_writer_id?: string | null
+          scan_date?: string | null
+          start_time?: string | null
+          updated_at?: string | null
+          wipe_rate?: number | null
+          worker_id?: string | null
+          xrf_price_2_3bed?: number | null
+          xrf_price_per_common_space?: number | null
+          xrf_price_studios_1bed?: number | null
+        }
+        Update: {
+          asbestos_sample_rate?: number | null
+          asbestos_site_visit_rate?: number | null
+          asbestos_status?: string
+          building_address?: string | null
+          complete_reminder_sent?: boolean
+          created_at?: string | null
+          dispatch_message_ids?: Json | null
+          dust_swab_proj_mgmt_rate?: number | null
+          dust_swab_site_visit_rate?: number | null
+          dust_swab_status?: string | null
+          estimated_end_time?: string | null
+          has_asbestos?: boolean
+          has_dust_swab?: boolean
+          has_xrf?: boolean
+          id?: string
+          job_id?: string
+          num_2_3bed?: number | null
+          num_asbestos_samples?: number | null
+          num_common_spaces?: number | null
+          num_studios_1bed?: number | null
+          num_units?: number | null
+          num_wipes?: number | null
+          property_status?: string
+          report_status?: string
+          report_writer_id?: string | null
+          scan_date?: string | null
+          start_time?: string | null
+          updated_at?: string | null
+          wipe_rate?: number | null
+          worker_id?: string | null
+          xrf_price_2_3bed?: number | null
+          xrf_price_per_common_space?: number | null
+          xrf_price_studios_1bed?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_report_writer_id_fkey"
+            columns: ["report_writer_id"]
+            isOneToOne: false
+            referencedRelation: "workers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_worker_id_fkey"
             columns: ["worker_id"]
             isOneToOne: false
             referencedRelation: "workers"
