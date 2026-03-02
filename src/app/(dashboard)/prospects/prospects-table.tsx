@@ -191,20 +191,6 @@ function formatDate(dateStr: string | null) {
   return `${month}/${day}/${year}`;
 }
 
-function todayIso() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function FollowUpDate({ date }: { date: string }) {
-  const overdue = date < todayIso();
-  return (
-    <span className={overdue ? "text-red-600 font-medium" : "text-muted-foreground"}>
-      {formatDate(date)}
-      {overdue && " (overdue)"}
-    </span>
-  );
-}
 
 function ProspectRow({ prospect }: { prospect: Prospect }) {
   const router = useRouter();
@@ -292,13 +278,6 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
           <StatusBadge status={prospect.status} />
           <EmailHistoryDialog prospect={prospect} />
         </div>
-      </TableCell>
-      <TableCell className="text-sm">
-        {prospect.next_followup ? (
-          <FollowUpDate date={prospect.next_followup} />
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
       </TableCell>
       <TableCell>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -513,7 +492,6 @@ export function ProspectsTable({
               <TableHead className="hidden xl:table-cell">Phone</TableHead>
               <TableHead className="hidden lg:table-cell">Email</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Follow-up</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -521,7 +499,7 @@ export function ProspectsTable({
             {prospects.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={7}
                   className="text-muted-foreground py-10 text-center text-sm"
                 >
                   No prospects found.
