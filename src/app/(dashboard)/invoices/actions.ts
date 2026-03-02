@@ -14,6 +14,17 @@ export async function generateInvoice(jobId: string) {
   redirect(`/invoices/${invoiceId}`);
 }
 
+async function autoSendReportsForJob(supabase: ReturnType<typeof createAdminClient>, jobId: string) {
+  const { data: properties } = await supabase
+    .from("properties")
+    .select("id")
+    .eq("job_id", jobId);
+
+  for (const prop of properties ?? []) {
+    await autoSendReports(supabase, prop.id);
+  }
+}
+
 export async function markAsPaid(id: string): Promise<void> {
   const supabase = await createClient();
 
@@ -38,7 +49,7 @@ export async function markAsPaid(id: string): Promise<void> {
 
   if (invoice?.job_id) {
     const adminClient = createAdminClient();
-    await autoSendReports(adminClient, invoice.job_id);
+    await autoSendReportsForJob(adminClient, invoice.job_id);
   }
 
   revalidatePath("/invoices");
@@ -78,7 +89,7 @@ export async function updateInvoiceStatus(id: string, status: string): Promise<v
 
   if (status === "paid" && invoice?.job_id) {
     const adminClient = createAdminClient();
-    await autoSendReports(adminClient, invoice.job_id);
+    await autoSendReportsForJob(adminClient, invoice.job_id);
   }
 
   revalidatePath("/invoices");

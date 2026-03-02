@@ -46,7 +46,7 @@ export default async function SchedulePage({
 
   const supabase = await createClient();
 
-  const [{ data: workers }, { data: jobs }, { data: blocks }] =
+  const [{ data: workers }, { data: properties }, { data: blocks }] =
     await Promise.all([
       supabase
         .from("workers")
@@ -55,9 +55,9 @@ export default async function SchedulePage({
         .eq("role", "field")
         .order("name"),
       supabase
-        .from("jobs")
+        .from("properties")
         .select(
-          "id, job_number, client_company, scan_date, start_time, estimated_end_time, worker_id, job_status, has_xrf, has_dust_swab, has_asbestos"
+          "id, job_id, building_address, scan_date, start_time, estimated_end_time, worker_id, property_status, has_xrf, has_dust_swab, has_asbestos, jobs(job_number, client_company)"
         )
         .gte("scan_date", mondayStr)
         .lte("scan_date", saturdayStr)
@@ -107,7 +107,7 @@ export default async function SchedulePage({
       </div>
       <ScheduleGrid
         workers={workers ?? []}
-        jobs={jobs ?? []}
+        properties={properties ?? []}
         blocks={blocks ?? []}
         days={days}
       />

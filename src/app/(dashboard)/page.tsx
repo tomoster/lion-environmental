@@ -53,19 +53,19 @@ function daysOverdue(dueDateStr: string | null): number {
   return Math.max(0, Math.round((todayStart.getTime() - due.getTime()) / (1000 * 60 * 60 * 24)));
 }
 
-const DISPATCH_STATUS_LABELS: Record<string, string> = {
-  not_dispatched: "Not Dispatched",
-  proposal_sent: "Proposal Sent",
-  open: "Open",
+const PROPERTY_STATUS_LABELS: Record<string, string> = {
+  not_scheduled: "Not Scheduled",
+  scheduled: "Scheduled",
   assigned: "Assigned",
+  in_progress: "In Progress",
   completed: "Completed",
 };
 
-function dispatchBadgeClass(status: string): string {
+function propertyBadgeClass(status: string): string {
   switch (status) {
-    case "proposal_sent": return "bg-purple-100 text-purple-700 border-purple-200";
-    case "open": return "bg-blue-100 text-blue-700 border-blue-200";
+    case "scheduled": return "bg-blue-100 text-blue-700 border-blue-200";
     case "assigned": return "bg-yellow-100 text-yellow-700 border-yellow-200";
+    case "in_progress": return "bg-violet-100 text-violet-700 border-violet-200";
     case "completed": return "bg-green-100 text-green-700 border-green-200";
     default: return "bg-zinc-100 text-zinc-700 border-zinc-200";
   }
@@ -87,7 +87,7 @@ export default async function DashboardPage() {
     { data: paidInvoices },
     { data: outstandingInvoices },
     { data: pipelineProspects },
-    { data: upcomingJobs },
+    { data: upcomingProperties },
     { data: overdueInvoices },
     { data: recentProspects },
     { data: recentJobs },
@@ -115,8 +115,8 @@ export default async function DashboardPage() {
       .select("status")
       .in("status", PIPELINE_STATUSES),
     supabase
-      .from("jobs")
-      .select("id, job_number, client_company, building_address, scan_date, job_status")
+      .from("properties")
+      .select("id, job_id, building_address, scan_date, property_status, jobs(job_number, client_company)")
       .gte("scan_date", todayIso)
       .order("scan_date", { ascending: true })
       .limit(5),
@@ -321,7 +321,7 @@ export default async function DashboardPage() {
             </Link>
           </CardHeader>
           <CardContent className="p-0">
-            {(upcomingJobs ?? []).length === 0 ? (
+            {(upcomingProperties ?? []).length === 0 ? (
               <p className="px-6 pb-6 text-sm text-muted-foreground">No upcoming jobs scheduled.</p>
             ) : (
               <Table>
@@ -335,27 +335,30 @@ export default async function DashboardPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {(upcomingJobs ?? []).map((job) => (
-                    <TableRow key={job.id}>
-                      <TableCell className="pl-6 font-mono text-sm font-medium">
-                        #{job.job_number}
-                      </TableCell>
-                      <TableCell className="font-medium max-w-[120px] truncate">
-                        {job.client_company ?? "—"}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-muted-foreground text-xs max-w-[160px] truncate">
-                        {job.building_address ?? "—"}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground text-sm">
-                        {formatDate(job.scan_date)}
-                      </TableCell>
-                      <TableCell className="pr-6">
-                        <Badge variant="outline" className={dispatchBadgeClass(job.job_status)}>
-                          {DISPATCH_STATUS_LABELS[job.job_status] ?? job.job_status}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {(upcomingProperties ?? []).map((prop) => {
+                    const pJob = prop.jobs as { job_number: number; client_company: string | null } | null;
+                    return (
+                      <TableRow key={prop.id}>
+                        <TableCell className="pl-6 font-mono text-sm font-medium">
+                          #{pJob?.job_number ?? "\u2014"}
+                        </TableCell>
+                        <TableCell className="font-medium max-w-[120px] truncate">
+                          {pJob?.client_company ?? "\u2014"}
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell text-muted-foreground text-xs max-w-[160px] truncate">
+                          {prop.building_address ?? "\u2014"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground text-sm">
+                          {formatDate(prop.scan_date)}
+                        </TableCell>
+                        <TableCell className="pr-6">
+                          <Badge variant="outline" className={propertyBadgeClass(prop.property_status)}>
+                            {PROPERTY_STATUS_LABELS[prop.property_status] ?? prop.property_status}
+                          </Badge>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             )}

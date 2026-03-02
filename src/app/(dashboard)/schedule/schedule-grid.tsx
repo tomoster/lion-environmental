@@ -4,18 +4,19 @@ import Link from "next/link";
 import { formatServiceTypes } from "@/lib/service-type-utils";
 
 type Worker = { id: string; name: string };
-type Job = {
+type Property = {
   id: string;
-  job_number: number;
-  client_company: string | null;
+  job_id: string;
+  building_address: string | null;
   scan_date: string | null;
   start_time: string | null;
   estimated_end_time: string | null;
   worker_id: string | null;
-  job_status: string;
+  property_status: string;
   has_xrf: boolean;
   has_dust_swab: boolean;
   has_asbestos: boolean;
+  jobs: { job_number: number; client_company: string | null } | null;
 };
 type Block = {
   id: string;
@@ -35,7 +36,7 @@ function formatTime(time: string) {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  open: "bg-blue-100 border-blue-300 text-blue-800",
+  scheduled: "bg-blue-100 border-blue-300 text-blue-800",
   assigned: "bg-amber-100 border-amber-300 text-amber-800",
   in_progress: "bg-violet-100 border-violet-300 text-violet-800",
   completed: "bg-green-100 border-green-300 text-green-800",
@@ -43,12 +44,12 @@ const STATUS_COLORS: Record<string, string> = {
 
 export function ScheduleGrid({
   workers,
-  jobs,
+  properties,
   blocks,
   days,
 }: {
   workers: Worker[];
-  jobs: Job[];
+  properties: Property[];
   blocks: Block[];
   days: Day[];
 }) {
@@ -97,9 +98,9 @@ export function ScheduleGrid({
                 </td>
                 {workers.map((worker) => {
                   const dayOff = getDayOff(blocks, worker.id, day);
-                  const workerJobs = jobs.filter(
-                    (j) =>
-                      j.worker_id === worker.id && j.scan_date === day.date
+                  const workerProperties = properties.filter(
+                    (p) =>
+                      p.worker_id === worker.id && p.scan_date === day.date
                   );
 
                   return (
@@ -120,36 +121,42 @@ export function ScheduleGrid({
                           )}
                         </div>
                       )}
-                      {workerJobs.map((job) => {
+                      {workerProperties.map((prop) => {
                         const colors =
-                          STATUS_COLORS[job.job_status] ??
+                          STATUS_COLORS[prop.property_status] ??
                           "bg-gray-100 border-gray-300 text-gray-800";
-                        const serviceLabel = formatServiceTypes(job);
+                        const serviceLabel = formatServiceTypes(prop);
+                        const job = prop.jobs;
                         return (
                           <Link
-                            key={job.id}
-                            href={`/jobs/${job.id}`}
+                            key={prop.id}
+                            href={`/jobs/${prop.job_id}`}
                             className={`mb-1 block rounded border px-2 py-1.5 text-xs transition-opacity hover:opacity-80 ${colors}`}
                           >
                             <div className="font-medium">
-                              #{job.job_number} — {serviceLabel}
+                              #{job?.job_number ?? "—"} — {serviceLabel}
                             </div>
-                            {job.client_company && (
+                            {prop.building_address && (
                               <div className="truncate opacity-80">
+                                {prop.building_address}
+                              </div>
+                            )}
+                            {job?.client_company && (
+                              <div className="truncate opacity-60 text-[10px]">
                                 {job.client_company}
                               </div>
                             )}
-                            {job.start_time && (
+                            {prop.start_time && (
                               <div className="mt-0.5 font-mono text-[10px]">
-                                {formatTime(job.start_time)}
-                                {job.estimated_end_time &&
-                                  `–${formatTime(job.estimated_end_time)}`}
+                                {formatTime(prop.start_time)}
+                                {prop.estimated_end_time &&
+                                  `\u2013${formatTime(prop.estimated_end_time)}`}
                               </div>
                             )}
                           </Link>
                         );
                       })}
-                      {!dayOff && workerJobs.length === 0 && (
+                      {!dayOff && workerProperties.length === 0 && (
                         <div className="py-1 text-center text-xs text-muted-foreground/50">
                           --
                         </div>

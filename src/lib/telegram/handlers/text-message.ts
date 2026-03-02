@@ -1,7 +1,7 @@
 import type { TelegramMessage } from "../types";
 import { sendMessage } from "../client";
 import { getState, setState, clearState } from "../state";
-import { reportTypeKeyboard } from "../keyboard";
+import { reportTypeKeyboard, reportForPropertyKeyboard } from "../keyboard";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function handleTextMessage(message: TelegramMessage) {
@@ -75,14 +75,17 @@ async function handleJobNumberInput(
     return;
   }
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("id, job_number, client_company, has_xrf, has_dust_swab")
-    .eq("job_number", jobNumber)
-    .single();
+  const { data: properties } = await supabase
+    .from("properties")
+    .select("id, building_address, has_xrf, has_dust_swab, jobs!inner(job_number, client_company)")
+    .eq("jobs.job_number", jobNumber);
 
-  if (!job) {
-    await sendMessage(chatId, `No job found with number #${jobNumber}. Try again.`);
+  const matched = (properties ?? []).filter(
+    (p) => (p.jobs as { job_number: number } | null)?.job_number === jobNumber
+  );
+
+  if (matched.length === 0) {
+    await sendMessage(chatId, `No properties found for job #${jobNumber}. Try again.`);
     return;
   }
 
@@ -97,27 +100,53 @@ async function handleJobNumberInput(
 
   const { handleReportUpload } = await import("./document-upload");
 
-  if (job.has_xrf && !job.has_dust_swab) {
-    await handleReportUpload(supabase, chatId, fileId, fileName, job.id, job.job_number, job.client_company, "xrf");
-    await clearState(supabase, String(chatId));
-    return;
-  }
-  if (job.has_dust_swab && !job.has_xrf) {
-    await handleReportUpload(supabase, chatId, fileId, fileName, job.id, job.job_number, job.client_company, "dust_swab");
-    await clearState(supabase, String(chatId));
+  if (matched.length === 1) {
+    const prop = matched[0];
+    const job = prop.jobs as { job_number: number; client_company: string | null };
+
+    if (prop.has_xrf && !prop.has_dust_swab) {
+      await handleReportUpload(supabase, chatId, fileId, fileName, prop.id, job.job_number, job.client_company, "xrf");
+      await clearState(supabase, String(chatId));
+      return;
+    }
+    if (prop.has_dust_swab && !prop.has_xrf) {
+      await handleReportUpload(supabase, chatId, fileId, fileName, prop.id, job.job_number, job.client_company, "dust_swab");
+      await clearState(supabase, String(chatId));
+      return;
+    }
+
+    await setState(supabase, String(chatId), "awaiting_report_type", {
+      file_id: fileId,
+      file_name: fileName,
+      property_id: prop.id,
+      job_number: job.job_number,
+      client_company: job.client_company,
+    });
+    await sendMessage(
+      chatId,
+      `Is this the XRF or Dust Swab report for Job #${job.job_number}?`,
+      reportTypeKeyboard(prop.id)
+    );
     return;
   }
 
-  await setState(supabase, String(chatId), "awaiting_report_type", {
+  await setState(supabase, String(chatId), "awaiting_report_pick", {
     file_id: fileId,
     file_name: fileName,
-    job_id: job.id,
-    job_number: job.job_number,
-    client_company: job.client_company,
   });
   await sendMessage(
     chatId,
-    `Is this the XRF or Dust Swab report for Job #${job.job_number}?`,
-    reportTypeKeyboard(job.id)
+    "Multiple properties found. Which property is this report for?",
+    reportForPropertyKeyboard(
+      matched.map((p) => {
+        const job = p.jobs as { job_number: number; client_company: string | null };
+        return {
+          id: p.id,
+          jobNumber: job.job_number,
+          address: p.building_address ?? "",
+          client: job.client_company ?? "\u2014",
+        };
+      })
+    )
   );
 }

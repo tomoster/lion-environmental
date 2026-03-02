@@ -9,28 +9,31 @@ type AutoSendResult = {
 
 export async function autoSendReports(
   supabase: SupabaseClient,
-  jobId: string
+  propertyId: string
 ): Promise<AutoSendResult> {
   const sent: string[] = [];
   const pending: string[] = [];
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, report_status, dust_swab_status, asbestos_status, num_studios_1bed, num_2_3bed, num_common_spaces, num_wipes, num_asbestos_samples")
-    .eq("id", jobId)
+  const { data: property } = await supabase
+    .from("properties")
+    .select("id, job_id, building_address, has_xrf, has_dust_swab, has_asbestos, report_status, dust_swab_status, asbestos_status, num_studios_1bed, num_2_3bed, num_common_spaces, num_wipes, num_asbestos_samples, jobs(job_number, client_company, client_email)")
+    .eq("id", propertyId)
     .single();
 
-  if (!job) return { sent, pending };
+  if (!property) return { sent, pending };
+
+  const jobRaw = property.jobs;
+  const job = (Array.isArray(jobRaw) ? jobRaw[0] : jobRaw) as { job_number: number; client_company: string | null; client_email: string | null } | null;
 
   const { data: invoice } = await supabase
     .from("invoices")
     .select("status")
-    .eq("job_id", jobId)
+    .eq("job_id", property.job_id)
     .limit(1)
     .maybeSingle();
 
   if (!invoice || invoice.status !== "paid") return { sent, pending };
-  if (!job.client_email) return { sent, pending };
+  if (!job?.client_email) return { sent, pending };
 
   const { data: settings } = await supabase
     .from("settings")
@@ -43,7 +46,7 @@ export async function autoSendReports(
   const { data: allReports } = await supabase
     .from("job_reports")
     .select("id, report_type, file_path, original_filename")
-    .eq("job_id", jobId);
+    .eq("property_id", propertyId);
 
   const reportsByType = {
     xrf: (allReports ?? []).filter((r) => r.report_type === "xrf"),
@@ -55,22 +58,22 @@ export async function autoSendReports(
     {
       label: "XRF",
       type: "xrf" as const,
-      has: job.has_xrf,
-      status: job.report_status,
+      has: property.has_xrf,
+      status: property.report_status,
       statusColumn: "report_status",
     },
     {
       label: "Dust Swab",
       type: "dust_swab" as const,
-      has: job.has_dust_swab,
-      status: job.dust_swab_status,
+      has: property.has_dust_swab,
+      status: property.dust_swab_status,
       statusColumn: "dust_swab_status",
     },
     {
       label: "Asbestos",
       type: "asbestos" as const,
-      has: job.has_asbestos,
-      status: job.asbestos_status,
+      has: property.has_asbestos,
+      status: property.asbestos_status,
       statusColumn: "asbestos_status",
     },
   ];
@@ -78,7 +81,7 @@ export async function autoSendReports(
   const required = reportTypes.filter((rt) => rt.has);
   const ready = required.filter((rt) => {
     const reports = reportsByType[rt.type];
-    const expected = getExpectedReportCount(rt.type, job);
+    const expected = getExpectedReportCount(rt.type, property);
     return rt.status === "uploaded" && reports.length > 0 && (expected === 0 || reports.length >= expected);
   });
   const alreadySent = required.filter((rt) => rt.status === "sent");
@@ -115,10 +118,10 @@ export async function autoSendReports(
     }
 
     await sendReportEmail({
-      to: job.client_email,
+      to: job.client_email!,
       jobNumber: job.job_number,
       clientCompany: job.client_company ?? "Client",
-      buildingAddress: job.building_address ?? "",
+      buildingAddress: property.building_address ?? "",
       serviceType: rt.type,
       attachments,
       senderName,
@@ -131,12 +134,12 @@ export async function autoSendReports(
     });
 
     await supabase
-      .from("jobs")
+      .from("properties")
       .update({
         [rt.statusColumn]: "sent",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", jobId);
+      .eq("id", propertyId);
 
     sent.push(rt.label);
   }

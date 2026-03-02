@@ -35,7 +35,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 function formatCurrency(amount: number | null): string {
-  if (amount === null) return "—";
+  if (amount === null) return "\u2014";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -43,7 +43,7 @@ function formatCurrency(amount: number | null): string {
 }
 
 function formatDate(dateString: string | null): string {
-  if (!dateString) return "—";
+  if (!dateString) return "\u2014";
   const d = new Date(
     dateString.length === 10 ? dateString + "T00:00:00" : dateString
   );
@@ -54,6 +54,27 @@ function formatDate(dateString: string | null): string {
   });
 }
 
+type PropertyRow = {
+  building_address: string | null;
+  has_xrf: boolean;
+  has_dust_swab: boolean;
+  has_asbestos: boolean;
+  num_units: number | null;
+  num_studios_1bed: number | null;
+  xrf_price_studios_1bed: number | null;
+  num_2_3bed: number | null;
+  xrf_price_2_3bed: number | null;
+  num_common_spaces: number | null;
+  xrf_price_per_common_space: number | null;
+  num_wipes: number | null;
+  wipe_rate: number | null;
+  dust_swab_site_visit_rate: number | null;
+  dust_swab_proj_mgmt_rate: number | null;
+  num_asbestos_samples: number | null;
+  asbestos_sample_rate: number | null;
+  asbestos_site_visit_rate: number | null;
+};
+
 export default async function InvoiceDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
@@ -61,7 +82,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   const { data: invoice } = await supabase
     .from("invoices")
     .select(
-      "*, jobs(id, job_number, has_xrf, has_dust_swab, has_asbestos, num_units, num_wipes, client_email)"
+      "*, jobs(id, job_number, client_email)"
     )
     .eq("id", id)
     .single();
@@ -71,13 +92,18 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
   const job = invoice.jobs as {
     id: string;
     job_number: number;
-    has_xrf: boolean;
-    has_dust_swab: boolean;
-    has_asbestos: boolean;
-    num_units: number | null;
-    num_wipes: number | null;
     client_email: string | null;
   } | null;
+
+  const { data: properties } = await supabase
+    .from("properties")
+    .select(
+      "building_address, has_xrf, has_dust_swab, has_asbestos, num_units, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate"
+    )
+    .eq("job_id", invoice.job_id!);
+
+  const props = (properties ?? []) as PropertyRow[];
+  const showPropertyHeaders = props.length > 1;
 
   const markAsPaidWithId = markAsPaid.bind(null, id);
   const generatePdfWithId = generateAndStorePdf.bind(null, id);
@@ -202,10 +228,10 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                   Bill To
                 </p>
                 <p className="font-medium">
-                  {invoice.client_company ?? "—"}
+                  {invoice.client_company ?? "\u2014"}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  {invoice.building_address ?? "—"}
+                  {invoice.building_address ?? "\u2014"}
                 </p>
               </div>
 
@@ -222,37 +248,9 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {job && job.has_xrf && (
-                      <tr>
-                        <td className="px-4 py-3">XRF Inspections ({job.num_units ?? 0} units)</td>
-                        <td className="px-4 py-3 text-right">—</td>
-                      </tr>
-                    )}
-
-                    {job && job.has_dust_swab && (
-                      <>
-                        <tr>
-                          <td className="px-4 py-3">Site Visit</td>
-                          <td className="px-4 py-3 text-right">
-                            {formatCurrency(375)}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-3">Report</td>
-                          <td className="px-4 py-3 text-right">
-                            {formatCurrency(135)}
-                          </td>
-                        </tr>
-                        <tr>
-                          <td className="px-4 py-3">
-                            Wipe Samples ({job.num_wipes ?? 0} $20/wipe)
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            {formatCurrency((job.num_wipes ?? 0) * 20)}
-                          </td>
-                        </tr>
-                      </>
-                    )}
+                    {props.map((prop, i) => (
+                      <PropertyLineItems key={i} prop={prop} showHeader={showPropertyHeaders} />
+                    ))}
                   </tbody>
                 </table>
               </div>
@@ -327,7 +325,7 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                         day: "numeric",
                         year: "numeric",
                       })
-                    : "—"}
+                    : "\u2014"}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -375,8 +373,8 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
                   </Link>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Service</span>
-                  <span>{formatServiceTypes(job)}</span>
+                  <span className="text-muted-foreground">Properties</span>
+                  <span>{props.length}</span>
                 </div>
                 {job.client_email && (
                   <div className="flex justify-between">
@@ -403,5 +401,92 @@ export default async function InvoiceDetailPage({ params }: PageProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+function PropertyLineItems({ prop, showHeader }: { prop: PropertyRow; showHeader: boolean }) {
+  return (
+    <>
+      {showHeader && prop.building_address && (
+        <tr className="bg-blue-50/50">
+          <td colSpan={2} className="px-4 py-2 font-medium text-xs text-blue-800 uppercase tracking-wide">
+            {prop.building_address}
+          </td>
+        </tr>
+      )}
+
+      {prop.has_xrf && (
+        <>
+          {(prop.num_studios_1bed ?? 0) > 0 && (
+            <tr>
+              <td className="px-4 py-3">
+                Studios & 1-Bed ({prop.num_studios_1bed} x {formatCurrency(prop.xrf_price_studios_1bed ?? 0)})
+              </td>
+              <td className="px-4 py-3 text-right">
+                {formatCurrency((prop.num_studios_1bed ?? 0) * (prop.xrf_price_studios_1bed ?? 0))}
+              </td>
+            </tr>
+          )}
+          {(prop.num_2_3bed ?? 0) > 0 && (
+            <tr>
+              <td className="px-4 py-3">
+                2 & 3-Bed ({prop.num_2_3bed} x {formatCurrency(prop.xrf_price_2_3bed ?? 0)})
+              </td>
+              <td className="px-4 py-3 text-right">
+                {formatCurrency((prop.num_2_3bed ?? 0) * (prop.xrf_price_2_3bed ?? 0))}
+              </td>
+            </tr>
+          )}
+          {(prop.num_common_spaces ?? 0) > 0 && (prop.xrf_price_per_common_space ?? 0) > 0 && (
+            <tr>
+              <td className="px-4 py-3">
+                Common Spaces ({prop.num_common_spaces} x {formatCurrency(prop.xrf_price_per_common_space ?? 0)})
+              </td>
+              <td className="px-4 py-3 text-right">
+                {formatCurrency((prop.num_common_spaces ?? 0) * (prop.xrf_price_per_common_space ?? 0))}
+              </td>
+            </tr>
+          )}
+        </>
+      )}
+
+      {prop.has_dust_swab && (
+        <>
+          <tr>
+            <td className="px-4 py-3">Site Visit</td>
+            <td className="px-4 py-3 text-right">{formatCurrency(prop.dust_swab_site_visit_rate ?? 0)}</td>
+          </tr>
+          <tr>
+            <td className="px-4 py-3">Project Management & Report</td>
+            <td className="px-4 py-3 text-right">{formatCurrency(prop.dust_swab_proj_mgmt_rate ?? 0)}</td>
+          </tr>
+          <tr>
+            <td className="px-4 py-3">
+              Wipe Samples ({prop.num_wipes ?? 0} x {formatCurrency(prop.wipe_rate ?? 0)})
+            </td>
+            <td className="px-4 py-3 text-right">
+              {formatCurrency((prop.num_wipes ?? 0) * (prop.wipe_rate ?? 0))}
+            </td>
+          </tr>
+        </>
+      )}
+
+      {prop.has_asbestos && (
+        <>
+          <tr>
+            <td className="px-4 py-3">Site Visit</td>
+            <td className="px-4 py-3 text-right">{formatCurrency(prop.asbestos_site_visit_rate ?? 0)}</td>
+          </tr>
+          <tr>
+            <td className="px-4 py-3">
+              Asbestos Samples ({prop.num_asbestos_samples ?? 0} x {formatCurrency(prop.asbestos_sample_rate ?? 0)})
+            </td>
+            <td className="px-4 py-3 text-right">
+              {formatCurrency((prop.num_asbestos_samples ?? 0) * (prop.asbestos_sample_rate ?? 0))}
+            </td>
+          </tr>
+        </>
+      )}
+    </>
   );
 }

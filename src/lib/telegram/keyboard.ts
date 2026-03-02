@@ -1,19 +1,27 @@
 import type { InlineKeyboardMarkup } from "./types";
 
-export function acceptJobKeyboard(jobId: string): InlineKeyboardMarkup {
+export function acceptPropertyKeyboard(propertyId: string): InlineKeyboardMarkup {
   return {
     inline_keyboard: [
-      [{ text: "Accept Job", callback_data: `accept_${jobId}` }],
+      [{ text: "Accept Job", callback_data: `accept_${propertyId}` }],
+    ],
+  };
+}
+
+export function acceptJobKeyboard(jobId: string): InlineKeyboardMarkup {
+  return acceptPropertyKeyboard(jobId);
+}
+
+export function completePropertyKeyboard(propertyId: string): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: [
+      [{ text: "Mark Complete", callback_data: `complete_${propertyId}` }],
     ],
   };
 }
 
 export function completeJobKeyboard(jobId: string): InlineKeyboardMarkup {
-  return {
-    inline_keyboard: [
-      [{ text: "Mark Complete", callback_data: `complete_${jobId}` }],
-    ],
-  };
+  return completePropertyKeyboard(jobId);
 }
 
 export function sendInvoiceKeyboard(invoiceId: string): InlineKeyboardMarkup {
@@ -44,6 +52,19 @@ export function sendReportKeyboard(jobId: string, reportType: "xrf" | "dust_swab
   };
 }
 
+export function reportForPropertyKeyboard(
+  properties: { id: string; jobNumber: number; address: string; client: string }[]
+): InlineKeyboardMarkup {
+  return {
+    inline_keyboard: properties.map((p) => [
+      {
+        text: `#${p.jobNumber} — ${p.address || p.client}`,
+        callback_data: `reportfor_${p.id}`,
+      },
+    ]),
+  };
+}
+
 export function reportForJobKeyboard(
   jobs: { id: string; jobNumber: number; client: string }[]
 ): InlineKeyboardMarkup {
@@ -57,12 +78,12 @@ export function reportForJobKeyboard(
   };
 }
 
-export function reportTypeKeyboard(jobId: string): InlineKeyboardMarkup {
+export function reportTypeKeyboard(propertyId: string): InlineKeyboardMarkup {
   return {
     inline_keyboard: [
       [
-        { text: "XRF Report", callback_data: `rtype_xrf_${jobId}` },
-        { text: "Dust Swab Report", callback_data: `rtype_ds_${jobId}` },
+        { text: "XRF Report", callback_data: `rtype_xrf_${propertyId}` },
+        { text: "Dust Swab Report", callback_data: `rtype_ds_${propertyId}` },
       ],
     ],
   };

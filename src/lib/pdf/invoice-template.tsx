@@ -69,6 +69,17 @@ const styles = StyleSheet.create({
     color: "#555",
     lineHeight: 1.5,
   },
+  propertyHeader: {
+    fontFamily: "Helvetica-Bold",
+    fontSize: 10,
+    backgroundColor: "#eef2ff",
+    padding: "6 10",
+    borderTopWidth: 1,
+    borderTopColor: "#e2e8f0",
+    borderBottomWidth: 1,
+    borderBottomColor: "#e2e8f0",
+    color: "#333",
+  },
   lineItemsTable: {
     marginBottom: 12,
   },
@@ -165,7 +176,7 @@ function formatCurrency(amount: number): string {
 }
 
 function formatDate(dateString: string | null): string {
-  if (!dateString) return "—";
+  if (!dateString) return "\u2014";
   const d = new Date(dateString + (dateString.length === 10 ? "T00:00:00" : ""));
   return d.toLocaleDateString("en-US", {
     month: "long",
@@ -187,7 +198,8 @@ export type InvoiceData = {
   created_at: string | null;
 };
 
-export type JobData = {
+export type PropertyData = {
+  building_address: string | null;
   has_xrf: boolean;
   has_dust_swab: boolean;
   has_asbestos: boolean;
@@ -207,6 +219,8 @@ export type JobData = {
   asbestos_site_visit_rate: number | null;
 };
 
+export type JobData = Omit<PropertyData, "building_address"> & { building_address?: string | null };
+
 export type InvoiceBusinessInfo = {
   businessName?: string;
   businessAddress?: string;
@@ -225,13 +239,107 @@ const BIZ_DEFAULTS = {
   businessCheckAddress: "1500 Teaneck Rd #448, Teaneck, NJ 07666",
 };
 
+function PropertyLineItems({ prop, showHeader }: { prop: PropertyData; showHeader: boolean }) {
+  return (
+    <>
+      {showHeader && prop.building_address && (
+        <View style={styles.propertyHeader}>
+          <Text>{prop.building_address}</Text>
+        </View>
+      )}
+
+      {prop.has_xrf && (
+        <>
+          {(prop.num_studios_1bed ?? 0) > 0 && (
+            <View style={styles.tableRow}>
+              <Text style={styles.colDescription}>
+                Studios & 1-Bed Inspections ({prop.num_studios_1bed} units{" "}
+                {formatCurrency(prop.xrf_price_studios_1bed ?? 0)}/unit)
+              </Text>
+              <Text style={styles.colAmount}>
+                {formatCurrency(
+                  (prop.num_studios_1bed ?? 0) * (prop.xrf_price_studios_1bed ?? 0)
+                )}
+              </Text>
+            </View>
+          )}
+          {(prop.num_2_3bed ?? 0) > 0 && (
+            <View style={styles.tableRow}>
+              <Text style={styles.colDescription}>
+                2 & 3-Bed Inspections ({prop.num_2_3bed} units{" "}
+                {formatCurrency(prop.xrf_price_2_3bed ?? 0)}/unit)
+              </Text>
+              <Text style={styles.colAmount}>
+                {formatCurrency(
+                  (prop.num_2_3bed ?? 0) * (prop.xrf_price_2_3bed ?? 0)
+                )}
+              </Text>
+            </View>
+          )}
+          {(prop.num_common_spaces ?? 0) > 0 && (prop.xrf_price_per_common_space ?? 0) > 0 && (
+            <View style={styles.tableRow}>
+              <Text style={styles.colDescription}>
+                Common Spaces ({prop.num_common_spaces} spaces{" "}
+                {formatCurrency(prop.xrf_price_per_common_space ?? 0)}/space)
+              </Text>
+              <Text style={styles.colAmount}>
+                {formatCurrency(
+                  (prop.num_common_spaces ?? 0) * (prop.xrf_price_per_common_space ?? 0)
+                )}
+              </Text>
+            </View>
+          )}
+        </>
+      )}
+
+      {prop.has_dust_swab && (
+        <>
+          <View style={styles.tableRow}>
+            <Text style={styles.colDescription}>Site Visit</Text>
+            <Text style={styles.colAmount}>{formatCurrency(prop.dust_swab_site_visit_rate ?? 0)}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={styles.colDescription}>Project Management & Report</Text>
+            <Text style={styles.colAmount}>{formatCurrency(prop.dust_swab_proj_mgmt_rate ?? 0)}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={styles.colDescription}>
+              Wipe Samples ({prop.num_wipes ?? 0} {formatCurrency(prop.wipe_rate ?? 0)}/wipe)
+            </Text>
+            <Text style={styles.colAmount}>
+              {formatCurrency((prop.num_wipes ?? 0) * (prop.wipe_rate ?? 0))}
+            </Text>
+          </View>
+        </>
+      )}
+
+      {prop.has_asbestos && (
+        <>
+          <View style={styles.tableRow}>
+            <Text style={styles.colDescription}>Site Visit</Text>
+            <Text style={styles.colAmount}>{formatCurrency(prop.asbestos_site_visit_rate ?? 0)}</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={styles.colDescription}>
+              Asbestos Samples ({prop.num_asbestos_samples ?? 0} {formatCurrency(prop.asbestos_sample_rate ?? 0)}/sample)
+            </Text>
+            <Text style={styles.colAmount}>
+              {formatCurrency((prop.num_asbestos_samples ?? 0) * (prop.asbestos_sample_rate ?? 0))}
+            </Text>
+          </View>
+        </>
+      )}
+    </>
+  );
+}
+
 export function InvoiceDocument({
   invoice,
-  job,
+  properties,
   business,
 }: {
   invoice: InvoiceData;
-  job: JobData;
+  properties: PropertyData[];
   business?: InvoiceBusinessInfo;
 }) {
   const biz = {
@@ -243,6 +351,7 @@ export function InvoiceDocument({
     checkAddress: business?.businessCheckAddress || BIZ_DEFAULTS.businessCheckAddress,
   };
   const invoiceDateStr = invoice.date_sent ?? invoice.created_at;
+  const showPropertyHeaders = properties.length > 1;
 
   return (
     <Document>
@@ -274,10 +383,10 @@ export function InvoiceDocument({
         <View style={styles.billToSection}>
           <Text style={styles.sectionLabel}>Bill To</Text>
           <Text style={styles.billToName}>
-            {invoice.client_company ?? "—"}
+            {invoice.client_company ?? "\u2014"}
           </Text>
           <Text style={styles.billToAddress}>
-            {invoice.building_address ?? "—"}
+            {invoice.building_address ?? "\u2014"}
           </Text>
         </View>
 
@@ -291,87 +400,9 @@ export function InvoiceDocument({
             </Text>
           </View>
 
-          {job.has_xrf && (
-            <>
-              {(job.num_studios_1bed ?? 0) > 0 && (
-                <View style={styles.tableRow}>
-                  <Text style={styles.colDescription}>
-                    Studios & 1-Bed Inspections ({job.num_studios_1bed} units{" "}
-                    {formatCurrency(job.xrf_price_studios_1bed ?? 0)}/unit)
-                  </Text>
-                  <Text style={styles.colAmount}>
-                    {formatCurrency(
-                      (job.num_studios_1bed ?? 0) * (job.xrf_price_studios_1bed ?? 0)
-                    )}
-                  </Text>
-                </View>
-              )}
-              {(job.num_2_3bed ?? 0) > 0 && (
-                <View style={styles.tableRow}>
-                  <Text style={styles.colDescription}>
-                    2 & 3-Bed Inspections ({job.num_2_3bed} units{" "}
-                    {formatCurrency(job.xrf_price_2_3bed ?? 0)}/unit)
-                  </Text>
-                  <Text style={styles.colAmount}>
-                    {formatCurrency(
-                      (job.num_2_3bed ?? 0) * (job.xrf_price_2_3bed ?? 0)
-                    )}
-                  </Text>
-                </View>
-              )}
-              {(job.num_common_spaces ?? 0) > 0 && (job.xrf_price_per_common_space ?? 0) > 0 && (
-                <View style={styles.tableRow}>
-                  <Text style={styles.colDescription}>
-                    Common Spaces ({job.num_common_spaces} spaces{" "}
-                    {formatCurrency(job.xrf_price_per_common_space ?? 0)}/space)
-                  </Text>
-                  <Text style={styles.colAmount}>
-                    {formatCurrency(
-                      (job.num_common_spaces ?? 0) * (job.xrf_price_per_common_space ?? 0)
-                    )}
-                  </Text>
-                </View>
-              )}
-            </>
-          )}
-
-          {job.has_dust_swab && (
-            <>
-              <View style={styles.tableRow}>
-                <Text style={styles.colDescription}>Site Visit</Text>
-                <Text style={styles.colAmount}>{formatCurrency(job.dust_swab_site_visit_rate ?? 0)}</Text>
-              </View>
-              <View style={styles.tableRow}>
-                <Text style={styles.colDescription}>Project Management & Report</Text>
-                <Text style={styles.colAmount}>{formatCurrency(job.dust_swab_proj_mgmt_rate ?? 0)}</Text>
-              </View>
-              <View style={styles.tableRow}>
-                <Text style={styles.colDescription}>
-                  Wipe Samples ({job.num_wipes ?? 0} {formatCurrency(job.wipe_rate ?? 0)}/wipe)
-                </Text>
-                <Text style={styles.colAmount}>
-                  {formatCurrency((job.num_wipes ?? 0) * (job.wipe_rate ?? 0))}
-                </Text>
-              </View>
-            </>
-          )}
-
-          {job.has_asbestos && (
-            <>
-              <View style={styles.tableRow}>
-                <Text style={styles.colDescription}>Site Visit</Text>
-                <Text style={styles.colAmount}>{formatCurrency(job.asbestos_site_visit_rate ?? 0)}</Text>
-              </View>
-              <View style={styles.tableRow}>
-                <Text style={styles.colDescription}>
-                  Asbestos Samples ({job.num_asbestos_samples ?? 0} {formatCurrency(job.asbestos_sample_rate ?? 0)}/sample)
-                </Text>
-                <Text style={styles.colAmount}>
-                  {formatCurrency((job.num_asbestos_samples ?? 0) * (job.asbestos_sample_rate ?? 0))}
-                </Text>
-              </View>
-            </>
-          )}
+          {properties.map((prop, i) => (
+            <PropertyLineItems key={i} prop={prop} showHeader={showPropertyHeaders} />
+          ))}
         </View>
 
         <View style={styles.totalsSection}>
@@ -413,9 +444,14 @@ export function InvoiceDocument({
 
 export async function renderInvoiceToBuffer(
   invoice: InvoiceData,
-  job: JobData,
+  propertiesOrJob: PropertyData[] | PropertyData | JobData,
   business?: InvoiceBusinessInfo
 ): Promise<Buffer> {
-  const element = <InvoiceDocument invoice={invoice} job={job} business={business} />;
+  const raw = Array.isArray(propertiesOrJob) ? propertiesOrJob : [propertiesOrJob];
+  const properties: PropertyData[] = raw.map((p) => ({
+    building_address: null,
+    ...p,
+  }));
+  const element = <InvoiceDocument invoice={invoice} properties={properties} business={business} />;
   return renderToBuffer(element) as Promise<Buffer>;
 }

@@ -34,7 +34,7 @@ export default async function FinancesPage() {
     { data: expensesThisMonth },
     { data: allExpenses },
     { data: jobs },
-    { data: fieldWorkersWithJobs },
+    { data: fieldWorkersWithProperties },
     { data: revenueByMonth },
     { data: expensesByMonth },
     { data: paymentsByMonth },
@@ -68,7 +68,7 @@ export default async function FinancesPage() {
       .from("workers")
       .select(`
         id, name, role, rate_per_unit, rate_per_common_space,
-        jobs!jobs_worker_id_fkey(id, num_units, num_common_spaces, job_status),
+        properties!properties_worker_id_fkey(id, num_units, num_common_spaces, property_status),
         worker_payments(amount)
       `)
       .eq("active", true)
@@ -108,7 +108,6 @@ export default async function FinancesPage() {
     0
   );
 
-  // Worker payables (field workers: rate × units/spaces)
   type WorkerPayable = {
     name: string;
     role: string;
@@ -118,20 +117,20 @@ export default async function FinancesPage() {
   };
   const workerPayables: WorkerPayable[] = [];
 
-  for (const w of fieldWorkersWithJobs ?? []) {
-    const workerJobs = Array.isArray(w.jobs) ? w.jobs : [];
+  for (const w of fieldWorkersWithProperties ?? []) {
+    const workerProperties = Array.isArray(w.properties) ? w.properties : [];
     const workerPayments = Array.isArray(w.worker_payments)
       ? w.worker_payments
       : [];
 
-    const expected = workerJobs
+    const expected = workerProperties
       .filter(
-        (j: { job_status: string }) =>
-          j.job_status === "assigned" || j.job_status === "completed"
+        (p: { property_status: string }) =>
+          p.property_status === "assigned" || p.property_status === "completed"
       )
-      .reduce((sum: number, j: { num_units: number | null; num_common_spaces: number | null }) => {
-        const unitPay = (j.num_units ?? 0) * (w.rate_per_unit ?? 0);
-        const csPay = (j.num_common_spaces ?? 0) * (w.rate_per_common_space ?? 0);
+      .reduce((sum: number, p: { num_units: number | null; num_common_spaces: number | null }) => {
+        const unitPay = (p.num_units ?? 0) * (w.rate_per_unit ?? 0);
+        const csPay = (p.num_common_spaces ?? 0) * (w.rate_per_common_space ?? 0);
         return sum + unitPay + csPay;
       }, 0);
 
@@ -146,7 +145,6 @@ export default async function FinancesPage() {
     }
   }
 
-  // Office staff payables (report writers: rate_per_unit × number of report PDFs)
   const { data: officeWorkers } = await supabase
     .from("workers")
     .select("id, name, rate_per_unit, worker_payments(amount)")
@@ -154,20 +152,24 @@ export default async function FinancesPage() {
     .eq("role", "office");
 
   for (const w of officeWorkers ?? []) {
-    const { count: reportCount } = await supabase
-      .from("job_reports")
-      .select("id", { count: "exact", head: true })
-      .in(
-        "job_id",
-        await supabase
-          .from("jobs")
-          .select("id")
-          .eq("report_writer_id", w.id)
-          .in("job_status", ["assigned", "completed"])
-          .then((r) => (r.data ?? []).map((j) => j.id))
-      );
+    const { data: assignedProperties } = await supabase
+      .from("properties")
+      .select("id")
+      .eq("report_writer_id", w.id)
+      .in("property_status", ["assigned", "completed"]);
 
-    const expected = (reportCount ?? 0) * (w.rate_per_unit ?? 0);
+    const propertyIds = (assignedProperties ?? []).map((p) => p.id);
+
+    let reportCount = 0;
+    if (propertyIds.length > 0) {
+      const { count } = await supabase
+        .from("job_reports")
+        .select("id", { count: "exact", head: true })
+        .in("property_id", propertyIds);
+      reportCount = count ?? 0;
+    }
+
+    const expected = reportCount * (w.rate_per_unit ?? 0);
     const workerPayments = Array.isArray(w.worker_payments) ? w.worker_payments : [];
     const paid = workerPayments.reduce(
       (sum: number, p: { amount: number }) => sum + p.amount,
@@ -179,7 +181,6 @@ export default async function FinancesPage() {
     }
   }
 
-  // Expenses table rows
   const expenseRows = (allExpenses ?? []).map((e) => ({
     id: e.id,
     date: e.date,
@@ -195,7 +196,6 @@ export default async function FinancesPage() {
     job_number: j.job_number,
   }));
 
-  // Revenue by month (last 6 months)
   const monthlyData = buildMonthlyData(
     revenueByMonth ?? [],
     expensesByMonth ?? [],
@@ -213,7 +213,6 @@ export default async function FinancesPage() {
         </div>
       </div>
 
-      {/* Summary cards */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <Card>
           <CardHeader className="pb-2">
@@ -269,7 +268,6 @@ export default async function FinancesPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Worker payables */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Worker Payables</CardTitle>
@@ -315,7 +313,6 @@ export default async function FinancesPage() {
           </CardContent>
         </Card>
 
-        {/* Revenue by month */}
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Revenue by Month</CardTitle>
@@ -363,7 +360,6 @@ export default async function FinancesPage() {
         </Card>
       </div>
 
-      {/* Expenses */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Expenses</CardTitle>

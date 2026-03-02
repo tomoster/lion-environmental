@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendMessage } from "@/lib/telegram/client";
-import { completeJobKeyboard } from "@/lib/telegram/keyboard";
+import { completePropertyKeyboard } from "@/lib/telegram/keyboard";
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
@@ -17,27 +17,29 @@ export async function GET(request: NextRequest) {
     timeZone: "America/New_York",
   });
 
-  const { data: jobs } = await supabase
-    .from("jobs")
+  const { data: properties } = await supabase
+    .from("properties")
     .select(
-      "id, job_number, client_company, building_address, start_time, worker_id, workers!jobs_worker_id_fkey(name, telegram_chat_id)"
+      "id, building_address, start_time, worker_id, complete_reminder_sent, workers!properties_worker_id_fkey(name, telegram_chat_id), jobs(job_number, client_company)"
     )
-    .eq("job_status", "assigned")
+    .eq("property_status", "assigned")
     .eq("scan_date", today)
     .not("start_time", "is", null)
     .eq("complete_reminder_sent", false);
 
   let sent = 0;
 
-  for (const job of jobs ?? []) {
-    const worker = job.workers as {
+  for (const prop of properties ?? []) {
+    const worker = prop.workers as {
       name: string;
       telegram_chat_id: string | null;
     } | null;
     if (!worker?.telegram_chat_id) continue;
 
+    const job = prop.jobs as { job_number: number; client_company: string | null } | null;
+
     if (!force) {
-      const [h, m] = job.start_time!.split(":").map(Number);
+      const [h, m] = prop.start_time!.split(":").map(Number);
       const jobStart = new Date(
         now.toLocaleString("en-US", { timeZone: "America/New_York" })
       );
@@ -51,20 +53,20 @@ export async function GET(request: NextRequest) {
     }
 
     const text =
-      `<b>Job #${job.job_number}</b> — ready to mark complete?\n\n` +
-      `Client: ${job.client_company ?? "\u2014"}\n` +
-      `Address: ${job.building_address ?? "\u2014"}`;
+      `<b>Job #${job?.job_number ?? "\u2014"}</b> — ${prop.building_address ?? ""} — ready to mark complete?\n\n` +
+      `Client: ${job?.client_company ?? "\u2014"}\n` +
+      `Address: ${prop.building_address ?? "\u2014"}`;
 
     await sendMessage(
       worker.telegram_chat_id,
       text,
-      completeJobKeyboard(job.id)
+      completePropertyKeyboard(prop.id)
     );
 
     await supabase
-      .from("jobs")
+      .from("properties")
       .update({ complete_reminder_sent: true })
-      .eq("id", job.id);
+      .eq("id", prop.id);
 
     sent++;
   }

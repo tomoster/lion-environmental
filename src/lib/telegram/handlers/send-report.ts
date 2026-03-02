@@ -9,32 +9,34 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
 
   const data = query.data!;
   let reportType: "xrf" | "dust_swab";
-  let jobId: string;
+  let propertyId: string;
 
   if (data.startsWith("sendreport_xrf_")) {
     reportType = "xrf";
-    jobId = data.replace("sendreport_xrf_", "");
+    propertyId = data.replace("sendreport_xrf_", "");
   } else if (data.startsWith("sendreport_ds_")) {
     reportType = "dust_swab";
-    jobId = data.replace("sendreport_ds_", "");
+    propertyId = data.replace("sendreport_ds_", "");
   } else {
     return;
   }
 
   const supabase = createAdminClient();
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("id, job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos")
-    .eq("id", jobId)
+  const { data: property } = await supabase
+    .from("properties")
+    .select("id, job_id, building_address, has_xrf, has_dust_swab, has_asbestos, jobs(job_number, client_company, client_email)")
+    .eq("id", propertyId)
     .single();
 
-  if (!job) {
-    await answerCallbackQuery(query.id, "Job not found.");
+  if (!property) {
+    await answerCallbackQuery(query.id, "Property not found.");
     return;
   }
 
-  if (!job.client_email) {
+  const job = property.jobs as { job_number: number; client_company: string | null; client_email: string | null } | null;
+
+  if (!job?.client_email) {
     await answerCallbackQuery(query.id, "No client email on file.");
     await sendMessage(chatId, "Can't send report \u2014 no client email address on file for this job.");
     return;
@@ -43,21 +45,21 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
   const { data: reports } = await supabase
     .from("job_reports")
     .select("file_path, original_filename")
-    .eq("job_id", jobId)
+    .eq("property_id", propertyId)
     .eq("report_type", reportType);
 
   const typeLabel = reportType === "xrf" ? "XRF" : "Dust Swab";
 
   if (!reports || reports.length === 0) {
     await answerCallbackQuery(query.id, `No ${typeLabel} report uploaded.`);
-    await sendMessage(chatId, `Can't send report \u2014 no ${typeLabel} report files uploaded for this job.`);
+    await sendMessage(chatId, `Can't send report \u2014 no ${typeLabel} report files uploaded for this property.`);
     return;
   }
 
   const { data: invoice } = await supabase
     .from("invoices")
     .select("status")
-    .eq("job_id", jobId)
+    .eq("job_id", property.job_id)
     .limit(1)
     .maybeSingle();
 
@@ -99,7 +101,7 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
       to: job.client_email,
       jobNumber: job.job_number,
       clientCompany: job.client_company ?? "Client",
-      buildingAddress: job.building_address ?? "",
+      buildingAddress: property.building_address ?? "",
       serviceType: reportType,
       attachments,
       senderName,
@@ -113,17 +115,17 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
 
     const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";
     await supabase
-      .from("jobs")
+      .from("properties")
       .update({
         [statusColumn]: "sent",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", jobId);
+      .eq("id", propertyId);
 
     await answerCallbackQuery(query.id, `${typeLabel} report${attachments.length > 1 ? "s" : ""} sent!`);
     await sendMessage(
       chatId,
-      `${attachments.length} ${typeLabel} report${attachments.length > 1 ? "s" : ""} for Job #${job.job_number} sent to <b>${job.client_email}</b>.`
+      `${attachments.length} ${typeLabel} report${attachments.length > 1 ? "s" : ""} for Job #${job.job_number} (${property.building_address ?? ""}) sent to <b>${job.client_email}</b>.`
     );
   } catch (error) {
     const msg = error instanceof Error ? error.message : "Unknown error";

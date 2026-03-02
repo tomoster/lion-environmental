@@ -7,7 +7,7 @@ export async function handleAcceptJob(query: TelegramCallbackQuery) {
   const chatId = query.message?.chat.id;
   if (!chatId) return;
 
-  const jobId = query.data!.replace("accept_", "");
+  const propertyId = query.data!.replace("accept_", "");
   const supabase = createAdminClient();
 
   const { data: worker } = await supabase
@@ -24,47 +24,59 @@ export async function handleAcceptJob(query: TelegramCallbackQuery) {
     return;
   }
 
-  const { data: accepted, error: rpcError } = await supabase.rpc("accept_job", {
-    p_job_id: jobId,
-    p_worker_id: worker.id,
-  });
+  const { data: property } = await supabase
+    .from("properties")
+    .select("id, property_status, worker_id, building_address, scan_date, dispatch_message_ids, jobs(job_number, client_company)")
+    .eq("id", propertyId)
+    .single();
 
-  if (rpcError) {
-    console.error("accept_job RPC error:", rpcError);
-    await answerCallbackQuery(query.id, "Something went wrong. Try again.");
+  if (!property) {
+    await answerCallbackQuery(query.id, "Property not found.");
     return;
   }
 
-  if (!accepted) {
+  if (property.worker_id) {
     await answerCallbackQuery(query.id, "Sorry, this job has already been taken!");
     await sendMessage(chatId, "This job has already been assigned to another worker.");
     return;
   }
 
-  const { data: job } = await supabase
-    .from("jobs")
-    .select("job_number, client_company, building_address, scan_date, dispatch_message_ids")
-    .eq("id", jobId)
-    .single();
+  const { error: updateError } = await supabase
+    .from("properties")
+    .update({
+      worker_id: worker.id,
+      property_status: "assigned",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", propertyId)
+    .is("worker_id", null);
+
+  if (updateError) {
+    console.error("Property accept error:", updateError);
+    await answerCallbackQuery(query.id, "Something went wrong. Try again.");
+    return;
+  }
+
+  const job = property.jobs as { job_number: number; client_company: string | null } | null;
 
   await answerCallbackQuery(query.id, "Job accepted!");
 
-  const msgIds = (job?.dispatch_message_ids ?? []) as Array<{ chat_id: string; message_id: number }>;
+  const msgIds = (property.dispatch_message_ids ?? []) as Array<{ chat_id: string; message_id: number }>;
   await Promise.allSettled(
     msgIds.map((m) => deleteMessage(m.chat_id, m.message_id))
   );
 
   await supabase
-    .from("jobs")
+    .from("properties")
     .update({ dispatch_message_ids: null })
-    .eq("id", jobId);
+    .eq("id", propertyId);
 
   await sendMessage(
     chatId,
     `You've accepted <b>Job #${job?.job_number}</b>!\n\n` +
       `Client: ${job?.client_company ?? "\u2014"}\n` +
-      `Address: ${job?.building_address ?? "\u2014"}\n` +
-      `Date: ${job?.scan_date ?? "TBD"}`
+      `Address: ${property.building_address ?? "\u2014"}\n` +
+      `Date: ${property.scan_date ?? "TBD"}`
   );
 
   const mgmtChatIds = await getManagementChatIds(supabase);
@@ -72,7 +84,7 @@ export async function handleAcceptJob(query: TelegramCallbackQuery) {
     mgmtChatIds.map((id) =>
       sendMessage(
         id,
-        `<b>${worker.name}</b> accepted Job #${job?.job_number} (${job?.client_company ?? "\u2014"}).`
+        `<b>${worker.name}</b> accepted Job #${job?.job_number} — ${property.building_address ?? ""} (${job?.client_company ?? "\u2014"}).`
       )
     )
   );
