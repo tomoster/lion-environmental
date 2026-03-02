@@ -10,13 +10,22 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
 
   const { data: job } = await supabase
     .from("jobs")
-    .select("job_number, client_company, client_email, building_address, has_xrf, has_dust_swab, has_asbestos, num_units, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
+    .select("job_number, client_company, client_email")
     .eq("id", jobId)
     .single();
 
   if (!job) return { error: "Job not found" };
   if (!job.client_email) return { error: "No client email set" };
-  if (!job.has_xrf && !job.has_dust_swab && !job.has_asbestos) return { error: "No service types selected" };
+
+  const { data: properties } = await supabase
+    .from("properties")
+    .select("building_address, num_units, has_xrf, has_dust_swab, has_asbestos, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
+    .eq("job_id", jobId);
+
+  if (!properties || properties.length === 0) return { error: "No properties found for this job" };
+
+  const hasAnyService = properties.some(p => p.has_xrf || p.has_dust_swab || p.has_asbestos);
+  if (!hasAnyService) return { error: "No service types selected on any property" };
 
   try {
     const { data: settingsRows } = await supabase
@@ -29,21 +38,31 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
     );
 
     const taxRate = s.tax_rate ? parseFloat(s.tax_rate) / 100 : 0.0888;
-
-    const proposals = await generateProposals(job, taxRate, {
+    const bizInfo = {
       businessName: s.business_name,
       businessAddress: s.business_check_address,
       businessPhone: s.business_phone,
       certificationNumber: s.certification_number,
-    });
-    if (proposals.length === 0) return { error: "No proposals generated" };
+    };
+    const jobInfo = { job_number: job.job_number, client_company: job.client_company };
+
+    const allProposals = (await Promise.all(
+      properties.map(prop => generateProposals(prop, jobInfo, taxRate, bizInfo))
+    )).flat();
+
+    if (allProposals.length === 0) return { error: "No proposals generated" };
+
+    const addresses = properties
+      .map(p => p.building_address)
+      .filter(Boolean)
+      .join(", ");
 
     await sendProposalEmail({
       to: job.client_email,
       jobNumber: job.job_number,
       clientCompany: job.client_company ?? "",
-      buildingAddress: job.building_address ?? "",
-      attachments: proposals,
+      buildingAddress: addresses,
+      attachments: allProposals,
       senderName: s.sender_name ?? "Lion Environmental",
       subjectTemplate: s.proposal_email_subject,
       bodyTemplate: s.proposal_email_body,

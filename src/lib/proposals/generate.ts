@@ -9,9 +9,7 @@ const LEFT = 72;
 const RIGHT = PAGE_WIDTH - 72;
 const CONTENT_WIDTH = RIGHT - LEFT; // 468
 
-type ProposalData = {
-  job_number: number;
-  client_company: string | null;
+export type ProposalData = {
   building_address: string | null;
   num_units: number | null;
   has_xrf: boolean;
@@ -31,6 +29,16 @@ type ProposalData = {
   asbestos_sample_rate: number | null;
   asbestos_site_visit_rate: number | null;
 };
+
+export type ProposalJobInfo = {
+  job_number: number;
+  client_company: string | null;
+};
+
+function addressSlug(address: string | null): string {
+  if (!address) return "unknown";
+  return address.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
 
 type GeneratedProposal = {
   type: "xrf" | "dust_swab" | "asbestos";
@@ -229,7 +237,7 @@ function todayFormatted(): string {
   return new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
-export async function generateXRFProposal(data: ProposalData, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
+export async function generateXRFProposal(data: ProposalData, jobInfo: ProposalJobInfo, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
   const biz = {
     businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
     businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
@@ -240,7 +248,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number, b
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
-  const proposalNum = String(data.job_number);
+  const proposalNum = String(jobInfo.job_number);
   const date = todayFormatted();
 
   const studiosTotal = (data.num_studios_1bed ?? 0) * (data.xrf_price_studios_1bed ?? 0);
@@ -256,7 +264,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number, b
   addHeader(doc, biz);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
-    client: data.client_company ?? "",
+    client: jobInfo.client_company ?? "",
     date,
     address: data.building_address ?? "",
     units: fmtQty(data.num_units),
@@ -360,7 +368,7 @@ export async function generateXRFProposal(data: ProposalData, taxRate: number, b
   return bufferPromise;
 }
 
-export async function generateDustSwabsProposal(data: ProposalData, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
+export async function generateDustSwabsProposal(data: ProposalData, jobInfo: ProposalJobInfo, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
   const biz = {
     businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
     businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
@@ -371,7 +379,7 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
-  const proposalNum = String(data.job_number);
+  const proposalNum = String(jobInfo.job_number);
   const date = todayFormatted();
 
   const siteVisitRate = data.dust_swab_site_visit_rate;
@@ -392,7 +400,7 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
   addHeader(doc, biz);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
-    client: data.client_company ?? "",
+    client: jobInfo.client_company ?? "",
     date,
     address: data.building_address ?? "",
     units: fmtQty(data.num_units),
@@ -450,7 +458,7 @@ export async function generateDustSwabsProposal(data: ProposalData, taxRate: num
   return bufferPromise;
 }
 
-export async function generateAsbestosProposal(data: ProposalData, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
+export async function generateAsbestosProposal(data: ProposalData, jobInfo: ProposalJobInfo, taxRate: number, business?: ProposalBusinessInfo): Promise<Buffer> {
   const biz = {
     businessName: business?.businessName || PROPOSAL_DEFAULTS.businessName,
     businessAddress: business?.businessAddress || PROPOSAL_DEFAULTS.businessAddress,
@@ -460,7 +468,7 @@ export async function generateAsbestosProposal(data: ProposalData, taxRate: numb
   const doc = createDoc();
   const bufferPromise = docToBuffer(doc);
 
-  const proposalNum = String(data.job_number);
+  const proposalNum = String(jobInfo.job_number);
   const date = todayFormatted();
 
   const siteVisitRate = data.asbestos_site_visit_rate;
@@ -479,7 +487,7 @@ export async function generateAsbestosProposal(data: ProposalData, taxRate: numb
   addHeader(doc, biz);
   drawProposalNumber(doc, proposalNum);
   let y = drawInfoBox(doc, {
-    client: data.client_company ?? "",
+    client: jobInfo.client_company ?? "",
     date,
     address: data.building_address ?? "",
     units: fmtQty(data.num_units),
@@ -543,33 +551,34 @@ export async function generateAsbestosProposal(data: ProposalData, taxRate: numb
   return bufferPromise;
 }
 
-export async function generateProposals(data: ProposalData, taxRate: number, business?: ProposalBusinessInfo): Promise<GeneratedProposal[]> {
+export async function generateProposals(data: ProposalData, jobInfo: ProposalJobInfo, taxRate: number, business?: ProposalBusinessInfo): Promise<GeneratedProposal[]> {
   const proposals: GeneratedProposal[] = [];
+  const slug = addressSlug(data.building_address);
 
   if (data.has_xrf) {
-    const buffer = await generateXRFProposal(data, taxRate, business);
+    const buffer = await generateXRFProposal(data, jobInfo, taxRate, business);
     proposals.push({
       type: "xrf",
       buffer,
-      filename: `proposal-xrf-job-${data.job_number}.pdf`,
+      filename: `proposal-xrf-${slug}.pdf`,
     });
   }
 
   if (data.has_dust_swab) {
-    const buffer = await generateDustSwabsProposal(data, taxRate, business);
+    const buffer = await generateDustSwabsProposal(data, jobInfo, taxRate, business);
     proposals.push({
       type: "dust_swab",
       buffer,
-      filename: `proposal-dust-swab-job-${data.job_number}.pdf`,
+      filename: `proposal-dust-swab-${slug}.pdf`,
     });
   }
 
   if (data.has_asbestos) {
-    const buffer = await generateAsbestosProposal(data, taxRate, business);
+    const buffer = await generateAsbestosProposal(data, jobInfo, taxRate, business);
     proposals.push({
       type: "asbestos",
       buffer,
-      filename: `proposal-asbestos-job-${data.job_number}.pdf`,
+      filename: `proposal-asbestos-${slug}.pdf`,
     });
   }
 
