@@ -268,9 +268,9 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
 
   return (
     <TableRow>
-      <TableCell className="font-medium">
+      <TableCell className="font-medium max-w-50 truncate">
         <span className="inline-flex items-center gap-1.5">
-          {prospect.company}
+          <span className="truncate">{prospect.company}</span>
           {prospect.notes && (
             <span title={prospect.notes}>
               <StickyNoteIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -281,10 +281,10 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
       <TableCell className="text-muted-foreground">
         {prospect.contact_name ?? "—"}
       </TableCell>
-      <TableCell className="text-muted-foreground">
+      <TableCell className="hidden xl:table-cell text-muted-foreground">
         {prospect.phone ?? "—"}
       </TableCell>
-      <TableCell className="text-muted-foreground">
+      <TableCell className="hidden lg:table-cell text-muted-foreground text-sm truncate max-w-40">
         {prospect.email ?? "—"}
       </TableCell>
       <TableCell>
@@ -504,14 +504,14 @@ export function ProspectsTable({
         </div>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
+      <div className="rounded-md border overflow-x-auto">
+        <Table className="w-full table-fixed">
           <TableHeader>
             <TableRow>
-              <TableHead>Company</TableHead>
+              <TableHead className="max-w-50">Company</TableHead>
               <TableHead>Contact</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead className="hidden xl:table-cell">Phone</TableHead>
+              <TableHead className="hidden lg:table-cell">Email</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Follow-up</TableHead>
               <TableHead className="w-10" />
