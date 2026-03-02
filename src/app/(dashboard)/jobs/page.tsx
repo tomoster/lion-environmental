@@ -13,11 +13,14 @@ import { JobsTable } from "./jobs-table";
 export default async function JobsPage() {
   const supabase = await createClient();
 
-  const [{ data: jobs }, { data: workers }, { data: settings }] = await Promise.all([
+  const [{ data: jobs }, { data: properties }, { data: workers }, { data: settings }] = await Promise.all([
     supabase
       .from("jobs")
-      .select("id, job_number, client_company, building_address, has_xrf, has_dust_swab, has_asbestos, scan_date, job_status, report_status, dust_swab_status, workers!jobs_worker_id_fkey(name)")
+      .select("id, job_number, client_company, job_status")
       .order("job_number", { ascending: false }),
+    supabase
+      .from("properties")
+      .select("job_id, has_xrf, has_dust_swab, has_asbestos"),
     supabase
       .from("workers")
       .select("id, name, active")
@@ -31,6 +34,29 @@ export default async function JobsPage() {
         "xrf_duration_per_unit", "xrf_duration_per_common_space", "dust_swab_duration", "asbestos_duration",
       ]),
   ]);
+
+  const propsByJob = new Map<string, { count: number; has_xrf: boolean; has_dust_swab: boolean; has_asbestos: boolean }>();
+  for (const p of properties ?? []) {
+    const existing = propsByJob.get(p.job_id) ?? { count: 0, has_xrf: false, has_dust_swab: false, has_asbestos: false };
+    existing.count++;
+    if (p.has_xrf) existing.has_xrf = true;
+    if (p.has_dust_swab) existing.has_dust_swab = true;
+    if (p.has_asbestos) existing.has_asbestos = true;
+    propsByJob.set(p.job_id, existing);
+  }
+
+  const jobsWithProperties = (jobs ?? []).map((job) => {
+    const agg = propsByJob.get(job.id) ?? { count: 0, has_xrf: false, has_dust_swab: false, has_asbestos: false };
+    const types: string[] = [];
+    if (agg.has_xrf) types.push("XRF");
+    if (agg.has_dust_swab) types.push("Dust Swab");
+    if (agg.has_asbestos) types.push("Asbestos");
+    return {
+      ...job,
+      property_count: agg.count,
+      service_types: types.join(" + "),
+    };
+  });
 
   const s = Object.fromEntries((settings ?? []).map((r) => [r.key, r.value]));
   const durationDefaults = {
@@ -65,7 +91,7 @@ export default async function JobsPage() {
         </Dialog>
       </div>
 
-      <JobsTable jobs={(jobs ?? []) as Parameters<typeof JobsTable>[0]["jobs"]} />
+      <JobsTable jobs={jobsWithProperties} />
     </div>
   );
 }

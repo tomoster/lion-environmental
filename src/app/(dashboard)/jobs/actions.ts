@@ -11,11 +11,28 @@ import { getExpectedReportCount } from "@/lib/reports/expected-counts";
 export async function createJob(formData: FormData) {
   const supabase = await createClient();
 
-  const data = {
+  const jobData = {
     client_company: (formData.get("client_company") as string) || null,
     client_contact: (formData.get("client_contact") as string) || null,
     client_email: (formData.get("client_email") as string) || null,
     client_phone: (formData.get("client_phone") as string) || null,
+    notes: (formData.get("notes") as string) || null,
+    job_status: "not_dispatched",
+    prospect_id: (formData.get("prospect_id") as string) || null,
+  };
+
+  const { data: job, error } = await supabase
+    .from("jobs")
+    .insert(jobData)
+    .select("id")
+    .single();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const propertyData = {
+    job_id: job.id,
     building_address: (formData.get("building_address") as string) || null,
     has_xrf: formData.get("has_xrf") === "true",
     has_dust_swab: formData.get("has_dust_swab") === "true",
@@ -26,26 +43,18 @@ export async function createJob(formData: FormData) {
     scan_date: (formData.get("scan_date") as string) || null,
     start_time: (formData.get("start_time") as string) || null,
     estimated_end_time: (formData.get("estimated_end_time") as string) || null,
-    notes: (formData.get("notes") as string) || null,
     worker_id: (formData.get("worker_id") as string) || null,
-    report_writer_id: (() => {
-      const v = formData.get("report_writer_id") as string;
-      return v && v !== "unassigned" ? v : null;
-    })(),
-    job_status: "not_dispatched",
     report_status: "not_started",
     dust_swab_status: "not_started",
-    prospect_id: (formData.get("prospect_id") as string) || null,
+    asbestos_status: "not_started",
   };
 
-  const { data: job, error } = await supabase
-    .from("jobs")
-    .insert(data)
-    .select("id")
-    .single();
+  const { error: propError } = await supabase
+    .from("properties")
+    .insert(propertyData);
 
-  if (error) {
-    throw new Error(error.message);
+  if (propError) {
+    throw new Error(propError.message);
   }
 
   revalidatePath("/jobs");
@@ -55,11 +64,54 @@ export async function createJob(formData: FormData) {
 export async function updateJob(id: string, formData: FormData): Promise<void> {
   const supabase = await createClient();
 
-  const { data: currentJob } = await supabase
-    .from("jobs")
-    .select("job_status, start_time, report_status, dust_swab_status, asbestos_status")
-    .eq("id", id)
+  const jobData = {
+    client_company: (formData.get("client_company") as string) || null,
+    client_contact: (formData.get("client_contact") as string) || null,
+    client_email: (formData.get("client_email") as string) || null,
+    client_phone: (formData.get("client_phone") as string) || null,
+    notes: (formData.get("notes") as string) || null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from("jobs").update(jobData).eq("id", id);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${id}`);
+}
+
+export async function createProperty(jobId: string, formData: FormData) {
+  const supabase = await createClient();
+
+  const data = buildPropertyDataFromForm(formData);
+
+  const { error } = await supabase
+    .from("properties")
+    .insert({ ...data, job_id: jobId });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${jobId}`);
+}
+
+export async function updateProperty(propertyId: string, formData: FormData): Promise<void> {
+  const supabase = await createClient();
+
+  const { data: currentProp } = await supabase
+    .from("properties")
+    .select("job_id, start_time, report_status, dust_swab_status, asbestos_status")
+    .eq("id", propertyId)
     .single();
+
+  if (!currentProp) {
+    throw new Error("Property not found");
+  }
 
   const startTime = (formData.get("start_time") as string) || null;
   const hasXrf = formData.get("has_xrf") === "true";
@@ -94,11 +146,7 @@ export async function updateJob(id: string, formData: FormData): Promise<void> {
     );
   }
 
-  const data = {
-    client_company: (formData.get("client_company") as string) || null,
-    client_contact: (formData.get("client_contact") as string) || null,
-    client_email: (formData.get("client_email") as string) || null,
-    client_phone: (formData.get("client_phone") as string) || null,
+  const data: Record<string, unknown> = {
     building_address: (formData.get("building_address") as string) || null,
     has_xrf: hasXrf,
     has_dust_swab: hasDustSwab,
@@ -120,7 +168,6 @@ export async function updateJob(id: string, formData: FormData): Promise<void> {
     scan_date: (formData.get("scan_date") as string) || null,
     start_time: startTime,
     estimated_end_time: estimatedEndTime,
-    notes: (formData.get("notes") as string) || null,
     worker_id: (() => {
       const v = formData.get("worker_id") as string;
       return v && v !== "unassigned" ? v : null;
@@ -131,37 +178,60 @@ export async function updateJob(id: string, formData: FormData): Promise<void> {
     })(),
     report_status: (() => {
       const formVal = formData.get("report_status") as string;
-      const dbVal = currentJob?.report_status ?? "not_started";
+      const dbVal = currentProp.report_status ?? "not_started";
       const locked = ["uploaded", "sent"];
       return locked.includes(dbVal) && !locked.includes(formVal) ? dbVal : formVal;
     })(),
     dust_swab_status: (() => {
       const formVal = (formData.get("dust_swab_status") as string) || "not_started";
-      const dbVal = currentJob?.dust_swab_status ?? "not_started";
+      const dbVal = currentProp.dust_swab_status ?? "not_started";
       const locked = ["uploaded", "sent"];
       return locked.includes(dbVal) && !locked.includes(formVal) ? dbVal : formVal;
     })(),
     asbestos_status: (() => {
       const formVal = (formData.get("asbestos_status") as string) || "not_started";
-      const dbVal = currentJob?.asbestos_status ?? "not_started";
+      const dbVal = currentProp.asbestos_status ?? "not_started";
       const locked = ["uploaded", "sent"];
       return locked.includes(dbVal) && !locked.includes(formVal) ? dbVal : formVal;
     })(),
     updated_at: new Date().toISOString(),
   };
 
-  if (startTime !== currentJob?.start_time) {
-    (data as Record<string, unknown>).complete_reminder_sent = false;
+  if (startTime !== currentProp.start_time) {
+    data.complete_reminder_sent = false;
   }
 
-  const { error } = await supabase.from("jobs").update(data).eq("id", id);
+  const { error } = await supabase.from("properties").update(data).eq("id", propertyId);
 
   if (error) {
     throw new Error(error.message);
   }
 
   revalidatePath("/jobs");
-  revalidatePath(`/jobs/${id}`);
+  revalidatePath(`/jobs/${currentProp.job_id}`);
+}
+
+export async function deleteProperty(propertyId: string) {
+  const supabase = await createClient();
+
+  const { data: prop } = await supabase
+    .from("properties")
+    .select("job_id")
+    .eq("id", propertyId)
+    .single();
+
+  if (!prop) {
+    throw new Error("Property not found");
+  }
+
+  const { error } = await supabase.from("properties").delete().eq("id", propertyId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${prop.job_id}`);
 }
 
 export async function deleteJob(id: string) {
@@ -267,16 +337,27 @@ export async function createJobFromProspect(prospectId: string) {
       client_email: prospect.email,
       client_contact: prospect.contact_name,
       client_phone: prospect.phone,
-      building_address: prospect.building_address,
       job_status: "not_dispatched",
-      report_status: "not_started",
-      dust_swab_status: "not_started",
     })
     .select("id")
     .single();
 
   if (error) {
     throw new Error(error.message);
+  }
+
+  const { error: propError } = await supabase
+    .from("properties")
+    .insert({
+      job_id: job.id,
+      building_address: prospect.building_address,
+      report_status: "not_started",
+      dust_swab_status: "not_started",
+      asbestos_status: "not_started",
+    });
+
+  if (propError) {
+    throw new Error(propError.message);
   }
 
   await supabase
@@ -287,4 +368,26 @@ export async function createJobFromProspect(prospectId: string) {
   revalidatePath("/jobs");
   revalidatePath("/prospects");
   redirect(`/jobs/${job.id}`);
+}
+
+function buildPropertyDataFromForm(formData: FormData) {
+  return {
+    building_address: (formData.get("building_address") as string) || null,
+    has_xrf: formData.get("has_xrf") === "true",
+    has_dust_swab: formData.get("has_dust_swab") === "true",
+    has_asbestos: formData.get("has_asbestos") === "true",
+    num_units: formData.get("num_units") ? Number(formData.get("num_units")) : null,
+    num_common_spaces: formData.get("num_common_spaces") ? Number(formData.get("num_common_spaces")) : null,
+    num_wipes: formData.get("num_wipes") ? Number(formData.get("num_wipes")) : null,
+    scan_date: (formData.get("scan_date") as string) || null,
+    start_time: (formData.get("start_time") as string) || null,
+    estimated_end_time: (formData.get("estimated_end_time") as string) || null,
+    worker_id: (() => {
+      const v = formData.get("worker_id") as string;
+      return v && v !== "unassigned" ? v : null;
+    })(),
+    report_status: "not_started" as const,
+    dust_swab_status: "not_started" as const,
+    asbestos_status: "not_started" as const,
+  };
 }

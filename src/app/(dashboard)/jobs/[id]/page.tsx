@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { updateJob, deleteJob, uploadReport } from "../actions";
+import { updateJob, updateProperty, createProperty, deleteProperty, deleteJob, uploadReport } from "../actions";
 import { dispatchJob, markClientPaid } from "./automation-actions";
 import { sendProposal } from "./send-proposal-action";
 import { DeleteJobButton } from "./delete-job-button";
@@ -38,16 +38,81 @@ type PageProps = {
   params: Promise<{ id: string }>;
 };
 
+function computePropertyPricing(
+  prop: {
+    has_xrf: boolean;
+    has_dust_swab: boolean;
+    has_asbestos: boolean;
+    num_studios_1bed: number | null;
+    num_2_3bed: number | null;
+    num_common_spaces: number | null;
+    xrf_price_studios_1bed: number | null;
+    xrf_price_2_3bed: number | null;
+    xrf_price_per_common_space: number | null;
+    num_wipes: number | null;
+    wipe_rate: number | null;
+    dust_swab_site_visit_rate: number | null;
+    dust_swab_proj_mgmt_rate: number | null;
+    num_asbestos_samples: number | null;
+    asbestos_sample_rate: number | null;
+    asbestos_site_visit_rate: number | null;
+  },
+  defaults: {
+    priceStudios1Bed: number | null;
+    price2_3Bed: number | null;
+    pricePerCommonSpace: number | null;
+    wipeRate: number | null;
+    dustSwabSiteVisitRate: number | null;
+    dustSwabProjMgmtRate: number | null;
+    asbestosSampleRate: number | null;
+    asbestosSiteVisitRate: number | null;
+  }
+) {
+  const ps1b = prop.xrf_price_studios_1bed ?? defaults.priceStudios1Bed ?? 150;
+  const p23b = prop.xrf_price_2_3bed ?? defaults.price2_3Bed ?? 165;
+  const pcs = prop.xrf_price_per_common_space ?? defaults.pricePerCommonSpace ?? 110;
+  const wr = prop.wipe_rate ?? defaults.wipeRate ?? 20;
+  const dsvr = prop.dust_swab_site_visit_rate ?? defaults.dustSwabSiteVisitRate ?? 375;
+  const dpmr = prop.dust_swab_proj_mgmt_rate ?? defaults.dustSwabProjMgmtRate ?? 135;
+  const asr = prop.asbestos_sample_rate ?? defaults.asbestosSampleRate ?? 0;
+  const asvr = prop.asbestos_site_visit_rate ?? defaults.asbestosSiteVisitRate ?? 375;
+
+  const xrfSubtotal = prop.has_xrf
+    ? (prop.num_studios_1bed ?? 0) * ps1b +
+      (prop.num_2_3bed ?? 0) * p23b +
+      (prop.num_common_spaces ?? 0) * pcs
+    : 0;
+
+  const dustSwabSubtotal = prop.has_dust_swab
+    ? dsvr + dpmr + (prop.num_wipes ?? 0) * wr
+    : 0;
+
+  const asbestosSubtotal = prop.has_asbestos
+    ? asvr + (prop.num_asbestos_samples ?? 0) * asr
+    : 0;
+
+  const subtotal = xrfSubtotal + dustSwabSubtotal + asbestosSubtotal;
+  const tax = subtotal * TAX_RATE;
+  const total = subtotal + tax;
+
+  return { xrfSubtotal, dustSwabSubtotal, asbestosSubtotal, subtotal, tax, total };
+}
+
 export default async function JobDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: job }, { data: jobInvoice }, { data: jobReports }, { data: officeWorkers }] = await Promise.all([
+  const [{ data: job }, { data: properties }, { data: jobInvoice }, { data: jobReports }, { data: officeWorkers }] = await Promise.all([
     supabase
       .from("jobs")
-      .select("*, workers!jobs_worker_id_fkey(id, name)")
+      .select("*")
       .eq("id", id)
       .single(),
+    supabase
+      .from("properties")
+      .select("*, worker:workers!properties_worker_id_fkey(id, name), report_writer:workers!properties_report_writer_id_fkey(id, name)")
+      .eq("job_id", id)
+      .order("created_at", { ascending: true }),
     supabase
       .from("invoices")
       .select("id, status")
@@ -69,6 +134,8 @@ export default async function JobDetailPage({ params }: PageProps) {
 
   if (!job) notFound();
 
+  const props = properties ?? [];
+
   const { data: settings } = await supabase
     .from("settings")
     .select("key, value")
@@ -84,69 +151,63 @@ export default async function JobDetailPage({ params }: PageProps) {
     settingsMap[s.key] = s.value;
   }
 
-  const defaultPricePerCommonSpace = job.xrf_price_per_common_space ?? (settingsMap.xrf_price_per_common_space ? Number(settingsMap.xrf_price_per_common_space) : 110);
-  const defaultPriceStudios1Bed = job.xrf_price_studios_1bed ?? (settingsMap.xrf_price_studios_1bed ? Number(settingsMap.xrf_price_studios_1bed) : 150);
-  const defaultPrice2_3Bed = job.xrf_price_2_3bed ?? (settingsMap.xrf_price_2_3bed ? Number(settingsMap.xrf_price_2_3bed) : 165);
-  const defaultWipeRate = job.wipe_rate ?? (settingsMap.dust_swab_wipe_rate ? Number(settingsMap.dust_swab_wipe_rate) : 20);
-  const defaultDustSwabSiteVisitRate = job.dust_swab_site_visit_rate ?? (settingsMap.dust_swab_site_visit_rate ? Number(settingsMap.dust_swab_site_visit_rate) : 375);
-  const defaultDustSwabProjMgmtRate = job.dust_swab_proj_mgmt_rate ?? (settingsMap.dust_swab_proj_mgmt_rate ? Number(settingsMap.dust_swab_proj_mgmt_rate) : 135);
-  const defaultAsbestosSampleRate = job.asbestos_sample_rate ?? (settingsMap.asbestos_sample_rate ? Number(settingsMap.asbestos_sample_rate) : null);
-  const defaultAsbestosSiteVisitRate = job.asbestos_site_visit_rate ?? (settingsMap.asbestos_site_visit_rate ? Number(settingsMap.asbestos_site_visit_rate) : 375);
+  const defaults = {
+    priceStudios1Bed: settingsMap.xrf_price_studios_1bed ? Number(settingsMap.xrf_price_studios_1bed) : 150,
+    price2_3Bed: settingsMap.xrf_price_2_3bed ? Number(settingsMap.xrf_price_2_3bed) : 165,
+    pricePerCommonSpace: settingsMap.xrf_price_per_common_space ? Number(settingsMap.xrf_price_per_common_space) : 110,
+    wipeRate: settingsMap.dust_swab_wipe_rate ? Number(settingsMap.dust_swab_wipe_rate) : 20,
+    dustSwabSiteVisitRate: settingsMap.dust_swab_site_visit_rate ? Number(settingsMap.dust_swab_site_visit_rate) : 375,
+    dustSwabProjMgmtRate: settingsMap.dust_swab_proj_mgmt_rate ? Number(settingsMap.dust_swab_proj_mgmt_rate) : 135,
+    asbestosSampleRate: settingsMap.asbestos_sample_rate ? Number(settingsMap.asbestos_sample_rate) : null,
+    asbestosSiteVisitRate: settingsMap.asbestos_site_visit_rate ? Number(settingsMap.asbestos_site_visit_rate) : 375,
+  };
 
-  let availability = { available: [] as { id: string; name: string }[], unavailable: [] as { worker: { id: string; name: string }; reason: string }[] };
+  const propertyPricings = props.map((p) => computePropertyPricing(p, defaults));
+  const aggregatePricing = {
+    xrfSubtotal: propertyPricings.reduce((sum, pp) => sum + pp.xrfSubtotal, 0),
+    dustSwabSubtotal: propertyPricings.reduce((sum, pp) => sum + pp.dustSwabSubtotal, 0),
+    asbestosSubtotal: propertyPricings.reduce((sum, pp) => sum + pp.asbestosSubtotal, 0),
+    subtotal: propertyPricings.reduce((sum, pp) => sum + pp.subtotal, 0),
+    tax: propertyPricings.reduce((sum, pp) => sum + pp.tax, 0),
+    total: propertyPricings.reduce((sum, pp) => sum + pp.total, 0),
+  };
 
-  if (job.scan_date) {
-    availability = await getAvailableWorkers(
-      job.scan_date,
-      job.start_time,
-      job.estimated_end_time,
-      id
-    );
-  } else {
-    const { data: workers } = await supabase
-      .from("workers")
-      .select("id, name")
-      .eq("active", true)
-      .order("name");
-    availability = { available: workers ?? [], unavailable: [] };
+  const availabilityByProperty: Record<string, { available: { id: string; name: string }[]; unavailable: { worker: { id: string; name: string }; reason: string }[] }> = {};
+  for (const p of props) {
+    if (p.scan_date) {
+      availabilityByProperty[p.id] = await getAvailableWorkers(
+        p.scan_date,
+        p.start_time,
+        p.estimated_end_time,
+        id
+      );
+    } else {
+      const { data: workers } = await supabase
+        .from("workers")
+        .select("id, name")
+        .eq("active", true)
+        .order("name");
+      availabilityByProperty[p.id] = { available: workers ?? [], unavailable: [] };
+    }
   }
 
-  const xrfSubtotal = job.has_xrf
-    ? (job.num_studios_1bed ?? 0) * (defaultPriceStudios1Bed ?? 0) +
-      (job.num_2_3bed ?? 0) * (defaultPrice2_3Bed ?? 0) +
-      (job.num_common_spaces ?? 0) * (defaultPricePerCommonSpace ?? 0)
-    : 0;
+  const aggregateHasXrf = props.some((p) => p.has_xrf);
+  const aggregateHasDustSwab = props.some((p) => p.has_dust_swab);
+  const aggregateHasAsbestos = props.some((p) => p.has_asbestos);
 
-  const dustSwabSubtotal = job.has_dust_swab
-    ? (defaultDustSwabSiteVisitRate ?? 0) +
-      (defaultDustSwabProjMgmtRate ?? 0) +
-      (job.num_wipes ?? 0) * (defaultWipeRate ?? 0)
-    : 0;
-
-  const asbestosSubtotal = job.has_asbestos
-    ? (defaultAsbestosSiteVisitRate ?? 0) +
-      (job.num_asbestos_samples ?? 0) * (defaultAsbestosSampleRate ?? 0)
-    : 0;
-
-  const subtotal = xrfSubtotal + dustSwabSubtotal + asbestosSubtotal;
-  const tax = subtotal * TAX_RATE;
-  const total = subtotal + tax;
-
-  const expectedXrf = (job.num_studios_1bed ?? 0) + (job.num_2_3bed ?? 0) + (job.num_common_spaces ?? 0);
-  const expectedDustSwab = job.num_wipes ?? 0;
-  const expectedAsbestos = job.num_asbestos_samples ?? 0;
-
-  const workerData = job.workers as { id: string; name: string } | null;
+  const firstProp = props[0];
+  const firstWorker = firstProp?.worker as { id: string; name: string } | null;
 
   const updateJobWithId = updateJob.bind(null, id);
   const deleteJobWithId = deleteJob.bind(null, id);
   const dispatchJobWithId = dispatchJob.bind(null, id);
   const sendProposalWithId = sendProposal.bind(null, id);
+  const markClientPaidWithId = markClientPaid.bind(null, id);
+  const createPropertyWithId = createProperty.bind(null, id);
 
   const uploadXrfReport = uploadReport.bind(null, id, "xrf");
   const uploadDustSwabReport = uploadReport.bind(null, id, "dust_swab");
   const uploadAsbestosReport = uploadReport.bind(null, id, "asbestos");
-  const markClientPaidWithId = markClientPaid.bind(null, id);
 
   return (
     <div className="space-y-6">
@@ -189,6 +250,7 @@ export default async function JobDetailPage({ params }: PageProps) {
                 year: "numeric",
               })
             : "\u2014"}
+          {props.length > 0 && ` \u00b7 ${props.length} ${props.length === 1 ? "property" : "properties"}`}
         </p>
       </div>
 
@@ -197,14 +259,14 @@ export default async function JobDetailPage({ params }: PageProps) {
         jobStatus={job.job_status}
         hasInvoice={!!jobInvoice}
         invoiceStatus={jobInvoice?.status ?? null}
-        workerName={workerData?.name ?? null}
+        workerName={firstWorker?.name ?? null}
         clientEmail={job.client_email}
-        hasXrf={job.has_xrf}
-        hasDustSwab={job.has_dust_swab}
-        hasAsbestos={job.has_asbestos}
-        xrfReportStatus={job.report_status}
-        dustSwabReportStatus={job.dust_swab_status ?? "not_started"}
-        asbestosReportStatus={job.asbestos_status ?? "not_started"}
+        hasXrf={aggregateHasXrf}
+        hasDustSwab={aggregateHasDustSwab}
+        hasAsbestos={aggregateHasAsbestos}
+        xrfReportStatus={firstProp?.report_status ?? "not_started"}
+        dustSwabReportStatus={firstProp?.dust_swab_status ?? "not_started"}
+        asbestosReportStatus={firstProp?.asbestos_status ?? "not_started"}
         dispatchAction={dispatchJobWithId}
         markPaidAction={markClientPaidWithId}
         sendProposalAction={sendProposalWithId}
@@ -212,30 +274,25 @@ export default async function JobDetailPage({ params }: PageProps) {
 
       <JobDetailForm
         key={job.updated_at}
-        action={updateJobWithId}
+        updateJobAction={updateJobWithId}
+        createPropertyAction={createPropertyWithId}
         job={job}
-        defaultPriceStudios1Bed={defaultPriceStudios1Bed}
-        defaultPrice2_3Bed={defaultPrice2_3Bed}
-        defaultPricePerCommonSpace={defaultPricePerCommonSpace}
-        defaultWipeRate={defaultWipeRate}
-        defaultDustSwabSiteVisitRate={defaultDustSwabSiteVisitRate}
-        defaultDustSwabProjMgmtRate={defaultDustSwabProjMgmtRate}
-        defaultAsbestosSampleRate={defaultAsbestosSampleRate}
-        defaultAsbestosSiteVisitRate={defaultAsbestosSiteVisitRate}
-        workerData={workerData}
-        availability={availability}
+        properties={props.map((p) => {
+          const worker = p.worker as { id: string; name: string } | null;
+          return {
+            ...p,
+            workerData: worker,
+            availability: availabilityByProperty[p.id] ?? { available: [], unavailable: [] },
+            updateAction: updateProperty.bind(null, p.id),
+            deleteAction: deleteProperty.bind(null, p.id),
+          };
+        })}
         officeWorkers={officeWorkers ?? []}
         xrfStatusLabels={XRF_STATUS_LABELS}
         dustSwabStatusLabels={DUST_SWAB_STATUS_LABELS}
         asbestosStatusLabels={ASBESTOS_STATUS_LABELS}
-        pricingSummary={{
-          xrfSubtotal,
-          dustSwabSubtotal,
-          asbestosSubtotal,
-          subtotal,
-          tax,
-          total,
-        }}
+        pricingSummary={aggregatePricing}
+        propertyPricings={propertyPricings}
         uploadActions={{
           xrf: uploadXrfReport,
           dustSwab: uploadDustSwabReport,
@@ -247,10 +304,15 @@ export default async function JobDetailPage({ params }: PageProps) {
           file_path: r.file_path,
           original_filename: r.original_filename,
         }))}
-        expectedCounts={{
-          xrf: expectedXrf,
-          dustSwab: expectedDustSwab,
-          asbestos: expectedAsbestos,
+        defaultPrices={{
+          priceStudios1Bed: defaults.priceStudios1Bed,
+          price2_3Bed: defaults.price2_3Bed,
+          pricePerCommonSpace: defaults.pricePerCommonSpace,
+          wipeRate: defaults.wipeRate,
+          dustSwabSiteVisitRate: defaults.dustSwabSiteVisitRate,
+          dustSwabProjMgmtRate: defaults.dustSwabProjMgmtRate,
+          asbestosSampleRate: defaults.asbestosSampleRate,
+          asbestosSiteVisitRate: defaults.asbestosSiteVisitRate,
         }}
       />
     </div>

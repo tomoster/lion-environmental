@@ -138,7 +138,7 @@ export function JobForm({ workers, durationDefaults, defaultValues, onSuccess }:
       </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="building_address">Building Address</Label>
+        <Label htmlFor="building_address">First Property Address</Label>
         <Input
           id="building_address"
           name="building_address"
