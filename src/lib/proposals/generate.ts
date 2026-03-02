@@ -73,7 +73,7 @@ function addHeader(doc: InstanceType<typeof PDFDocument>, biz: Required<Proposal
   if (fs.existsSync(LOGO_PATH)) {
     doc.image(LOGO_PATH, PAGE_WIDTH / 2 - 40, 35, { width: 80 });
   }
-  doc.fontSize(20).font("Helvetica-Bold");
+  doc.fontSize(20).font("Helvetica-Bold").fillColor("#000000");
   doc.text(biz.businessName, LEFT, 120, { width: CONTENT_WIDTH, align: "center" });
   if (biz.certificationNumber) {
     doc.fontSize(9).font("Helvetica");
