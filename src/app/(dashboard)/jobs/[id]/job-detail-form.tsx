@@ -31,7 +31,9 @@ type JobDetailFormProps = {
   action: (formData: FormData) => Promise<void>;
   job: {
     client_company: string | null;
+    client_contact: string | null;
     client_email: string | null;
+    client_phone: string | null;
     building_address: string | null;
     scan_date: string | null;
     has_xrf: boolean;
@@ -200,12 +202,29 @@ export function JobDetailForm({
                 />
               </div>
               <div className="space-y-1.5">
+                <Label htmlFor="client_contact">Contact</Label>
+                <Input
+                  id="client_contact"
+                  name="client_contact"
+                  defaultValue={job.client_contact ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="client_email">Email</Label>
                 <Input
                   id="client_email"
                   name="client_email"
                   type="email"
                   defaultValue={job.client_email ?? ""}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="client_phone">Phone</Label>
+                <Input
+                  id="client_phone"
+                  name="client_phone"
+                  type="tel"
+                  defaultValue={job.client_phone ?? ""}
                 />
               </div>
             </div>

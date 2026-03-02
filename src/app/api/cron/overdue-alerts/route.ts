@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     .from("prospects")
     .select("id, company, contact_name, next_followup, status")
     .lt("next_followup", today)
-    .not("status", "in", '("confirmed","lost")');
+    .not("status", "in", '("converted","archived","not_interested","bounced")');
 
   if (overdueProspects && overdueProspects.length > 0) {
     let text = `<b>Overdue Follow-ups (${overdueProspects.length})</b>\n\n`;

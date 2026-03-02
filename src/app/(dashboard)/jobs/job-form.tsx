@@ -36,7 +36,9 @@ type JobFormProps = {
   durationDefaults?: DurationDefaults;
   defaultValues?: {
     client_company?: string;
+    client_contact?: string;
     client_email?: string;
+    client_phone?: string;
     building_address?: string;
     prospect_id?: string;
   };
@@ -105,6 +107,15 @@ export function JobForm({ workers, durationDefaults, defaultValues, onSuccess }:
           />
         </div>
         <div className="space-y-1.5">
+          <Label htmlFor="client_contact">Contact</Label>
+          <Input
+            id="client_contact"
+            name="client_contact"
+            defaultValue={defaultValues?.client_contact ?? ""}
+            placeholder="Contact name"
+          />
+        </div>
+        <div className="space-y-1.5">
           <Label htmlFor="client_email">Email</Label>
           <Input
             id="client_email"
@@ -112,6 +123,16 @@ export function JobForm({ workers, durationDefaults, defaultValues, onSuccess }:
             type="email"
             defaultValue={defaultValues?.client_email ?? ""}
             placeholder="client@example.com"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="client_phone">Phone</Label>
+          <Input
+            id="client_phone"
+            name="client_phone"
+            type="tel"
+            defaultValue={defaultValues?.client_phone ?? ""}
+            placeholder="(###) ###-####"
           />
         </div>
       </div>

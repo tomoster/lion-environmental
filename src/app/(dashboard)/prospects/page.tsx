@@ -26,6 +26,7 @@ export default async function ProspectsPage({
     .from("prospects")
     .select("*", { count: "exact" })
     .order("created_at", { ascending: false })
+    .order("next_followup", { ascending: true, nullsFirst: false })
     .range(from, to);
 
   if (search) {

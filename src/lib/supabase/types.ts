@@ -7,8 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.1"
   }
@@ -233,7 +231,9 @@ export type Database = {
           asbestos_status: string
           building_address: string | null
           client_company: string | null
+          client_contact: string | null
           client_email: string | null
+          client_phone: string | null
           complete_reminder_sent: boolean
           created_at: string | null
           dispatch_message_ids: Json | null
@@ -273,7 +273,9 @@ export type Database = {
           asbestos_status?: string
           building_address?: string | null
           client_company?: string | null
+          client_contact?: string | null
           client_email?: string | null
+          client_phone?: string | null
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
@@ -313,7 +315,9 @@ export type Database = {
           asbestos_status?: string
           building_address?: string | null
           client_company?: string | null
+          client_contact?: string | null
           client_email?: string | null
+          client_phone?: string | null
           complete_reminder_sent?: boolean
           created_at?: string | null
           dispatch_message_ids?: Json | null
@@ -387,7 +391,6 @@ export type Database = {
           next_send: string | null
           notes: string | null
           phone: string | null
-          seq_status: string
           seq_step: number
           source: string | null
           status: string
@@ -409,7 +412,6 @@ export type Database = {
           next_send?: string | null
           notes?: string | null
           phone?: string | null
-          seq_status?: string
           seq_step?: number
           source?: string | null
           status?: string
@@ -431,7 +433,6 @@ export type Database = {
           next_send?: string | null
           notes?: string | null
           phone?: string | null
-          seq_status?: string
           seq_step?: number
           source?: string | null
           status?: string

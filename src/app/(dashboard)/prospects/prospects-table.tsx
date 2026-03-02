@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
-import { MailIcon, MoreHorizontalIcon, PlusIcon, UploadIcon, SearchIcon } from "lucide-react";
+import { MailIcon, MoreHorizontalIcon, PlusIcon, UploadIcon, SearchIcon, StickyNoteIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +37,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Tables } from "@/lib/supabase/types";
+import {
+  PROSPECT_STATUS_LABELS as STATUS_LABELS,
+  PROSPECT_STATUS_COLORS as STATUS_COLORS,
+} from "@/lib/prospects/constants";
 import { ProspectForm } from "./prospect-form";
 import {
   deleteProspect,
@@ -60,31 +74,6 @@ interface ProspectsTableProps {
   pageSize: number;
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  new: "New",
-  emailing: "Emailing",
-  no_response: "No Response",
-  replied: "Replied",
-  called: "Called",
-  interested: "Interested",
-  not_interested: "Not Interested",
-  bounced: "Bounced",
-  converted: "Converted",
-  archived: "Archived",
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  new: "bg-gray-100 text-gray-700 border-gray-200",
-  emailing: "bg-blue-100 text-blue-700 border-blue-200",
-  no_response: "bg-yellow-100 text-yellow-700 border-yellow-200",
-  replied: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  called: "bg-purple-100 text-purple-700 border-purple-200",
-  interested: "bg-green-100 text-green-700 border-green-200",
-  not_interested: "bg-red-100 text-red-700 border-red-200",
-  bounced: "bg-orange-100 text-orange-700 border-orange-200",
-  converted: "bg-teal-100 text-teal-700 border-teal-200",
-  archived: "bg-gray-50 text-gray-400 border-gray-200",
-};
 
 function StatusBadge({ status }: { status: string }) {
   const label = STATUS_LABELS[status] ?? status;
@@ -140,9 +129,9 @@ function EmailHistoryDialog({ prospect }: { prospect: Prospect }) {
       <button
         type="button"
         onClick={handleOpen}
-        className={`inline-flex items-center gap-1 text-xs ${chipColor} cursor-pointer hover:underline`}
+        className={`inline-flex items-center gap-1 text-xs rounded-full border px-2 py-0.5 ${chipColor} cursor-pointer hover:underline`}
       >
-        <MailIcon className="h-3 w-3" />
+        <MailIcon className="h-3.5 w-3.5" />
         {chipLabel}
       </button>
       <DialogContent className="max-w-md">
@@ -202,13 +191,28 @@ function formatDate(dateStr: string | null) {
   return `${month}/${day}/${year}`;
 }
 
+function todayIso() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function FollowUpDate({ date }: { date: string }) {
+  const overdue = date < todayIso();
+  return (
+    <span className={overdue ? "text-red-600 font-medium" : "text-muted-foreground"}>
+      {formatDate(date)}
+      {overdue && " (overdue)"}
+    </span>
+  );
+}
+
 function ProspectRow({ prospect }: { prospect: Prospect }) {
   const router = useRouter();
   const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [, startTransition] = useTransition();
 
   function handleDelete() {
-    if (!confirm(`Delete ${prospect.company}? This cannot be undone.`)) return;
     startTransition(async () => {
       const result = await deleteProspect(prospect.id);
       if (result.error) {
@@ -264,7 +268,16 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
 
   return (
     <TableRow>
-      <TableCell className="font-medium">{prospect.company}</TableCell>
+      <TableCell className="font-medium">
+        <span className="inline-flex items-center gap-1.5">
+          {prospect.company}
+          {prospect.notes && (
+            <span title={prospect.notes}>
+              <StickyNoteIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            </span>
+          )}
+        </span>
+      </TableCell>
       <TableCell className="text-muted-foreground">
         {prospect.contact_name ?? "—"}
       </TableCell>
@@ -279,6 +292,13 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
           <StatusBadge status={prospect.status} />
           <EmailHistoryDialog prospect={prospect} />
         </div>
+      </TableCell>
+      <TableCell className="text-sm">
+        {prospect.next_followup ? (
+          <FollowUpDate date={prospect.next_followup} />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        )}
       </TableCell>
       <TableCell>
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
@@ -314,7 +334,7 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
-              <DropdownMenuItem variant="destructive" onSelect={handleDelete}>
+              <DropdownMenuItem variant="destructive" onSelect={() => setDeleteOpen(true)}>
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -329,6 +349,22 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
             />
           </DialogContent>
         </Dialog>
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete {prospect.company}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This cannot be undone. The prospect and all related data will be permanently removed.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </TableCell>
     </TableRow>
   );
@@ -412,8 +448,7 @@ export function ProspectsTable({
               <SelectItem value="new">New</SelectItem>
               <SelectItem value="emailing">Emailing</SelectItem>
               <SelectItem value="no_response">No Response</SelectItem>
-              <SelectItem value="replied">Replied</SelectItem>
-              <SelectItem value="called">Called</SelectItem>
+              <SelectItem value="responded">Responded</SelectItem>
               <SelectItem value="interested">Interested</SelectItem>
               <SelectItem value="not_interested">Not Interested</SelectItem>
               <SelectItem value="bounced">Bounced</SelectItem>
@@ -478,6 +513,7 @@ export function ProspectsTable({
               <TableHead>Phone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Follow-up</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
@@ -485,7 +521,7 @@ export function ProspectsTable({
             {prospects.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="text-muted-foreground py-10 text-center text-sm"
                 >
                   No prospects found.

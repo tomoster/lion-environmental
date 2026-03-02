@@ -27,13 +27,11 @@ export function ProspectForm({ prospect, onSuccess }: ProspectFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   const [isPending, startTransition] = useTransition();
   const [status, setStatus] = useState(prospect?.status ?? "new");
-  const [source, setSource] = useState(prospect?.source ?? "manual");
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
     formData.set("status", status);
-    formData.set("source", source);
 
     startTransition(async () => {
       const result = prospect
@@ -47,7 +45,6 @@ export function ProspectForm({ prospect, onSuccess }: ProspectFormProps) {
         if (!prospect) {
           formRef.current?.reset();
           setStatus("new");
-          setSource("manual");
         }
         onSuccess?.();
       }
@@ -120,39 +117,26 @@ export function ProspectForm({ prospect, onSuccess }: ProspectFormProps) {
           />
         </div>
 
-        <div className="space-y-1.5">
-          <Label>Status</Label>
-          <Select value={status} onValueChange={setStatus}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="emailing">Emailing</SelectItem>
-              <SelectItem value="no_response">No Response</SelectItem>
-              <SelectItem value="replied">Replied</SelectItem>
-              <SelectItem value="called">Called</SelectItem>
-              <SelectItem value="interested">Interested</SelectItem>
-              <SelectItem value="not_interested">Not Interested</SelectItem>
-              <SelectItem value="bounced">Bounced</SelectItem>
-              <SelectItem value="converted">Converted</SelectItem>
-              <SelectItem value="archived">Archived</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-1.5">
-          <Label>Source</Label>
-          <Select value={source} onValueChange={setSource}>
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="manual">Manual</SelectItem>
-              <SelectItem value="apify">Apify</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        {prospect && (
+          <div className="col-span-2 space-y-1.5">
+            <Label>Status</Label>
+            <Select value={status} onValueChange={setStatus}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="new">New</SelectItem>
+                <SelectItem value="emailing">Emailing</SelectItem>
+                <SelectItem value="no_response">No Response</SelectItem>
+                <SelectItem value="responded">Responded</SelectItem>
+                <SelectItem value="interested">Interested</SelectItem>
+                <SelectItem value="not_interested">Not Interested</SelectItem>
+                <SelectItem value="bounced">Bounced</SelectItem>
+                <SelectItem value="archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
         <div className="col-span-2 space-y-1.5">
           <Label htmlFor="notes">Notes</Label>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAuth } from "@/lib/auth/require-auth";
+import { nextBusinessDaySend } from "@/lib/email/scheduling";
 
 interface ApifyRow {
   title?: string;
@@ -17,17 +18,6 @@ interface ImportResult {
   imported: number;
   skipped: number;
   duplicates: string[];
-}
-
-function nextBusinessDaySend(): string {
-  const now = new Date();
-  const next = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  // Set to ~9am ET (14:00 UTC) + random 0-60 min
-  next.setUTCHours(14, Math.floor(Math.random() * 60), 0, 0);
-  const day = next.getUTCDay();
-  if (day === 6) next.setDate(next.getDate() + 2);
-  if (day === 0) next.setDate(next.getDate() + 1);
-  return next.toISOString();
 }
 
 function normalizePhone(phone: string | null | undefined): string | null {

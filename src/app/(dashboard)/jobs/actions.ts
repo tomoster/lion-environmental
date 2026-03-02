@@ -13,7 +13,9 @@ export async function createJob(formData: FormData) {
 
   const data = {
     client_company: (formData.get("client_company") as string) || null,
+    client_contact: (formData.get("client_contact") as string) || null,
     client_email: (formData.get("client_email") as string) || null,
+    client_phone: (formData.get("client_phone") as string) || null,
     building_address: (formData.get("building_address") as string) || null,
     has_xrf: formData.get("has_xrf") === "true",
     has_dust_swab: formData.get("has_dust_swab") === "true",
@@ -94,7 +96,9 @@ export async function updateJob(id: string, formData: FormData): Promise<void> {
 
   const data = {
     client_company: (formData.get("client_company") as string) || null,
+    client_contact: (formData.get("client_contact") as string) || null,
     client_email: (formData.get("client_email") as string) || null,
+    client_phone: (formData.get("client_phone") as string) || null,
     building_address: (formData.get("building_address") as string) || null,
     has_xrf: hasXrf,
     has_dust_swab: hasDustSwab,
@@ -247,7 +251,7 @@ export async function createJobFromProspect(prospectId: string) {
 
   const { data: prospect, error: prospectError } = await supabase
     .from("prospects")
-    .select("company, email, building_address")
+    .select("company, email, building_address, contact_name, phone")
     .eq("id", prospectId)
     .single();
 
@@ -261,6 +265,8 @@ export async function createJobFromProspect(prospectId: string) {
       prospect_id: prospectId,
       client_company: prospect.company,
       client_email: prospect.email,
+      client_contact: prospect.contact_name,
+      client_phone: prospect.phone,
       building_address: prospect.building_address,
       job_status: "not_dispatched",
       report_status: "not_started",
