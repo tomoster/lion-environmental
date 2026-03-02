@@ -81,6 +81,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       businessName: settingsMap["business_name"],
       businessPhone: settingsMap["business_phone"],
       businessEmail: settingsMap["business_email"],
+      signatureText: settingsMap["email_signature"],
     });
 
     const statusColumn = reportType === "xrf" ? "report_status" : reportType === "dust_swab" ? "dust_swab_status" : "asbestos_status";

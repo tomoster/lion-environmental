@@ -245,6 +245,20 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                   </p>
                 </div>
               </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="email_signature">Email Signature</Label>
+                <Textarea
+                  id="email_signature"
+                  name="email_signature"
+                  rows={4}
+                  defaultValue={
+                    settings.email_signature ?? "Avi Bursztyn\nLion Environmental LLC\n(201) 375-2797"
+                  }
+                />
+                <p className="text-xs text-muted-foreground">
+                  Appears at the bottom of proposal, invoice, and report emails.
+                </p>
+              </div>
             </CardContent>
             <CardFooter>
               <Button type="submit" disabled={biz.isPending}>

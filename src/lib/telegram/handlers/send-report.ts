@@ -108,6 +108,7 @@ export async function handleSendReport(query: TelegramCallbackQuery) {
       businessName: settingsMap["business_name"],
       businessPhone: settingsMap["business_phone"],
       businessEmail: settingsMap["business_email"],
+      signatureText: settingsMap["email_signature"],
     });
 
     const statusColumn = reportType === "xrf" ? "report_status" : "dust_swab_status";

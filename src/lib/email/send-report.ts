@@ -37,6 +37,7 @@ type SendReportParams = {
   businessName?: string;
   businessPhone?: string;
   businessEmail?: string;
+  signatureText?: string;
 };
 
 const SERVICE_LABELS: Record<string, string> = {
@@ -58,7 +59,7 @@ function textToHtml(text: string): string {
         const items = lines
           .map((l) => `<li>${l.replace(/^\s*-\s*/, "")}</li>`)
           .join("");
-        return `<ul style="color: #555;">${items}</ul>`;
+        return `<ul>${items}</ul>`;
       }
       return `<p>${block.replace(/\n/g, "<br/>")}</p>`;
     })
@@ -78,6 +79,7 @@ export async function sendReportEmail({
   businessName,
   businessPhone,
   businessEmail,
+  signatureText,
 }: SendReportParams) {
   const serviceLabel = SERVICE_LABELS[serviceType] ?? "Inspection";
 
@@ -101,9 +103,9 @@ export async function sendReportEmail({
     to,
     subject,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; font-size: 14px; color: #000;">
         ${bodyHtml}
-        ${renderSignature({ senderName, businessName, businessPhone, businessEmail })}
+        ${renderSignature({ senderName, businessName, businessPhone, businessEmail, signatureText })}
       </div>
     `,
     attachments: attachments.map((a) => ({

@@ -22,7 +22,7 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
     const { data: settingsRows } = await supabase
       .from("settings")
       .select("key, value")
-      .in("key", ["sender_name", "proposal_email_subject", "proposal_email_body", "tax_rate", "business_name", "business_phone", "business_email", "business_check_address"]);
+      .in("key", ["sender_name", "proposal_email_subject", "proposal_email_body", "tax_rate", "business_name", "business_phone", "business_email", "business_check_address", "email_signature"]);
 
     const s: Record<string, string> = Object.fromEntries(
       (settingsRows ?? []).map(({ key, value }) => [key, value])
@@ -49,6 +49,7 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
       businessName: s.business_name,
       businessPhone: s.business_phone,
       businessEmail: s.business_email,
+      signatureText: s.email_signature,
     });
 
     await supabase.from("jobs").update({

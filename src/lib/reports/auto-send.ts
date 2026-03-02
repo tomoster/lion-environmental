@@ -127,6 +127,7 @@ export async function autoSendReports(
       businessName: settingsMap["business_name"],
       businessPhone: settingsMap["business_phone"],
       businessEmail: settingsMap["business_email"],
+      signatureText: settingsMap["email_signature"],
     });
 
     await supabase

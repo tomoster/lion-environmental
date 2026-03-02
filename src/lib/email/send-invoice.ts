@@ -37,7 +37,7 @@ function textToHtml(text: string): string {
         const items = lines
           .map((l) => `<li>${l.replace(/^\s*-\s*/, "")}</li>`)
           .join("");
-        return `<ul style="color: #555;">${items}</ul>`;
+        return `<ul>${items}</ul>`;
       }
       return `<p>${block.replace(/\n/g, "<br/>")}</p>`;
     })
@@ -59,6 +59,7 @@ type SendInvoiceParams = {
   businessEmail?: string;
   businessZelle?: string;
   businessCheckAddress?: string;
+  signatureText?: string;
 };
 
 export async function sendInvoiceEmail({
@@ -76,6 +77,7 @@ export async function sendInvoiceEmail({
   businessEmail,
   businessZelle,
   businessCheckAddress,
+  signatureText,
 }: SendInvoiceParams) {
   const bizName = businessName || "Lion Environmental LLC";
   const bizZelle = businessZelle || "2013752797";
@@ -111,9 +113,9 @@ export async function sendInvoiceEmail({
     to,
     subject,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; font-size: 14px; color: #000;">
         ${bodyHtml}
-        ${renderSignature({ senderName, businessName: bizName, businessPhone, businessEmail })}
+        ${renderSignature({ senderName, businessName: bizName, businessPhone, businessEmail, signatureText })}
       </div>
     `,
     attachments: [
@@ -233,6 +235,7 @@ export async function sendInvoiceForId(
     businessEmail,
     businessZelle,
     businessCheckAddress,
+    signatureText: settingsMap["email_signature"],
   });
 
   const pdfPath = `invoices/${invoiceId}/invoice-${invoice.invoice_number}.pdf`;

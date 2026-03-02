@@ -27,6 +27,7 @@ type SendProposalParams = {
   businessName?: string;
   businessPhone?: string;
   businessEmail?: string;
+  signatureText?: string;
 };
 
 const DEFAULT_SUBJECT = "Proposal \u2014 {{address}}";
@@ -56,6 +57,7 @@ export async function sendProposalEmail({
   businessName,
   businessPhone,
   businessEmail,
+  signatureText,
 }: SendProposalParams) {
   const vars: Record<string, string> = {
     address: buildingAddress || `Job #${jobNumber}`,
@@ -68,7 +70,7 @@ export async function sendProposalEmail({
 
   const bodyHtml = bodyText
     .split("\n\n")
-    .map((p) => `<p style="color: #555;">${p.replace(/\n/g, "<br/>")}</p>`)
+    .map((p) => `<p>${p.replace(/\n/g, "<br/>")}</p>`)
     .join("\n");
 
   const info = await transporter.sendMail({
@@ -76,9 +78,9 @@ export async function sendProposalEmail({
     to,
     subject,
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Arial, sans-serif; font-size: 14px; color: #000;">
         ${bodyHtml}
-        ${renderSignature({ senderName, businessName, businessPhone, businessEmail })}
+        ${renderSignature({ senderName, businessName, businessPhone, businessEmail, signatureText })}
       </div>
     `,
     attachments: attachments.map((a) => ({
