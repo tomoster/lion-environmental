@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAuth } from "@/lib/auth/require-auth";
 import { nextBusinessDaySend } from "@/lib/email/scheduling";
+import {
+  normalizePhone,
+  normalizeCompany,
+  fetchDedupSets,
+  batchInsert,
+} from "@/lib/prospects/import";
 
 interface ApifyRow {
   title?: string;
@@ -14,71 +20,29 @@ interface ApifyRow {
   categoryName?: string;
 }
 
-interface ImportResult {
-  imported: number;
-  skipped: number;
-  duplicates: string[];
-}
-
-function normalizePhone(phone: string | null | undefined): string | null {
-  if (!phone) return null;
-  return phone.replace(/[^\d+]/g, "");
-}
-
-function normalizeCompany(name: string): string {
-  return name.trim().toLowerCase().replace(/[^a-z0-9\s]/g, "");
-}
-
 export async function POST(request: NextRequest) {
   const user = await requireAuth();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const supabase = createAdminClient();
-
   const { rows } = (await request.json()) as { rows: ApifyRow[] };
 
   if (!rows || !Array.isArray(rows) || rows.length === 0) {
     return NextResponse.json({ error: "No rows provided" }, { status: 400 });
   }
 
-  const { data: existing, error: fetchError } = await supabase
-    .from("prospects")
-    .select("company, phone, email");
-
-  if (fetchError) {
+  let dedup;
+  try {
+    dedup = await fetchDedupSets(supabase);
+  } catch (e) {
     return NextResponse.json(
-      { error: `Failed to fetch existing prospects: ${fetchError.message}` },
+      { error: (e as Error).message },
       { status: 500 }
     );
   }
 
-  const existingNormalizedNames = new Set(
-    (existing ?? []).map((p) => normalizeCompany(p.company))
-  );
-  const existingPhones = new Set(
-    (existing ?? [])
-      .map((p) => normalizePhone(p.phone))
-      .filter(Boolean)
-  );
-  const existingEmails = new Set(
-    (existing ?? [])
-      .map((p) => p.email?.toLowerCase())
-      .filter(Boolean)
-  );
-
   const seenInBatch = new Set<string>();
-  const toInsert: Array<{
-    company: string;
-    phone: string | null;
-    email: string | null;
-    building_address: string | null;
-    website: string | null;
-    google_rating: number | null;
-    status: string;
-    source: string;
-    seq_step: number;
-    next_send: string | null;
-  }> = [];
+  const toInsert: Record<string, unknown>[] = [];
   const duplicates: string[] = [];
 
   for (const row of rows) {
@@ -89,15 +53,11 @@ export async function POST(request: NextRequest) {
     const phone = normalizePhone(row.phone);
     const email = row.email?.trim().toLowerCase() || null;
 
-    let isDuplicate = false;
-
-    if (existingNormalizedNames.has(normalized) || seenInBatch.has(normalized)) {
-      isDuplicate = true;
-    } else if (phone && existingPhones.has(phone)) {
-      isDuplicate = true;
-    } else if (email && existingEmails.has(email)) {
-      isDuplicate = true;
-    }
+    const isDuplicate =
+      dedup.names.has(normalized) ||
+      seenInBatch.has(normalized) ||
+      (!!phone && dedup.phones.has(phone)) ||
+      (!!email && dedup.emails.has(email));
 
     if (isDuplicate) {
       duplicates.push(company);
@@ -105,8 +65,8 @@ export async function POST(request: NextRequest) {
     }
 
     seenInBatch.add(normalized);
-    if (phone) existingPhones.add(phone);
-    if (email) existingEmails.add(email);
+    if (phone) dedup.phones.add(phone);
+    if (email) dedup.emails.add(email);
 
     const hasEmail = !!email;
     toInsert.push({
@@ -124,39 +84,21 @@ export async function POST(request: NextRequest) {
   }
 
   if (toInsert.length === 0) {
-    return NextResponse.json({
-      imported: 0,
-      skipped: duplicates.length,
-      duplicates,
-    } satisfies ImportResult);
+    return NextResponse.json({ imported: 0, skipped: duplicates.length, duplicates });
   }
 
-  const BATCH_SIZE = 500;
-  let totalImported = 0;
+  const result = await batchInsert(supabase, toInsert);
 
-  for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
-    const batch = toInsert.slice(i, i + BATCH_SIZE);
-    const { error: insertError } = await supabase
-      .from("prospects")
-      .insert(batch);
-
-    if (insertError) {
-      return NextResponse.json(
-        {
-          error: `Insert failed at batch ${Math.floor(i / BATCH_SIZE) + 1}: ${insertError.message}`,
-          imported: totalImported,
-          skipped: duplicates.length,
-          duplicates,
-        },
-        { status: 500 }
-      );
-    }
-    totalImported += batch.length;
+  if (result.error) {
+    return NextResponse.json(
+      { error: result.error, imported: result.imported, skipped: duplicates.length, duplicates },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({
-    imported: totalImported,
+    imported: result.imported,
     skipped: duplicates.length,
     duplicates,
-  } satisfies ImportResult);
+  });
 }

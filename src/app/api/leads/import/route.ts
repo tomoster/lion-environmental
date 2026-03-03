@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireAuth } from "@/lib/auth/require-auth";
 import { nextBusinessDaySend } from "@/lib/email/scheduling";
+import {
+  normalizePhone,
+  normalizeCompany,
+  fetchDedupSets,
+  batchInsert,
+} from "@/lib/prospects/import";
 
 interface LeadInput {
   name: string;
@@ -13,15 +19,6 @@ interface LeadInput {
   apollo_id?: string | null;
   source: string;
   location?: string | null;
-}
-
-function normalizePhone(phone: string | null | undefined): string | null {
-  if (!phone) return null;
-  return phone.replace(/[^\d+]/g, "");
-}
-
-function normalizeCompany(name: string): string {
-  return name.trim().toLowerCase().replace(/[^a-z0-9\s]/g, "");
 }
 
 export async function POST(request: NextRequest) {
@@ -36,53 +33,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "No leads provided" }, { status: 400 });
   }
 
-  const { data: existing, error: fetchError } = await supabase
-    .from("prospects")
-    .select("company, phone, email, apollo_id");
-
-  if (fetchError) {
+  let dedup;
+  try {
+    dedup = await fetchDedupSets(supabase);
+  } catch (e) {
     return NextResponse.json(
-      { error: `Failed to fetch existing prospects: ${fetchError.message}` },
+      { error: (e as Error).message },
       { status: 500 }
     );
   }
 
-  const existingNames = new Set(
-    (existing ?? []).map((p) => normalizeCompany(p.company))
-  );
-  const existingPhones = new Set(
-    (existing ?? [])
-      .map((p) => normalizePhone(p.phone))
-      .filter(Boolean)
-  );
-  const existingEmails = new Set(
-    (existing ?? [])
-      .map((p) => p.email?.toLowerCase())
-      .filter(Boolean)
-  );
-  const existingApolloIds = new Set(
-    (existing ?? [])
-      .map((p) => (p as Record<string, unknown>).apollo_id as string | null)
-      .filter(Boolean)
-  );
-
   const seenEmails = new Set<string>();
   const seenApolloIds = new Set<string>();
   const seenCompanies = new Set<string>();
-  const toInsert: Array<{
-    company: string;
-    contact_name: string | null;
-    email: string | null;
-    phone: string | null;
-    job_title: string | null;
-    linkedin: string | null;
-    apollo_id: string | null;
-    source: string;
-    building_address: string | null;
-    status: string;
-    seq_step: number;
-    next_send: string | null;
-  }> = [];
+  const toInsert: Record<string, unknown>[] = [];
   const duplicates: string[] = [];
 
   for (const lead of leads) {
@@ -94,17 +58,11 @@ export async function POST(request: NextRequest) {
     const apolloId = lead.apollo_id || null;
     const hasPersonId = !!email || !!apolloId;
 
-    let isDuplicate = false;
-
-    if (apolloId && (existingApolloIds.has(apolloId) || seenApolloIds.has(apolloId))) {
-      isDuplicate = true;
-    } else if (email && (existingEmails.has(email) || seenEmails.has(email))) {
-      isDuplicate = true;
-    } else if (phone && existingPhones.has(phone)) {
-      isDuplicate = true;
-    } else if (!hasPersonId && (existingNames.has(normalized) || seenCompanies.has(normalized))) {
-      isDuplicate = true;
-    }
+    const isDuplicate =
+      (!!apolloId && (dedup.apolloIds.has(apolloId) || seenApolloIds.has(apolloId))) ||
+      (!!email && (dedup.emails.has(email) || seenEmails.has(email))) ||
+      (!!phone && dedup.phones.has(phone)) ||
+      (!hasPersonId && (dedup.names.has(normalized) || seenCompanies.has(normalized)));
 
     if (isDuplicate) {
       duplicates.push(lead.company);
@@ -140,30 +98,17 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  const BATCH_SIZE = 500;
-  let totalImported = 0;
+  const result = await batchInsert(supabase, toInsert);
 
-  for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
-    const batch = toInsert.slice(i, i + BATCH_SIZE);
-    const { error: insertError } = await supabase
-      .from("prospects")
-      .insert(batch);
-
-    if (insertError) {
-      return NextResponse.json(
-        {
-          error: `Insert failed: ${insertError.message}`,
-          imported: totalImported,
-          duplicates: duplicates.length,
-        },
-        { status: 500 }
-      );
-    }
-    totalImported += batch.length;
+  if (result.error) {
+    return NextResponse.json(
+      { error: result.error, imported: result.imported, duplicates: duplicates.length },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({
-    imported: totalImported,
+    imported: result.imported,
     duplicates: duplicates.length,
     total: leads.length,
   });
