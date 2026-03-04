@@ -3,7 +3,7 @@
 4-step outreach sequence. Templates auto-selected based on prospect location.
 Subject lines are per-step — each follow-up gets a different subject to boost opens.
 
-Variables: `{{first_name}}`, `{{company}}`
+Variables: `{{first_name}}`, `{{company}}`, `{{month}}` (auto-filled with current month)
 
 ---
 
@@ -11,11 +11,11 @@ Variables: `{{first_name}}`, `{{company}}`
 
 ### Step 1
 
-**Subject:** `Local Law 31 pricing — March only, {{first_name}}`
+**Subject:** `Local Law 31 pricing — {{month}} only, {{first_name}}`
 
 Hi {{first_name}},
 
-Lion Environmental is currently offering a limited-time promotion through the end of March on all lead (Local Law 31) compliance services.
+Lion Environmental is currently offering a limited-time promotion through the end of {{month}} on all lead (Local Law 31) compliance services.
 
 Promotional Pricing:
 

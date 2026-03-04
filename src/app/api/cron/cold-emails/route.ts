@@ -193,7 +193,11 @@ export async function GET(request: NextRequest) {
 
     // Personalize
     const firstName = prospect.contact_name?.split(" ")[0] ?? "";
-    const vars = { first_name: firstName, company: prospect.company };
+    const currentMonth = new Date().toLocaleString("en-US", {
+      timeZone: "America/New_York",
+      month: "long",
+    });
+    const vars = { first_name: firstName, company: prospect.company, month: currentMonth };
     const stepSubject =
       settings[`cold_email_subject_step_${step}_${location}`] ??
       settings[`cold_email_subject_step_${step}`] ??
