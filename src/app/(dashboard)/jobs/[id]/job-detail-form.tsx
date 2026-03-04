@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import {
   Select,
   SelectContent,
@@ -948,6 +949,49 @@ const DOC_TYPE_LABELS: Record<string, string> = {
   proposal_asbestos: "Asbestos",
 };
 
+const chevronIcon = (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className="h-4 w-4 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180"
+  >
+    <path d="m6 9 6 6 6-6" />
+  </svg>
+);
+
+function CollapsibleCard({
+  title,
+  defaultOpen,
+  children,
+}: {
+  title: React.ReactNode;
+  defaultOpen?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Collapsible defaultOpen={defaultOpen} className="group">
+      <Card>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer select-none">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base">{title}</CardTitle>
+              {chevronIcon}
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <CardContent>{children}</CardContent>
+        </CollapsibleContent>
+      </Card>
+    </Collapsible>
+  );
+}
+
 function ProposalsSection({
   properties,
   documents,
@@ -957,16 +1001,7 @@ function ProposalsSection({
   documents: JobDocument[];
   fileIcon: React.ReactNode;
 }) {
-  if (documents.length === 0) {
-    return (
-      <Card>
-        <CardHeader><CardTitle className="text-base">Proposals</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">Proposals will appear here after sending.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const hasContent = documents.length > 0;
 
   const grouped = new Map<string | null, JobDocument[]>();
   for (const doc of documents) {
@@ -976,46 +1011,52 @@ function ProposalsSection({
   }
 
   return (
-    <Card>
-      <CardHeader><CardTitle className="text-base">Proposals ({documents.length})</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
-        {Array.from(grouped.entries()).map(([propId, docs]) => {
-          const prop = properties.find(p => p.id === propId);
-          return (
-            <div key={propId ?? "unknown"} className="space-y-2">
-              {properties.length > 1 && (
-                <h4 className="text-sm font-medium text-muted-foreground">
-                  {prop?.building_address ?? "Unknown Property"}
-                </h4>
-              )}
-              <ul className="space-y-1.5">
-                {docs.map(d => (
-                  <li key={d.id} className="flex items-center gap-2 text-sm">
-                    {fileIcon}
-                    <a
-                      href={`/api/documents/${d.file_path}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline truncate"
-                    >
-                      {d.original_filename}
-                    </a>
-                    <Badge variant="outline" className="text-xs">
-                      {DOC_TYPE_LABELS[d.document_type] ?? d.document_type}
-                    </Badge>
-                    {d.created_at && (
-                      <span className="text-xs text-muted-foreground ml-auto shrink-0">
-                        {new Date(d.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
+    <CollapsibleCard
+      title={hasContent ? `Proposals (${documents.length})` : "Proposals"}
+      defaultOpen={hasContent}
+    >
+      {!hasContent ? (
+        <p className="text-sm text-muted-foreground">Proposals will appear here after sending.</p>
+      ) : (
+        <div className="space-y-4">
+          {Array.from(grouped.entries()).map(([propId, docs]) => {
+            const prop = properties.find(p => p.id === propId);
+            return (
+              <div key={propId ?? "unknown"} className="space-y-2">
+                {properties.length > 1 && (
+                  <h4 className="text-sm font-medium text-muted-foreground">
+                    {prop?.building_address ?? "Unknown Property"}
+                  </h4>
+                )}
+                <ul className="space-y-1.5">
+                  {docs.map(d => (
+                    <li key={d.id} className="flex items-center gap-2 text-sm">
+                      {fileIcon}
+                      <a
+                        href={`/api/documents/${d.file_path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline truncate"
+                      >
+                        {d.original_filename}
+                      </a>
+                      <Badge variant="outline" className="text-xs">
+                        {DOC_TYPE_LABELS[d.document_type] ?? d.document_type}
+                      </Badge>
+                      {d.created_at && (
+                        <span className="text-xs text-muted-foreground ml-auto shrink-0">
+                          {new Date(d.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </CollapsibleCard>
   );
 }
 
@@ -1038,9 +1079,11 @@ function SignedProposalsSection({
   const router = useRouter();
 
   return (
-    <Card>
-      <CardHeader><CardTitle className="text-base">Signed Proposals ({documents.length})</CardTitle></CardHeader>
-      <CardContent className="space-y-4">
+    <CollapsibleCard
+      title={`Signed Proposals (${documents.length})`}
+      defaultOpen
+    >
+      <div className="space-y-4">
         {properties.map(prop => {
           const propDocs = documents.filter(d => d.property_id === prop.id);
           const uploadAction = uploadActions[prop.id];
@@ -1118,8 +1161,8 @@ function SignedProposalsSection({
             </div>
           );
         })}
-      </CardContent>
-    </Card>
+      </div>
+    </CollapsibleCard>
   );
 }
 
@@ -1137,42 +1180,39 @@ function InvoiceSection({
   fileIcon: React.ReactNode;
 }) {
   return (
-    <Card>
-      <CardHeader><CardTitle className="text-base">Invoice</CardTitle></CardHeader>
-      <CardContent>
-        {!invoice ? (
-          <p className="text-sm text-muted-foreground">No invoice generated yet.</p>
-        ) : invoice.pdf_path ? (
-          <div className="flex items-center gap-2 text-sm">
-            {fileIcon}
-            <a
-              href={`/api/documents/${invoice.pdf_path}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline"
-            >
-              Invoice #{invoice.invoice_number}
-            </a>
-            {invoice.total != null && (
-              <span className="text-muted-foreground ml-auto">
-                {formatCurrency(invoice.total)}
-              </span>
-            )}
-            <Badge variant="outline" className="text-xs capitalize">{invoice.status}</Badge>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2 text-sm">
-            <span>Invoice #{invoice.invoice_number}</span>
-            {invoice.total != null && (
-              <span className="text-muted-foreground ml-auto">
-                {formatCurrency(invoice.total)}
-              </span>
-            )}
-            <Badge variant="outline" className="text-xs capitalize">{invoice.status}</Badge>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+    <CollapsibleCard title="Invoice" defaultOpen={!!invoice}>
+      {!invoice ? (
+        <p className="text-sm text-muted-foreground">No invoice generated yet.</p>
+      ) : invoice.pdf_path ? (
+        <div className="flex items-center gap-2 text-sm">
+          {fileIcon}
+          <a
+            href={`/api/documents/${invoice.pdf_path}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:underline"
+          >
+            Invoice #{invoice.invoice_number}
+          </a>
+          {invoice.total != null && (
+            <span className="text-muted-foreground ml-auto">
+              {formatCurrency(invoice.total)}
+            </span>
+          )}
+          <Badge variant="outline" className="text-xs capitalize">{invoice.status}</Badge>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 text-sm">
+          <span>Invoice #{invoice.invoice_number}</span>
+          {invoice.total != null && (
+            <span className="text-muted-foreground ml-auto">
+              {formatCurrency(invoice.total)}
+            </span>
+          )}
+          <Badge variant="outline" className="text-xs capitalize">{invoice.status}</Badge>
+        </div>
+      )}
+    </CollapsibleCard>
   );
 }
 
@@ -1199,108 +1239,97 @@ function ReportsSection({
   };
   fileIcon: React.ReactNode;
 }) {
-  if (!anyHasXrf && !anyHasDustSwab && !anyHasAsbestos) {
-    return (
-      <Card>
-        <CardHeader><CardTitle className="text-base">Reports</CardTitle></CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">No services selected on any property.</p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const totalReports = xrfReports.length + dustSwabReports.length + asbestosReports.length;
+  const hasServices = anyHasXrf || anyHasDustSwab || anyHasAsbestos;
 
   return (
-    <div className="space-y-4">
-      {anyHasXrf && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">XRF Reports ({xrfReports.length} uploaded)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {xrfReports.length > 0 ? (
-              <ul className="space-y-1.5">
-                {xrfReports.map((r) => (
-                  <li key={r.id} className="flex items-center gap-2 text-sm">
-                    {fileIcon}
-                    <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
-                      {r.original_filename}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">No XRF reports uploaded yet.</p>
-            )}
-            <form action={uploadActions.xrf}>
-              <div className="flex items-center gap-3">
-                <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                <Button type="submit" variant="outline" size="sm">Upload</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+    <CollapsibleCard
+      title={hasServices ? `Reports (${totalReports} uploaded)` : "Reports"}
+      defaultOpen={hasServices}
+    >
+      {!hasServices ? (
+        <p className="text-sm text-muted-foreground">No services selected on any property.</p>
+      ) : (
+        <div className="space-y-6">
+          {anyHasXrf && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">XRF Reports ({xrfReports.length})</h4>
+              {xrfReports.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {xrfReports.map((r) => (
+                    <li key={r.id} className="flex items-center gap-2 text-sm">
+                      {fileIcon}
+                      <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                        {r.original_filename}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No XRF reports uploaded yet.</p>
+              )}
+              <form action={uploadActions.xrf}>
+                <div className="flex items-center gap-3">
+                  <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                  <Button type="submit" variant="outline" size="sm">Upload</Button>
+                </div>
+              </form>
+            </div>
+          )}
 
-      {anyHasDustSwab && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Dust Swab Reports ({dustSwabReports.length} uploaded)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {dustSwabReports.length > 0 ? (
-              <ul className="space-y-1.5">
-                {dustSwabReports.map((r) => (
-                  <li key={r.id} className="flex items-center gap-2 text-sm">
-                    {fileIcon}
-                    <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
-                      {r.original_filename}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">No dust swab reports uploaded yet.</p>
-            )}
-            <form action={uploadActions.dustSwab}>
-              <div className="flex items-center gap-3">
-                <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                <Button type="submit" variant="outline" size="sm">Upload</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      )}
+          {anyHasDustSwab && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">Dust Swab Reports ({dustSwabReports.length})</h4>
+              {dustSwabReports.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {dustSwabReports.map((r) => (
+                    <li key={r.id} className="flex items-center gap-2 text-sm">
+                      {fileIcon}
+                      <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                        {r.original_filename}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No dust swab reports uploaded yet.</p>
+              )}
+              <form action={uploadActions.dustSwab}>
+                <div className="flex items-center gap-3">
+                  <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                  <Button type="submit" variant="outline" size="sm">Upload</Button>
+                </div>
+              </form>
+            </div>
+          )}
 
-      {anyHasAsbestos && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Asbestos Reports ({asbestosReports.length} uploaded)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {asbestosReports.length > 0 ? (
-              <ul className="space-y-1.5">
-                {asbestosReports.map((r) => (
-                  <li key={r.id} className="flex items-center gap-2 text-sm">
-                    {fileIcon}
-                    <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
-                      {r.original_filename}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted-foreground">No asbestos reports uploaded yet.</p>
-            )}
-            <form action={uploadActions.asbestos}>
-              <div className="flex items-center gap-3">
-                <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                <Button type="submit" variant="outline" size="sm">Upload</Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+          {anyHasAsbestos && (
+            <div className="space-y-3">
+              <h4 className="text-sm font-medium">Asbestos Reports ({asbestosReports.length})</h4>
+              {asbestosReports.length > 0 ? (
+                <ul className="space-y-1.5">
+                  {asbestosReports.map((r) => (
+                    <li key={r.id} className="flex items-center gap-2 text-sm">
+                      {fileIcon}
+                      <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                        {r.original_filename}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm text-muted-foreground">No asbestos reports uploaded yet.</p>
+              )}
+              <form action={uploadActions.asbestos}>
+                <div className="flex items-center gap-3">
+                  <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                  <Button type="submit" variant="outline" size="sm">Upload</Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </div>
       )}
-    </div>
+    </CollapsibleCard>
   );
 }
