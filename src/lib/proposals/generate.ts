@@ -3,6 +3,7 @@ import path from "path";
 import fs from "fs";
 
 const LOGO_PATH = path.join(process.cwd(), "public", "images", "lion-logo.png");
+const CURSIVE_FONT_PATH = path.join(process.cwd(), "public", "fonts", "DancingScript.ttf");
 
 const PAGE_WIDTH = 612;
 const LEFT = 72;
@@ -73,7 +74,7 @@ function fmtQty(val: number | null | undefined): string {
 function createDoc(): InstanceType<typeof PDFDocument> {
   return new PDFDocument({
     size: "LETTER",
-    margins: { top: 50, bottom: 80, left: LEFT, right: 72 },
+    margins: { top: 50, bottom: 55, left: LEFT, right: 72 },
   });
 }
 
@@ -93,10 +94,10 @@ function addFooter(doc: InstanceType<typeof PDFDocument>, biz: Required<Proposal
   const saved = doc.page.margins.bottom;
   doc.page.margins.bottom = 0;
   doc.fontSize(8).font("Helvetica").fillColor("#000000");
-  doc.text(biz.businessAddress, LEFT, 720, {
+  doc.text(biz.businessAddress, LEFT, 755, {
     width: CONTENT_WIDTH, align: "center", lineBreak: false,
   });
-  doc.text(`P: ${biz.businessPhone}`, LEFT, 732, {
+  doc.text(`P: ${biz.businessPhone}`, LEFT, 767, {
     width: CONTENT_WIDTH, align: "center", lineBreak: false,
   });
   doc.page.margins.bottom = saved;
@@ -205,23 +206,57 @@ function addPaymentTerms(doc: InstanceType<typeof PDFDocument>, y: number, days:
 }
 
 function addSignatureBlock(doc: InstanceType<typeof PDFDocument>, y: number) {
-  doc.font("Helvetica-Bold").fontSize(12).fillColor("#000000");
+  doc.font("Helvetica-Bold").fontSize(11).fillColor("#000000");
   doc.text("This correctly sets forth understanding of the client. Client Agrees to all Terms and Conditions.", LEFT, y, { width: CONTENT_WIDTH });
-  y = doc.y + 30;
+  y = doc.y + 18;
 
-  const lineEnd = LEFT + 280;
-  doc.font("Helvetica-Bold").fontSize(10);
+  const colWidth = (CONTENT_WIDTH - 30) / 2;
+  const lineEndL = LEFT + colWidth;
+  const rightCol = LEFT + colWidth + 30;
+  const lineEndR = RIGHT;
 
-  doc.text("Accepted By:", LEFT, y, { lineBreak: false });
-  doc.moveTo(LEFT + 85, y + 13).lineTo(lineEnd, y + 13).lineWidth(0.5).stroke();
-  y += 35;
+  doc.font("Helvetica-Bold").fontSize(9);
 
+  // Contractor column header
+  doc.text("Contractor:", LEFT, y, { lineBreak: false });
+  doc.text("Client:", rightCol, y, { lineBreak: false });
+  y += 18;
+
+  // Signature row
   doc.text("Signature:", LEFT, y, { lineBreak: false });
-  doc.moveTo(LEFT + 75, y + 13).lineTo(lineEnd, y + 13).stroke();
-  y += 35;
+  doc.moveTo(LEFT + 65, y + 12).lineTo(lineEndL, y + 12).lineWidth(0.5).stroke();
+  doc.text("Accepted By:", rightCol, y, { lineBreak: false });
+  doc.moveTo(rightCol + 78, y + 12).lineTo(lineEndR, y + 12).stroke();
 
+  // Avi's cursive signature on the contractor line
+  if (fs.existsSync(CURSIVE_FONT_PATH)) {
+    doc.font(CURSIVE_FONT_PATH).fontSize(16).fillColor("#000000");
+    doc.text("Avi Bursztyn", LEFT + 68, y - 3, { lineBreak: false });
+  }
+  y += 25;
+
+  // Name row
+  doc.font("Helvetica-Bold").fontSize(9);
+  doc.text("Name:", LEFT, y, { lineBreak: false });
+  doc.moveTo(LEFT + 42, y + 12).lineTo(lineEndL, y + 12).stroke();
+  doc.font("Helvetica").fontSize(9);
+  doc.text("Avi Bursztyn", LEFT + 46, y, { lineBreak: false });
+
+  doc.font("Helvetica-Bold").fontSize(9);
+  doc.text("Signature:", rightCol, y, { lineBreak: false });
+  doc.moveTo(rightCol + 65, y + 12).lineTo(lineEndR, y + 12).stroke();
+  y += 25;
+
+  // Date row
+  doc.font("Helvetica-Bold").fontSize(9);
   doc.text("Date:", LEFT, y, { lineBreak: false });
-  doc.moveTo(LEFT + 45, y + 13).lineTo(lineEnd, y + 13).stroke();
+  doc.moveTo(LEFT + 35, y + 12).lineTo(lineEndL, y + 12).stroke();
+  doc.font("Helvetica").fontSize(9);
+  doc.text(todayFormatted(), LEFT + 39, y, { lineBreak: false });
+
+  doc.font("Helvetica-Bold").fontSize(9);
+  doc.text("Date:", rightCol, y, { lineBreak: false });
+  doc.moveTo(rightCol + 35, y + 12).lineTo(lineEndR, y + 12).stroke();
 }
 
 function docToBuffer(doc: InstanceType<typeof PDFDocument>): Promise<Buffer> {
@@ -360,7 +395,9 @@ export async function generateXRFProposal(data: ProposalData, jobInfo: ProposalJ
     { cells: [{ text: "TOTAL", bold: true }, { text: "" }, { text: "" }, { text: subtotal > 0 ? fmt(total) : "TBD", bold: true }], height: 30 },
   ], colW);
 
-  y += 25;
+  y += 15;
+  y = addPaymentTerms(doc, y, 60);
+  y += 10;
   addSignatureBlock(doc, y);
   addFooter(doc, biz);
 
