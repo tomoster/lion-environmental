@@ -11,13 +11,29 @@ Variables: `{{first_name}}`, `{{company}}`
 
 ### Step 1
 
-**Subject:** `Local Law 31 deadlines — {{first_name}}`
+**Subject:** `Local Law 31 pricing — March only, {{first_name}}`
 
 Hi {{first_name}},
 
-I run a lead paint inspection company in NJ. We've been doing a ton of Local Law 31 work for property managers in the city — full-building XRF inspections with certified reports back in 48-72 hours.
+Lion Environmental is currently offering a limited-time promotion through the end of March on all lead (Local Law 31) compliance services.
 
-Fines are $1,000 per unit and enforcement is picking up. If your buildings still need inspections, happy to put together numbers.
+Promotional Pricing:
+
+$150 – Studios & one-bedroom units
+
+$165 – Two- and three-bedroom units
+
+$110 – Per common area
+
+Lead Dust Swabs:
+
+$275 per unit, plus laboratory costs
+
+With pricing like this, our schedule is filling up quickly.
+
+To provide you with an accurate proposal, please send over the property address along with the total number of units.
+
+We look forward to working with you.
 
 Avi Bursztyn
 Lion Environmental LLC
