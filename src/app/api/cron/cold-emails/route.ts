@@ -194,10 +194,12 @@ export async function GET(request: NextRequest) {
     // Personalize
     const firstName = prospect.contact_name?.split(" ")[0] ?? "";
     const vars = { first_name: firstName, company: prospect.company };
-    const locationSubject =
+    const stepSubject =
+      settings[`cold_email_subject_step_${step}_${location}`] ??
+      settings[`cold_email_subject_step_${step}`] ??
       settings[`cold_email_subject_${location}`] ??
       subjectTemplate;
-    let subject = replaceVars(locationSubject, vars);
+    let subject = replaceVars(stepSubject, vars);
     let body = replaceVars(bodyTemplate, vars);
 
     // Clean up when no name: "Quick question, " → "Quick question", "Hi ," → "Hi,"
