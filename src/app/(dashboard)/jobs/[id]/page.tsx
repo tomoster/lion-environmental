@@ -4,6 +4,7 @@ import Link from "next/link";
 import { updateJob, updateProperty, createProperty, deleteProperty, deleteJob, uploadReport } from "../actions";
 import { dispatchJob, markClientPaid } from "./automation-actions";
 import { sendProposal } from "./send-proposal-action";
+import { uploadSignedProposal, deleteDocument } from "./document-actions";
 import { DeleteJobButton } from "./delete-job-button";
 import { WorkflowBar } from "./workflow-bar";
 import { JobDetailForm } from "./job-detail-form";
@@ -102,7 +103,7 @@ export default async function JobDetailPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: job }, { data: properties }, { data: jobInvoice }, { data: jobReports }, { data: officeWorkers }] = await Promise.all([
+  const [{ data: job }, { data: properties }, { data: jobInvoice }, { data: jobReports }, { data: officeWorkers }, { data: jobDocuments }] = await Promise.all([
     supabase
       .from("jobs")
       .select("*")
@@ -115,7 +116,7 @@ export default async function JobDetailPage({ params }: PageProps) {
       .order("created_at", { ascending: true }),
     supabase
       .from("invoices")
-      .select("id, status")
+      .select("id, status, pdf_path, invoice_number, total")
       .eq("job_id", id)
       .limit(1)
       .maybeSingle(),
@@ -130,6 +131,11 @@ export default async function JobDetailPage({ params }: PageProps) {
       .eq("role", "office")
       .eq("active", true)
       .order("name"),
+    supabase
+      .from("job_documents")
+      .select("id, property_id, document_type, file_path, original_filename, created_at")
+      .eq("job_id", id)
+      .order("created_at", { ascending: true }),
   ]);
 
   if (!job) notFound();
@@ -208,6 +214,12 @@ export default async function JobDetailPage({ params }: PageProps) {
   const uploadXrfReport = uploadReport.bind(null, id, "xrf");
   const uploadDustSwabReport = uploadReport.bind(null, id, "dust_swab");
   const uploadAsbestosReport = uploadReport.bind(null, id, "asbestos");
+  const deleteDocumentWithJobId = deleteDocument.bind(null);
+
+  const uploadSignedProposalActions: Record<string, (formData: FormData) => Promise<{ error?: string }>> = {};
+  for (const p of props) {
+    uploadSignedProposalActions[p.id] = uploadSignedProposal.bind(null, id, p.id);
+  }
 
   return (
     <div className="space-y-6">
@@ -304,6 +316,24 @@ export default async function JobDetailPage({ params }: PageProps) {
           file_path: r.file_path,
           original_filename: r.original_filename,
         }))}
+        jobDocuments={(jobDocuments ?? []).map((d) => ({
+          id: d.id,
+          property_id: d.property_id,
+          document_type: d.document_type,
+          file_path: d.file_path,
+          original_filename: d.original_filename,
+          created_at: d.created_at,
+        }))}
+        jobInvoice={jobInvoice ? {
+          id: jobInvoice.id,
+          status: jobInvoice.status,
+          pdf_path: jobInvoice.pdf_path,
+          invoice_number: jobInvoice.invoice_number,
+          total: jobInvoice.total,
+        } : null}
+        uploadSignedProposalActions={uploadSignedProposalActions}
+        deleteDocumentAction={deleteDocumentWithJobId}
+        jobId={id}
         defaultPrices={{
           priceStudios1Bed: defaults.priceStudios1Bed,
           price2_3Bed: defaults.price2_3Bed,

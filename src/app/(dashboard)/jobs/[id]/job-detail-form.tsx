@@ -67,6 +67,15 @@ type Property = {
   deleteAction: () => Promise<void>;
 };
 
+type JobDocument = {
+  id: string;
+  property_id: string | null;
+  document_type: string;
+  file_path: string;
+  original_filename: string;
+  created_at: string | null;
+};
+
 type JobDetailFormProps = {
   updateJobAction: (formData: FormData) => Promise<void>;
   createPropertyAction: (formData: FormData) => Promise<void>;
@@ -109,6 +118,17 @@ type JobDetailFormProps = {
     file_path: string;
     original_filename: string;
   }[];
+  jobDocuments: JobDocument[];
+  jobInvoice: {
+    id: string;
+    status: string;
+    pdf_path: string | null;
+    invoice_number: number | null;
+    total: number | null;
+  } | null;
+  uploadSignedProposalActions: Record<string, (formData: FormData) => Promise<{ error?: string }>>;
+  deleteDocumentAction: (documentId: string, jobId: string) => Promise<{ error?: string }>;
+  jobId: string;
   defaultPrices: {
     priceStudios1Bed: number | null;
     price2_3Bed: number | null;
@@ -134,6 +154,11 @@ export function JobDetailForm({
   propertyPricings,
   uploadActions,
   jobReports,
+  jobDocuments,
+  jobInvoice,
+  uploadSignedProposalActions,
+  deleteDocumentAction,
+  jobId,
   defaultPrices,
 }: JobDetailFormProps) {
   const [isPending, startTransition] = useTransition();
@@ -173,7 +198,7 @@ export function JobDetailForm({
             Properties ({properties.length})
           </TabsTrigger>
           <TabsTrigger value="pricing">Pricing</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="documents">Documents</TabsTrigger>
         </TabsList>
 
         {/* ---- DETAILS TAB: Company Info ---- */}
@@ -295,126 +320,32 @@ export function JobDetailForm({
           )}
         </TabsContent>
 
-        {/* ---- REPORTS TAB ---- */}
-        <TabsContent value="reports" className="space-y-4 pt-4">
-          {!anyHasXrf && !anyHasDustSwab && !anyHasAsbestos ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              No services selected on any property. Enable services to manage reports.
-            </p>
-          ) : (
-            <div className="space-y-6">
-              {anyHasXrf && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      XRF Reports ({xrfReports.length} uploaded)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {xrfReports.length > 0 ? (
-                      <ul className="space-y-1.5">
-                        {xrfReports.map((r) => (
-                          <li key={r.id} className="flex items-center gap-2 text-sm">
-                            {fileIcon}
-                            <a
-                              href={`/api/reports/${r.file_path}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline truncate"
-                            >
-                              {r.original_filename}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No XRF reports uploaded yet.</p>
-                    )}
-                    <form action={uploadActions.xrf}>
-                      <div className="flex items-center gap-3">
-                        <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                        <Button type="submit" variant="outline" size="sm">Upload</Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-
-              {anyHasDustSwab && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      Dust Swab Reports ({dustSwabReports.length} uploaded)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {dustSwabReports.length > 0 ? (
-                      <ul className="space-y-1.5">
-                        {dustSwabReports.map((r) => (
-                          <li key={r.id} className="flex items-center gap-2 text-sm">
-                            {fileIcon}
-                            <a
-                              href={`/api/reports/${r.file_path}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline truncate"
-                            >
-                              {r.original_filename}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No dust swab reports uploaded yet.</p>
-                    )}
-                    <form action={uploadActions.dustSwab}>
-                      <div className="flex items-center gap-3">
-                        <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                        <Button type="submit" variant="outline" size="sm">Upload</Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-
-              {anyHasAsbestos && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      Asbestos Reports ({asbestosReports.length} uploaded)
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {asbestosReports.length > 0 ? (
-                      <ul className="space-y-1.5">
-                        {asbestosReports.map((r) => (
-                          <li key={r.id} className="flex items-center gap-2 text-sm">
-                            {fileIcon}
-                            <a
-                              href={`/api/reports/${r.file_path}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline truncate"
-                            >
-                              {r.original_filename}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-sm text-muted-foreground">No asbestos reports uploaded yet.</p>
-                    )}
-                    <form action={uploadActions.asbestos}>
-                      <div className="flex items-center gap-3">
-                        <Input name="file" type="file" accept=".pdf,.doc,.docx" />
-                        <Button type="submit" variant="outline" size="sm">Upload</Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          )}
+        {/* ---- DOCUMENTS TAB ---- */}
+        <TabsContent value="documents" className="space-y-6 pt-4">
+          <ProposalsSection
+            properties={properties}
+            documents={jobDocuments.filter(d => d.document_type.startsWith("proposal_"))}
+            fileIcon={fileIcon}
+          />
+          <SignedProposalsSection
+            properties={properties}
+            documents={jobDocuments.filter(d => d.document_type === "signed_proposal")}
+            uploadActions={uploadSignedProposalActions}
+            deleteAction={deleteDocumentAction}
+            jobId={jobId}
+            fileIcon={fileIcon}
+          />
+          <InvoiceSection invoice={jobInvoice} fileIcon={fileIcon} />
+          <ReportsSection
+            anyHasXrf={anyHasXrf}
+            anyHasDustSwab={anyHasDustSwab}
+            anyHasAsbestos={anyHasAsbestos}
+            xrfReports={xrfReports}
+            dustSwabReports={dustSwabReports}
+            asbestosReports={asbestosReports}
+            uploadActions={uploadActions}
+            fileIcon={fileIcon}
+          />
         </TabsContent>
       </Tabs>
     </>
@@ -1008,5 +939,368 @@ function AddPropertyForm({
         </form>
       </CardContent>
     </Card>
+  );
+}
+
+const DOC_TYPE_LABELS: Record<string, string> = {
+  proposal_xrf: "XRF",
+  proposal_dust_swab: "Dust Swab",
+  proposal_asbestos: "Asbestos",
+};
+
+function ProposalsSection({
+  properties,
+  documents,
+  fileIcon,
+}: {
+  properties: Property[];
+  documents: JobDocument[];
+  fileIcon: React.ReactNode;
+}) {
+  if (documents.length === 0) {
+    return (
+      <Card>
+        <CardHeader><CardTitle className="text-base">Proposals</CardTitle></CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">Proposals will appear here after sending.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const grouped = new Map<string | null, JobDocument[]>();
+  for (const doc of documents) {
+    const key = doc.property_id;
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key)!.push(doc);
+  }
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Proposals ({documents.length})</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        {Array.from(grouped.entries()).map(([propId, docs]) => {
+          const prop = properties.find(p => p.id === propId);
+          return (
+            <div key={propId ?? "unknown"} className="space-y-2">
+              {properties.length > 1 && (
+                <h4 className="text-sm font-medium text-muted-foreground">
+                  {prop?.building_address ?? "Unknown Property"}
+                </h4>
+              )}
+              <ul className="space-y-1.5">
+                {docs.map(d => (
+                  <li key={d.id} className="flex items-center gap-2 text-sm">
+                    {fileIcon}
+                    <a
+                      href={`/api/documents/${d.file_path}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline truncate"
+                    >
+                      {d.original_filename}
+                    </a>
+                    <Badge variant="outline" className="text-xs">
+                      {DOC_TYPE_LABELS[d.document_type] ?? d.document_type}
+                    </Badge>
+                    {d.created_at && (
+                      <span className="text-xs text-muted-foreground ml-auto shrink-0">
+                        {new Date(d.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SignedProposalsSection({
+  properties,
+  documents,
+  uploadActions,
+  deleteAction,
+  jobId,
+  fileIcon,
+}: {
+  properties: Property[];
+  documents: JobDocument[];
+  uploadActions: Record<string, (formData: FormData) => Promise<{ error?: string }>>;
+  deleteAction: (documentId: string, jobId: string) => Promise<{ error?: string }>;
+  jobId: string;
+  fileIcon: React.ReactNode;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
+
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Signed Proposals ({documents.length})</CardTitle></CardHeader>
+      <CardContent className="space-y-4">
+        {properties.map(prop => {
+          const propDocs = documents.filter(d => d.property_id === prop.id);
+          const uploadAction = uploadActions[prop.id];
+
+          return (
+            <div key={prop.id} className="space-y-2">
+              {properties.length > 1 && (
+                <h4 className="text-sm font-medium text-muted-foreground">
+                  {prop.building_address ?? "Unknown Property"}
+                </h4>
+              )}
+              {propDocs.length > 0 && (
+                <ul className="space-y-1.5">
+                  {propDocs.map(d => (
+                    <li key={d.id} className="flex items-center gap-2 text-sm">
+                      {fileIcon}
+                      <a
+                        href={`/api/documents/${d.file_path}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline truncate"
+                      >
+                        {d.original_filename}
+                      </a>
+                      {d.created_at && (
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(d.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="text-xs text-destructive hover:underline ml-auto shrink-0"
+                        disabled={isPending}
+                        onClick={() => {
+                          if (!confirm("Delete this document?")) return;
+                          startTransition(async () => {
+                            const result = await deleteAction(d.id, jobId);
+                            if (result.error) {
+                              toast.error(result.error);
+                            } else {
+                              toast.success("Document deleted");
+                              router.refresh();
+                            }
+                          });
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {uploadAction && (
+                <form
+                  action={(formData) => {
+                    startTransition(async () => {
+                      const result = await uploadAction(formData);
+                      if (result.error) {
+                        toast.error(result.error);
+                      } else {
+                        toast.success("Signed proposal uploaded");
+                        router.refresh();
+                      }
+                    });
+                  }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                    <Button type="submit" variant="outline" size="sm" disabled={isPending}>
+                      {isPending ? "Uploading..." : "Upload"}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </div>
+          );
+        })}
+      </CardContent>
+    </Card>
+  );
+}
+
+function InvoiceSection({
+  invoice,
+  fileIcon,
+}: {
+  invoice: {
+    id: string;
+    status: string;
+    pdf_path: string | null;
+    invoice_number: number | null;
+    total: number | null;
+  } | null;
+  fileIcon: React.ReactNode;
+}) {
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-base">Invoice</CardTitle></CardHeader>
+      <CardContent>
+        {!invoice ? (
+          <p className="text-sm text-muted-foreground">No invoice generated yet.</p>
+        ) : invoice.pdf_path ? (
+          <div className="flex items-center gap-2 text-sm">
+            {fileIcon}
+            <a
+              href={`/api/documents/${invoice.pdf_path}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Invoice #{invoice.invoice_number}
+            </a>
+            {invoice.total != null && (
+              <span className="text-muted-foreground ml-auto">
+                {formatCurrency(invoice.total)}
+              </span>
+            )}
+            <Badge variant="outline" className="text-xs capitalize">{invoice.status}</Badge>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 text-sm">
+            <span>Invoice #{invoice.invoice_number}</span>
+            {invoice.total != null && (
+              <span className="text-muted-foreground ml-auto">
+                {formatCurrency(invoice.total)}
+              </span>
+            )}
+            <Badge variant="outline" className="text-xs capitalize">{invoice.status}</Badge>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function ReportsSection({
+  anyHasXrf,
+  anyHasDustSwab,
+  anyHasAsbestos,
+  xrfReports,
+  dustSwabReports,
+  asbestosReports,
+  uploadActions,
+  fileIcon,
+}: {
+  anyHasXrf: boolean;
+  anyHasDustSwab: boolean;
+  anyHasAsbestos: boolean;
+  xrfReports: { id: string; report_type: string; file_path: string; original_filename: string }[];
+  dustSwabReports: { id: string; report_type: string; file_path: string; original_filename: string }[];
+  asbestosReports: { id: string; report_type: string; file_path: string; original_filename: string }[];
+  uploadActions: {
+    xrf: (formData: FormData) => Promise<void>;
+    dustSwab: (formData: FormData) => Promise<void>;
+    asbestos: (formData: FormData) => Promise<void>;
+  };
+  fileIcon: React.ReactNode;
+}) {
+  if (!anyHasXrf && !anyHasDustSwab && !anyHasAsbestos) {
+    return (
+      <Card>
+        <CardHeader><CardTitle className="text-base">Reports</CardTitle></CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">No services selected on any property.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {anyHasXrf && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">XRF Reports ({xrfReports.length} uploaded)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {xrfReports.length > 0 ? (
+              <ul className="space-y-1.5">
+                {xrfReports.map((r) => (
+                  <li key={r.id} className="flex items-center gap-2 text-sm">
+                    {fileIcon}
+                    <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                      {r.original_filename}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No XRF reports uploaded yet.</p>
+            )}
+            <form action={uploadActions.xrf}>
+              <div className="flex items-center gap-3">
+                <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                <Button type="submit" variant="outline" size="sm">Upload</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {anyHasDustSwab && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Dust Swab Reports ({dustSwabReports.length} uploaded)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {dustSwabReports.length > 0 ? (
+              <ul className="space-y-1.5">
+                {dustSwabReports.map((r) => (
+                  <li key={r.id} className="flex items-center gap-2 text-sm">
+                    {fileIcon}
+                    <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                      {r.original_filename}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No dust swab reports uploaded yet.</p>
+            )}
+            <form action={uploadActions.dustSwab}>
+              <div className="flex items-center gap-3">
+                <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                <Button type="submit" variant="outline" size="sm">Upload</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
+      {anyHasAsbestos && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Asbestos Reports ({asbestosReports.length} uploaded)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {asbestosReports.length > 0 ? (
+              <ul className="space-y-1.5">
+                {asbestosReports.map((r) => (
+                  <li key={r.id} className="flex items-center gap-2 text-sm">
+                    {fileIcon}
+                    <a href={`/api/reports/${r.file_path}`} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                      {r.original_filename}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted-foreground">No asbestos reports uploaded yet.</p>
+            )}
+            <form action={uploadActions.asbestos}>
+              <div className="flex items-center gap-3">
+                <Input name="file" type="file" accept=".pdf,.doc,.docx" />
+                <Button type="submit" variant="outline" size="sm">Upload</Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }

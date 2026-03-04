@@ -191,6 +191,51 @@ export type Database = {
           },
         ]
       }
+      job_documents: {
+        Row: {
+          created_at: string | null
+          document_type: string
+          file_path: string
+          id: string
+          job_id: string
+          original_filename: string
+          property_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          document_type: string
+          file_path: string
+          id?: string
+          job_id: string
+          original_filename: string
+          property_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          document_type?: string
+          file_path?: string
+          id?: string
+          job_id?: string
+          original_filename?: string
+          property_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_documents_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "job_documents_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_reports: {
         Row: {
           created_at: string | null

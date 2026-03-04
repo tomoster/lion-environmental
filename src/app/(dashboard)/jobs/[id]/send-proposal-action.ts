@@ -19,7 +19,7 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
 
   const { data: properties } = await supabase
     .from("properties")
-    .select("building_address, num_units, has_xrf, has_dust_swab, has_asbestos, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
+    .select("id, building_address, num_units, has_xrf, has_dust_swab, has_asbestos, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
     .eq("job_id", jobId);
 
   if (!properties || properties.length === 0) return { error: "No properties found for this job" };
@@ -46,10 +46,14 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
     };
     const jobInfo = { job_number: job.job_number, client_company: job.client_company };
 
-    const allProposals = (await Promise.all(
-      properties.map(prop => generateProposals(prop, jobInfo, taxRate, bizInfo))
-    )).flat();
+    const proposalsByProperty = await Promise.all(
+      properties.map(async (prop) => ({
+        propertyId: prop.id,
+        proposals: await generateProposals(prop, jobInfo, taxRate, bizInfo),
+      }))
+    );
 
+    const allProposals = proposalsByProperty.flatMap(p => p.proposals);
     if (allProposals.length === 0) return { error: "No proposals generated" };
 
     const addresses = properties
@@ -71,6 +75,26 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
       businessEmail: s.business_email,
       signatureText: s.email_signature,
     });
+
+    try {
+      for (const { propertyId, proposals } of proposalsByProperty) {
+        for (const proposal of proposals) {
+          const storagePath = `proposals/${jobId}/${propertyId}/proposal_${proposal.type}-${Date.now()}.pdf`;
+          await supabase.storage.from("reports").upload(storagePath, proposal.buffer, {
+            contentType: "application/pdf",
+          });
+          await supabase.from("job_documents").insert({
+            job_id: jobId,
+            property_id: propertyId,
+            document_type: `proposal_${proposal.type}`,
+            file_path: storagePath,
+            original_filename: proposal.filename,
+          });
+        }
+      }
+    } catch (storageErr) {
+      console.error("Failed to store proposals (email was sent):", storageErr);
+    }
 
     await supabase.from("jobs").update({
       job_status: "proposal_sent",
