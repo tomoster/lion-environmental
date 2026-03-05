@@ -1,13 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { JobForm } from "./job-form";
+import { NewJobDialog } from "./new-job-dialog";
 import { JobsTable } from "./jobs-table";
 
 export default async function JobsPage() {
@@ -75,20 +67,10 @@ export default async function JobsPage() {
             Manage inspection jobs and track progress
           </p>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button>New Job</Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Create New Job</DialogTitle>
-            </DialogHeader>
-            <JobForm
-              workers={workers ?? []}
-              durationDefaults={durationDefaults}
-            />
-          </DialogContent>
-        </Dialog>
+        <NewJobDialog
+          workers={workers ?? []}
+          durationDefaults={durationDefaults}
+        />
       </div>
 
       <JobsTable jobs={jobsWithProperties} />
