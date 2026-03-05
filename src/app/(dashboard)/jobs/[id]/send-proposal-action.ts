@@ -19,7 +19,7 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
 
   const { data: properties } = await supabase
     .from("properties")
-    .select("id, building_address, num_units, has_xrf, has_dust_swab, has_asbestos, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate")
+    .select("id, building_address, num_units, has_xrf, has_dust_swab, has_asbestos, num_studios_1bed, xrf_price_studios_1bed, num_2_3bed, xrf_price_2_3bed, num_common_spaces, xrf_price_per_common_space, num_wipes, wipe_rate, dust_swab_site_visit_rate, dust_swab_proj_mgmt_rate, num_asbestos_samples, asbestos_sample_rate, asbestos_site_visit_rate, has_studios_1bed, has_2_3bed, has_common_spaces, has_wipes, has_asbestos_samples")
     .eq("job_id", jobId);
 
   if (!properties || properties.length === 0) return { error: "No properties found for this job" };

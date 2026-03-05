@@ -445,8 +445,13 @@ export type Database = {
           dust_swab_site_visit_rate: number | null
           dust_swab_status: string | null
           estimated_end_time: string | null
+          has_2_3bed: boolean
           has_asbestos: boolean
+          has_asbestos_samples: boolean
+          has_common_spaces: boolean
           has_dust_swab: boolean
+          has_studios_1bed: boolean
+          has_wipes: boolean
           has_xrf: boolean
           id: string
           job_id: string
@@ -480,8 +485,13 @@ export type Database = {
           dust_swab_site_visit_rate?: number | null
           dust_swab_status?: string | null
           estimated_end_time?: string | null
+          has_2_3bed?: boolean
           has_asbestos?: boolean
+          has_asbestos_samples?: boolean
+          has_common_spaces?: boolean
           has_dust_swab?: boolean
+          has_studios_1bed?: boolean
+          has_wipes?: boolean
           has_xrf?: boolean
           id?: string
           job_id: string
@@ -515,8 +525,13 @@ export type Database = {
           dust_swab_site_visit_rate?: number | null
           dust_swab_status?: string | null
           estimated_end_time?: string | null
+          has_2_3bed?: boolean
           has_asbestos?: boolean
+          has_asbestos_samples?: boolean
+          has_common_spaces?: boolean
           has_dust_swab?: boolean
+          has_studios_1bed?: boolean
+          has_wipes?: boolean
           has_xrf?: boolean
           id?: string
           job_id?: string

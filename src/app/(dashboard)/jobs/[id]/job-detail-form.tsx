@@ -53,6 +53,11 @@ type Property = {
   xrf_price_studios_1bed: number | null;
   xrf_price_2_3bed: number | null;
   xrf_price_per_common_space: number | null;
+  has_studios_1bed: boolean;
+  has_2_3bed: boolean;
+  has_common_spaces: boolean;
+  has_wipes: boolean;
+  has_asbestos_samples: boolean;
   report_status: string;
   dust_swab_status: string | null;
   asbestos_status: string | null;
@@ -484,6 +489,11 @@ function PropertyCard({
   const [xrfChecked, setXrfChecked] = useState(prop.has_xrf);
   const [dustSwabChecked, setDustSwabChecked] = useState(prop.has_dust_swab);
   const [asbestosChecked, setAsbestosChecked] = useState(prop.has_asbestos);
+  const [hasStudios1Bed, setHasStudios1Bed] = useState(prop.has_studios_1bed);
+  const [has2_3Bed, setHas2_3Bed] = useState(prop.has_2_3bed);
+  const [hasCommonSpaces, setHasCommonSpaces] = useState(prop.has_common_spaces);
+  const [hasWipes, setHasWipes] = useState(prop.has_wipes);
+  const [hasAsbestosSamples, setHasAsbestosSamples] = useState(prop.has_asbestos_samples);
   const router = useRouter();
 
   const serviceTypes: string[] = [];
@@ -570,6 +580,11 @@ function PropertyCard({
             <input type="hidden" name="has_xrf" value={xrfChecked ? "true" : "false"} />
             <input type="hidden" name="has_dust_swab" value={dustSwabChecked ? "true" : "false"} />
             <input type="hidden" name="has_asbestos" value={asbestosChecked ? "true" : "false"} />
+            <input type="hidden" name="has_studios_1bed" value={hasStudios1Bed ? "true" : "false"} />
+            <input type="hidden" name="has_2_3bed" value={has2_3Bed ? "true" : "false"} />
+            <input type="hidden" name="has_common_spaces" value={hasCommonSpaces ? "true" : "false"} />
+            <input type="hidden" name="has_wipes" value={hasWipes ? "true" : "false"} />
+            <input type="hidden" name="has_asbestos_samples" value={hasAsbestosSamples ? "true" : "false"} />
 
             <div className="space-y-1.5">
               <Label>Building Address</Label>
@@ -633,26 +648,54 @@ function PropertyCard({
                   </div>
                 </div>
                 <div className="rounded-md border">
-                  <div className="grid grid-cols-[1fr_80px_100px] gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                  <div className="grid grid-cols-[20px_1fr_80px_100px] gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                    <span />
                     <span>Description</span>
                     <span className="text-right">Qty</span>
                     <span className="text-right">Rate</span>
                   </div>
                   <div className="divide-y">
-                    <div className="grid grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-2">
-                      <span className="text-sm">Studios & 1-Bed</span>
-                      <Input name="num_studios_1bed" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_studios_1bed ?? ""} />
-                      <Input name="xrf_price_studios_1bed" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.xrf_price_studios_1bed ?? defaultPrices.priceStudios1Bed ?? ""} />
+                    <div className="grid grid-cols-[20px_1fr_80px_100px] items-center gap-2 px-3 py-2">
+                      <Checkbox checked={hasStudios1Bed} onCheckedChange={(c) => setHasStudios1Bed(c === true)} />
+                      <span className={`text-sm ${!hasStudios1Bed ? "text-muted-foreground" : ""}`}>Studios & 1-Bed</span>
+                      {hasStudios1Bed ? (
+                        <Input name="num_studios_1bed" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_studios_1bed ?? ""} />
+                      ) : (
+                        <span className="text-center text-sm text-muted-foreground">N/A</span>
+                      )}
+                      {hasStudios1Bed ? (
+                        <Input name="xrf_price_studios_1bed" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.xrf_price_studios_1bed ?? defaultPrices.priceStudios1Bed ?? ""} />
+                      ) : (
+                        <span className="text-right text-sm text-muted-foreground">N/A</span>
+                      )}
                     </div>
-                    <div className="grid grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-2">
-                      <span className="text-sm">2 & 3-Bed</span>
-                      <Input name="num_2_3bed" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_2_3bed ?? ""} />
-                      <Input name="xrf_price_2_3bed" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.xrf_price_2_3bed ?? defaultPrices.price2_3Bed ?? ""} />
+                    <div className="grid grid-cols-[20px_1fr_80px_100px] items-center gap-2 px-3 py-2">
+                      <Checkbox checked={has2_3Bed} onCheckedChange={(c) => setHas2_3Bed(c === true)} />
+                      <span className={`text-sm ${!has2_3Bed ? "text-muted-foreground" : ""}`}>2 & 3-Bed</span>
+                      {has2_3Bed ? (
+                        <Input name="num_2_3bed" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_2_3bed ?? ""} />
+                      ) : (
+                        <span className="text-center text-sm text-muted-foreground">N/A</span>
+                      )}
+                      {has2_3Bed ? (
+                        <Input name="xrf_price_2_3bed" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.xrf_price_2_3bed ?? defaultPrices.price2_3Bed ?? ""} />
+                      ) : (
+                        <span className="text-right text-sm text-muted-foreground">N/A</span>
+                      )}
                     </div>
-                    <div className="grid grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-2">
-                      <span className="text-sm">Common Spaces</span>
-                      <Input name="num_common_spaces" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_common_spaces ?? ""} />
-                      <Input name="xrf_price_per_common_space" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.xrf_price_per_common_space ?? defaultPrices.pricePerCommonSpace ?? ""} />
+                    <div className="grid grid-cols-[20px_1fr_80px_100px] items-center gap-2 px-3 py-2">
+                      <Checkbox checked={hasCommonSpaces} onCheckedChange={(c) => setHasCommonSpaces(c === true)} />
+                      <span className={`text-sm ${!hasCommonSpaces ? "text-muted-foreground" : ""}`}>Common Spaces</span>
+                      {hasCommonSpaces ? (
+                        <Input name="num_common_spaces" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_common_spaces ?? ""} />
+                      ) : (
+                        <span className="text-center text-sm text-muted-foreground">N/A</span>
+                      )}
+                      {hasCommonSpaces ? (
+                        <Input name="xrf_price_per_common_space" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.xrf_price_per_common_space ?? defaultPrices.pricePerCommonSpace ?? ""} />
+                      ) : (
+                        <span className="text-right text-sm text-muted-foreground">N/A</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -663,26 +706,38 @@ function PropertyCard({
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Dust Swab Details</h4>
                 <div className="rounded-md border">
-                  <div className="grid grid-cols-[1fr_80px_100px] gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                  <div className="grid grid-cols-[20px_1fr_80px_100px] gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                    <span />
                     <span>Description</span>
                     <span className="text-right">Qty</span>
                     <span className="text-right">Rate</span>
                   </div>
                   <div className="divide-y">
-                    <div className="grid grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-2">
+                    <div className="grid grid-cols-[20px_1fr_80px_100px] items-center gap-2 px-3 py-2">
+                      <span />
                       <span className="text-sm">Site Visit (EPA Certified)</span>
                       <span className="text-center text-sm text-muted-foreground">-</span>
                       <Input name="dust_swab_site_visit_rate" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.dust_swab_site_visit_rate ?? defaultPrices.dustSwabSiteVisitRate ?? ""} />
                     </div>
-                    <div className="grid grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-2">
+                    <div className="grid grid-cols-[20px_1fr_80px_100px] items-center gap-2 px-3 py-2">
+                      <span />
                       <span className="text-sm">Project Mgmt & Report</span>
                       <span className="text-center text-sm text-muted-foreground">-</span>
                       <Input name="dust_swab_proj_mgmt_rate" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.dust_swab_proj_mgmt_rate ?? defaultPrices.dustSwabProjMgmtRate ?? ""} />
                     </div>
-                    <div className="grid grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-2">
-                      <span className="text-sm">Lead Dust Wipes</span>
-                      <Input name="num_wipes" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_wipes ?? ""} />
-                      <Input name="wipe_rate" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.wipe_rate ?? defaultPrices.wipeRate ?? ""} />
+                    <div className="grid grid-cols-[20px_1fr_80px_100px] items-center gap-2 px-3 py-2">
+                      <Checkbox checked={hasWipes} onCheckedChange={(c) => setHasWipes(c === true)} />
+                      <span className={`text-sm ${!hasWipes ? "text-muted-foreground" : ""}`}>Lead Dust Wipes</span>
+                      {hasWipes ? (
+                        <Input name="num_wipes" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_wipes ?? ""} />
+                      ) : (
+                        <span className="text-center text-sm text-muted-foreground">N/A</span>
+                      )}
+                      {hasWipes ? (
+                        <Input name="wipe_rate" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.wipe_rate ?? defaultPrices.wipeRate ?? ""} />
+                      ) : (
+                        <span className="text-right text-sm text-muted-foreground">N/A</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -693,21 +748,32 @@ function PropertyCard({
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Asbestos Details</h4>
                 <div className="rounded-md border">
-                  <div className="grid grid-cols-[1fr_80px_100px] gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                  <div className="grid grid-cols-[20px_1fr_80px_100px] gap-2 border-b bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">
+                    <span />
                     <span>Description</span>
                     <span className="text-right">Qty</span>
                     <span className="text-right">Rate</span>
                   </div>
                   <div className="divide-y">
-                    <div className="grid grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-2">
+                    <div className="grid grid-cols-[20px_1fr_80px_100px] items-center gap-2 px-3 py-2">
+                      <span />
                       <span className="text-sm">Site Visit</span>
                       <span className="text-center text-sm text-muted-foreground">-</span>
                       <Input name="asbestos_site_visit_rate" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.asbestos_site_visit_rate ?? defaultPrices.asbestosSiteVisitRate ?? ""} />
                     </div>
-                    <div className="grid grid-cols-[1fr_80px_100px] items-center gap-2 px-3 py-2">
-                      <span className="text-sm">Samples</span>
-                      <Input name="num_asbestos_samples" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_asbestos_samples ?? ""} />
-                      <Input name="asbestos_sample_rate" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.asbestos_sample_rate ?? defaultPrices.asbestosSampleRate ?? ""} />
+                    <div className="grid grid-cols-[20px_1fr_80px_100px] items-center gap-2 px-3 py-2">
+                      <Checkbox checked={hasAsbestosSamples} onCheckedChange={(c) => setHasAsbestosSamples(c === true)} />
+                      <span className={`text-sm ${!hasAsbestosSamples ? "text-muted-foreground" : ""}`}>Samples</span>
+                      {hasAsbestosSamples ? (
+                        <Input name="num_asbestos_samples" type="number" min="0" className="h-8 text-right text-sm" defaultValue={prop.num_asbestos_samples ?? ""} />
+                      ) : (
+                        <span className="text-center text-sm text-muted-foreground">N/A</span>
+                      )}
+                      {hasAsbestosSamples ? (
+                        <Input name="asbestos_sample_rate" type="number" min="0" step="0.01" className="h-8 text-right text-sm" defaultValue={prop.asbestos_sample_rate ?? defaultPrices.asbestosSampleRate ?? ""} />
+                      ) : (
+                        <span className="text-right text-sm text-muted-foreground">N/A</span>
+                      )}
                     </div>
                   </div>
                 </div>
