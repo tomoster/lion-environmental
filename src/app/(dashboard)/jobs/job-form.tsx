@@ -77,13 +77,9 @@ export function JobForm({ workers, durationDefaults, defaultValues, onSuccess }:
       formData.set("estimated_end_time", estimatedEndTime);
     }
     startTransition(async () => {
-      try {
-        await createJob(formData);
-        onSuccess?.();
-        router.refresh();
-      } catch {
-        // redirect happens inside createJob on success
-      }
+      const jobId = await createJob(formData);
+      onSuccess?.();
+      router.push(`/jobs/${jobId}`);
     });
   }
 

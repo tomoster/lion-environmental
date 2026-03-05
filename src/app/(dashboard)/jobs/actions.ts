@@ -58,7 +58,7 @@ export async function createJob(formData: FormData) {
   }
 
   revalidatePath("/jobs");
-  redirect(`/jobs/${job.id}`);
+  return job.id;
 }
 
 export async function updateJob(id: string, formData: FormData): Promise<void> {
