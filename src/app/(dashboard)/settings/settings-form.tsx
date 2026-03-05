@@ -51,8 +51,19 @@ Thank you for reaching out. Please find attached our proposal for {{address}}.
 
 Once you've had a chance to review, let us know a good time to schedule the work. We're looking forward to working with you!`;
 
-const DEFAULT_COLD_EMAIL_SUBJECT_NYC = "Quick question, {{first_name}}";
-const DEFAULT_COLD_EMAIL_SUBJECT_ROCKLAND = "Quick question, {{first_name}}";
+const DEFAULT_COLD_EMAIL_SUBJECTS_NYC = [
+  "Don't Miss Lion Environmental's Promotion, {{first_name}}!",
+  "Still available — LL31 pricing won't last, {{first_name}}",
+  "Violations are adding up — lock in our rates, {{first_name}}",
+  "Last chance, {{first_name}} — promo ends soon",
+];
+
+const DEFAULT_COLD_EMAIL_SUBJECTS_ROCKLAND = [
+  "Don't Miss Lion Environmental's Promotion, {{first_name}}!",
+  "$40K per unit grant + our promo pricing, {{first_name}}",
+  "Landlords in Rockland are jumping on this, {{first_name}}",
+  "Last chance, {{first_name}} — promo ends soon",
+];
 
 const DEFAULT_COLD_EMAIL_STEPS_NYC = [
   `Hi {{first_name}},
@@ -719,39 +730,41 @@ export function SettingsForm({ settings }: SettingsFormProps) {
                       Rockland County
                     </button>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label htmlFor={`cold_email_subject_${emailLocation}`}>
-                      Subject Line
-                    </Label>
-                    <Input
-                      key={`subject_${emailLocation}`}
-                      id={`cold_email_subject_${emailLocation}`}
-                      name={`cold_email_subject_${emailLocation}`}
-                      defaultValue={
-                        settings[`cold_email_subject_${emailLocation}`] ??
-                        (emailLocation === "nyc"
-                          ? settings.cold_email_subject ?? DEFAULT_COLD_EMAIL_SUBJECT_NYC
-                          : DEFAULT_COLD_EMAIL_SUBJECT_ROCKLAND)
-                      }
-                    />
-                  </div>
                   {[1, 2, 3, 4].map((step) => (
-                    <div key={`${step}_${emailLocation}`} className="space-y-1.5">
-                      <Label htmlFor={`cold_email_step_${step}_${emailLocation}`}>
-                        Step {step}
-                      </Label>
-                      <Textarea
-                        id={`cold_email_step_${step}_${emailLocation}`}
-                        name={`cold_email_step_${step}_${emailLocation}`}
-                        rows={7}
-                        defaultValue={
-                          settings[`cold_email_step_${step}_${emailLocation}`] ??
-                          (emailLocation === "nyc"
-                            ? settings[`cold_email_step_${step}`] ??
-                              DEFAULT_COLD_EMAIL_STEPS_NYC[step - 1] ?? ""
-                            : DEFAULT_COLD_EMAIL_STEPS_ROCKLAND[step - 1] ?? "")
-                        }
-                      />
+                    <div key={`${step}_${emailLocation}`} className="space-y-2 rounded-lg border p-4">
+                      <p className="text-sm font-semibold">Step {step}</p>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`cold_email_subject_step_${step}_${emailLocation}`}>
+                          Subject Line
+                        </Label>
+                        <Input
+                          id={`cold_email_subject_step_${step}_${emailLocation}`}
+                          name={`cold_email_subject_step_${step}_${emailLocation}`}
+                          defaultValue={
+                            settings[`cold_email_subject_step_${step}_${emailLocation}`] ??
+                            (emailLocation === "nyc"
+                              ? DEFAULT_COLD_EMAIL_SUBJECTS_NYC[step - 1] ?? ""
+                              : DEFAULT_COLD_EMAIL_SUBJECTS_ROCKLAND[step - 1] ?? "")
+                          }
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label htmlFor={`cold_email_step_${step}_${emailLocation}`}>
+                          Body
+                        </Label>
+                        <Textarea
+                          id={`cold_email_step_${step}_${emailLocation}`}
+                          name={`cold_email_step_${step}_${emailLocation}`}
+                          rows={7}
+                          defaultValue={
+                            settings[`cold_email_step_${step}_${emailLocation}`] ??
+                            (emailLocation === "nyc"
+                              ? settings[`cold_email_step_${step}`] ??
+                                DEFAULT_COLD_EMAIL_STEPS_NYC[step - 1] ?? ""
+                              : DEFAULT_COLD_EMAIL_STEPS_ROCKLAND[step - 1] ?? "")
+                          }
+                        />
+                      </div>
                     </div>
                   ))}
                 </CardContent>
