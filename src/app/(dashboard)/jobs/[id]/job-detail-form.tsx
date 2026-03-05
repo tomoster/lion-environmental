@@ -64,6 +64,7 @@ type Property = {
   report_writer_id: string | null;
   worker_id: string | null;
   property_status: string;
+  updated_at: string | null;
   workerData: { id: string; name: string } | null;
   availability: {
     available: { id: string; name: string }[];
@@ -226,7 +227,7 @@ export function JobDetailForm({
           ) : (
             properties.map((prop, idx) => (
               <PropertyCard
-                key={prop.id}
+                key={`${prop.id}-${prop.updated_at}`}
                 property={prop}
                 index={idx}
                 officeWorkers={officeWorkers}
