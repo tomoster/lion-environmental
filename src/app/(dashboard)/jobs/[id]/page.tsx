@@ -150,6 +150,7 @@ export default async function JobDetailPage({ params }: PageProps) {
       "xrf_price_studios_1bed", "xrf_price_2_3bed",
       "dust_swab_wipe_rate", "dust_swab_site_visit_rate", "dust_swab_proj_mgmt_rate",
       "asbestos_sample_rate", "asbestos_site_visit_rate",
+      "proposal_email_subject", "proposal_email_body",
     ]);
 
   const settingsMap: Record<string, string> = {};
@@ -167,6 +168,19 @@ export default async function JobDetailPage({ params }: PageProps) {
     asbestosSampleRate: settingsMap.asbestos_sample_rate ? Number(settingsMap.asbestos_sample_rate) : null,
     asbestosSiteVisitRate: settingsMap.asbestos_site_visit_rate ? Number(settingsMap.asbestos_site_visit_rate) : 375,
   };
+
+  const addresses = props.map(p => p.building_address).filter(Boolean).join(", ");
+  const emailVars: Record<string, string> = {
+    address: addresses || `Job #${job.job_number}`,
+    job_number: String(job.job_number),
+    company: job.client_company ?? "",
+  };
+  const interpolateTemplate = (t: string) => t.replace(/\{\{(\w+)\}\}/g, (_, k) => emailVars[k] ?? "");
+  const defaultEmailSubject = interpolateTemplate(settingsMap.proposal_email_subject || "Proposal \u2014 {{address}}");
+  const defaultEmailBody = interpolateTemplate(
+    settingsMap.proposal_email_body ||
+    "Hi,\n\nThank you for reaching out. Please find attached our proposal for {{address}}.\n\nOnce you've had a chance to review, let us know a good time to schedule the work. We're looking forward to working with you!"
+  );
 
   const propertyPricings = props.map((p) => computePropertyPricing(p, defaults));
   const aggregatePricing = {
@@ -207,7 +221,10 @@ export default async function JobDetailPage({ params }: PageProps) {
   const updateJobWithId = updateJob.bind(null, id);
   const deleteJobWithId = deleteJob.bind(null, id);
   const dispatchJobWithId = dispatchJob.bind(null, id);
-  const sendProposalWithId = sendProposal.bind(null, id);
+  const sendProposalWithId = async (emailOverrides: { subject: string; body: string }) => {
+    "use server";
+    return sendProposal(id, emailOverrides);
+  };
   const markClientPaidWithId = markClientPaid.bind(null, id);
   const createPropertyWithId = createProperty.bind(null, id);
 
@@ -282,6 +299,8 @@ export default async function JobDetailPage({ params }: PageProps) {
         dispatchAction={dispatchJobWithId}
         markPaidAction={markClientPaidWithId}
         sendProposalAction={sendProposalWithId}
+        defaultEmailSubject={defaultEmailSubject}
+        defaultEmailBody={defaultEmailBody}
       />
 
       <JobDetailForm

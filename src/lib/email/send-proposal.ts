@@ -24,6 +24,8 @@ type SendProposalParams = {
   senderName: string;
   subjectTemplate?: string;
   bodyTemplate?: string;
+  subjectFinal?: string;
+  bodyFinal?: string;
   businessName?: string;
   businessPhone?: string;
   businessEmail?: string;
@@ -54,6 +56,8 @@ export async function sendProposalEmail({
   senderName,
   subjectTemplate,
   bodyTemplate,
+  subjectFinal,
+  bodyFinal,
   businessName,
   businessPhone,
   businessEmail,
@@ -65,8 +69,8 @@ export async function sendProposalEmail({
     company: clientCompany,
   };
 
-  const subject = interpolate(subjectTemplate || DEFAULT_SUBJECT, vars);
-  const bodyText = interpolate(bodyTemplate || DEFAULT_BODY, vars);
+  const subject = subjectFinal ?? interpolate(subjectTemplate || DEFAULT_SUBJECT, vars);
+  const bodyText = bodyFinal ?? interpolate(bodyTemplate || DEFAULT_BODY, vars);
 
   const bodyHtml = bodyText
     .split("\n\n")

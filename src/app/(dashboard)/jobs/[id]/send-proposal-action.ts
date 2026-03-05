@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { generateProposals } from "@/lib/proposals/generate";
 import { sendProposalEmail } from "@/lib/email/send-proposal";
 
-export async function sendProposal(jobId: string): Promise<{ error?: string }> {
+export async function sendProposal(jobId: string, emailOverrides?: { subject: string; body: string }): Promise<{ error?: string }> {
   const supabase = await createClient();
 
   const { data: job } = await supabase
@@ -68,8 +68,10 @@ export async function sendProposal(jobId: string): Promise<{ error?: string }> {
       buildingAddress: addresses,
       attachments: allProposals,
       senderName: s.sender_name ?? "Lion Environmental",
-      subjectTemplate: s.proposal_email_subject,
-      bodyTemplate: s.proposal_email_body,
+      subjectTemplate: emailOverrides ? undefined : s.proposal_email_subject,
+      bodyTemplate: emailOverrides ? undefined : s.proposal_email_body,
+      subjectFinal: emailOverrides?.subject,
+      bodyFinal: emailOverrides?.body,
       businessName: s.business_name,
       businessPhone: s.business_phone,
       businessEmail: s.business_email,

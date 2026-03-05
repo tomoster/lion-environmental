@@ -1,8 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
 type WorkflowBarProps = {
@@ -20,7 +23,9 @@ type WorkflowBarProps = {
   asbestosReportStatus: string;
   dispatchAction: () => Promise<void>;
   markPaidAction: () => Promise<void>;
-  sendProposalAction: () => Promise<{ error?: string }>;
+  sendProposalAction: (data: { subject: string; body: string }) => Promise<{ error?: string }>;
+  defaultEmailSubject: string;
+  defaultEmailBody: string;
 };
 
 type Stage = {
@@ -84,6 +89,9 @@ function CheckIcon() {
 export function WorkflowBar(props: WorkflowBarProps) {
   const { jobId, jobStatus, hasInvoice, invoiceStatus, clientEmail, hasXrf, hasDustSwab, hasAsbestos } = props;
   const [isPending, startTransition] = useTransition();
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailSubject, setEmailSubject] = useState(props.defaultEmailSubject);
+  const [emailBody, setEmailBody] = useState(props.defaultEmailBody);
   const router = useRouter();
 
   const stages = getStages(props);
@@ -91,18 +99,26 @@ export function WorkflowBar(props: WorkflowBarProps) {
 
   const hasServices = hasXrf || hasDustSwab || hasAsbestos;
   const canSendProposal = jobStatus === "not_dispatched" && !!clientEmail && hasServices;
+  const canResendProposal = jobStatus !== "not_dispatched" && !!clientEmail && hasServices;
   const canDispatch = jobStatus === "proposal_sent";
   const canGenerateInvoice = jobStatus === "completed" && !hasInvoice;
   const canMarkPaid = hasInvoice && invoiceStatus !== "paid" && jobStatus === "completed";
 
+  function openEmailModal() {
+    setEmailSubject(props.defaultEmailSubject);
+    setEmailBody(props.defaultEmailBody);
+    setEmailModalOpen(true);
+  }
+
   function handleSendProposal() {
     startTransition(async () => {
       try {
-        const result = await props.sendProposalAction();
+        const result = await props.sendProposalAction({ subject: emailSubject, body: emailBody });
         if (result.error) {
           toast.error(`Proposal failed: ${result.error}`);
         } else {
           toast.success("Proposal sent to client");
+          setEmailModalOpen(false);
         }
       } catch {
         toast.error("Failed to send proposal");
@@ -180,13 +196,18 @@ export function WorkflowBar(props: WorkflowBarProps) {
         <p className="text-sm text-muted-foreground">{description}</p>
         <div className="shrink-0">
           {canSendProposal && (
-            <Button size="sm" onClick={handleSendProposal} disabled={isPending}>
-              {isPending ? "Sending..." : "Send Proposal"}
+            <Button size="sm" onClick={openEmailModal}>
+              Send Proposal
             </Button>
           )}
           {jobStatus === "not_dispatched" && !canSendProposal && (
             <Button size="sm" disabled title="Add client email and at least one service type">
               Send Proposal
+            </Button>
+          )}
+          {canResendProposal && (
+            <Button size="sm" variant="outline" onClick={openEmailModal}>
+              Resend Proposal
             </Button>
           )}
           {canDispatch && (
@@ -206,6 +227,29 @@ export function WorkflowBar(props: WorkflowBarProps) {
           )}
         </div>
       </div>
+      <Dialog open={emailModalOpen} onOpenChange={setEmailModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Proposal Email</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Subject</label>
+              <Input value={emailSubject} onChange={(e) => setEmailSubject(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Body</label>
+              <Textarea rows={8} value={emailBody} onChange={(e) => setEmailBody(e.target.value)} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEmailModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleSendProposal} disabled={isPending}>
+              {isPending ? "Sending..." : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
