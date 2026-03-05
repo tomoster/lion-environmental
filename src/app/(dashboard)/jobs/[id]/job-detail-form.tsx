@@ -1,6 +1,6 @@
 "use client";
 
-import { useTransition, useState } from "react";
+import { useTransition, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -227,7 +227,7 @@ export function JobDetailForm({
           ) : (
             properties.map((prop, idx) => (
               <PropertyCard
-                key={`${prop.id}-${prop.updated_at}`}
+                key={prop.id}
                 property={prop}
                 index={idx}
                 officeWorkers={officeWorkers}
@@ -496,6 +496,17 @@ function PropertyCard({
   const [hasWipes, setHasWipes] = useState(prop.has_wipes);
   const [hasAsbestosSamples, setHasAsbestosSamples] = useState(prop.has_asbestos_samples);
   const router = useRouter();
+
+  useEffect(() => {
+    setXrfChecked(prop.has_xrf);
+    setDustSwabChecked(prop.has_dust_swab);
+    setAsbestosChecked(prop.has_asbestos);
+    setHasStudios1Bed(prop.has_studios_1bed);
+    setHas2_3Bed(prop.has_2_3bed);
+    setHasCommonSpaces(prop.has_common_spaces);
+    setHasWipes(prop.has_wipes);
+    setHasAsbestosSamples(prop.has_asbestos_samples);
+  }, [prop.has_xrf, prop.has_dust_swab, prop.has_asbestos, prop.has_studios_1bed, prop.has_2_3bed, prop.has_common_spaces, prop.has_wipes, prop.has_asbestos_samples]);
 
   const serviceTypes: string[] = [];
   if (prop.has_xrf) serviceTypes.push("XRF");
