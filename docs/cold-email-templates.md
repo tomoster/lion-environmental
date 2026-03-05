@@ -11,7 +11,7 @@ Variables: `{{first_name}}`, `{{company}}`, `{{month}}` (auto-filled with curren
 
 ### Step 1
 
-**Subject:** `Local Law 31 pricing — {{month}} only, {{first_name}}`
+**Subject:** `Don't Miss Lion Environmental's Promotion, {{first_name}}!`
 
 Hi {{first_name}},
 
@@ -43,7 +43,7 @@ Lion Environmental LLC
 
 ### Step 2
 
-**Subject:** `re: lead paint inspections`
+**Subject:** `Still available — LL31 pricing won't last, {{first_name}}`
 
 Hi {{first_name}},
 
@@ -51,14 +51,27 @@ Wanted to follow up — we just wrapped a 24-unit building in the Bronx. Report 
 
 If LL31 inspections are on your list, I can get you a quote today.
 
-Avi
+Promotional Pricing:
+
+$150 – Studios & one-bedroom units
+
+$165 – Two- and three-bedroom units
+
+$110 – Per common area
+
+Lead Dust Swabs:
+
+$275 per unit, plus laboratory costs
+
+Avi Bursztyn
+Lion Environmental LLC
 (201) 375-2797
 
 ---
 
 ### Step 3
 
-**Subject:** `seeing a lot of violations lately`
+**Subject:** `Violations are adding up — lock in our rates, {{first_name}}`
 
 Hi {{first_name}},
 
@@ -66,20 +79,46 @@ Not sure if you've been tracking this but DOB has been issuing LL31 violations p
 
 Way cheaper to get ahead of it. Happy to take a look at your portfolio if it helps.
 
-Avi
+Promotional Pricing:
+
+$150 – Studios & one-bedroom units
+
+$165 – Two- and three-bedroom units
+
+$110 – Per common area
+
+Lead Dust Swabs:
+
+$275 per unit, plus laboratory costs
+
+Avi Bursztyn
+Lion Environmental LLC
 (201) 375-2797
 
 ---
 
 ### Step 4
 
-**Subject:** `(last one from me)`
+**Subject:** `Last chance, {{first_name}} — promo ends soon`
 
 Hi {{first_name}},
 
 Totally get it if the timing's off. If lead paint inspections or LL31 compliance ever comes up, you've got my number.
 
-Avi
+Promotional Pricing:
+
+$150 – Studios & one-bedroom units
+
+$165 – Two- and three-bedroom units
+
+$110 – Per common area
+
+Lead Dust Swabs:
+
+$275 per unit, plus laboratory costs
+
+Avi Bursztyn
+Lion Environmental LLC
 (201) 375-2797
 
 ---
@@ -88,13 +127,25 @@ Avi
 
 ### Step 1
 
-**Subject:** `$40K per unit — Rockland County lead paint grant`
+**Subject:** `Don't Miss Lion Environmental's Promotion, {{first_name}}!`
 
 Hi {{first_name}},
 
 Not sure if you've heard about this — Rockland County has a remediation grant that covers up to $40,000 per unit for landlords. Catch is you need a lead paint inspection first.
 
 We do full-building XRF inspections with certified reports in 48-72 hours. Most of the pre-1978 rentals in the area qualify.
+
+Promotional Pricing:
+
+$150 – Studios & one-bedroom units
+
+$165 – Two- and three-bedroom units
+
+$110 – Per common area
+
+Lead Dust Swabs:
+
+$275 per unit, plus laboratory costs
 
 Worth a quick conversation?
 
@@ -106,7 +157,7 @@ Lion Environmental LLC
 
 ### Step 2
 
-**Subject:** `re: Rockland County lead paint grants`
+**Subject:** `$40K per unit grant + our promo pricing, {{first_name}}`
 
 Hi {{first_name}},
 
@@ -114,14 +165,27 @@ Following up on this — the county grant is real money ($40K per unit) and most
 
 Happy to put together a quick quote if you want to see what it'd cost.
 
-Avi
+Promotional Pricing:
+
+$150 – Studios & one-bedroom units
+
+$165 – Two- and three-bedroom units
+
+$110 – Per common area
+
+Lead Dust Swabs:
+
+$275 per unit, plus laboratory costs
+
+Avi Bursztyn
+Lion Environmental LLC
 (201) 375-2797
 
 ---
 
 ### Step 3
 
-**Subject:** `owner in New City just applied for the grant`
+**Subject:** `Landlords in Rockland are jumping on this, {{first_name}}`
 
 Hi {{first_name}},
 
@@ -129,18 +193,44 @@ Just finished a property in New City — owner's applying for the Rockland remed
 
 If you've been sitting on this, happy to get you a quote this week.
 
-Avi
+Promotional Pricing:
+
+$150 – Studios & one-bedroom units
+
+$165 – Two- and three-bedroom units
+
+$110 – Per common area
+
+Lead Dust Swabs:
+
+$275 per unit, plus laboratory costs
+
+Avi Bursztyn
+Lion Environmental LLC
 (201) 375-2797
 
 ---
 
 ### Step 4
 
-**Subject:** `(last one from me)`
+**Subject:** `Last chance, {{first_name}} — promo ends soon`
 
 Hi {{first_name}},
 
 No worries if the timing's off. If lead paint inspections or the Rockland grants ever come up, I'm around.
 
-Avi
+Promotional Pricing:
+
+$150 – Studios & one-bedroom units
+
+$165 – Two- and three-bedroom units
+
+$110 – Per common area
+
+Lead Dust Swabs:
+
+$275 per unit, plus laboratory costs
+
+Avi Bursztyn
+Lion Environmental LLC
 (201) 375-2797
