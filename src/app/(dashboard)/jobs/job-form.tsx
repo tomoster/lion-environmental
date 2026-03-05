@@ -48,6 +48,7 @@ type JobFormProps = {
 export function JobForm({ workers, durationDefaults, defaultValues, onSuccess }: JobFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
   const [xrfChecked, setXrfChecked] = useState(true);
   const [dustSwabChecked, setDustSwabChecked] = useState(false);
   const [asbestosChecked, setAsbestosChecked] = useState(false);
@@ -76,10 +77,15 @@ export function JobForm({ workers, durationDefaults, defaultValues, onSuccess }:
     if (estimatedEndTime) {
       formData.set("estimated_end_time", estimatedEndTime);
     }
+    setError(null);
     startTransition(async () => {
-      const jobId = await createJob(formData);
-      onSuccess?.();
-      router.push(`/jobs/${jobId}`);
+      try {
+        const jobId = await createJob(formData);
+        onSuccess?.();
+        router.push(`/jobs/${jobId}`);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Failed to create job");
+      }
     });
   }
 
@@ -268,6 +274,8 @@ export function JobForm({ workers, durationDefaults, defaultValues, onSuccess }:
           rows={3}
         />
       </div>
+
+      {error && <p className="text-sm text-red-500">{error}</p>}
 
       <div className="flex justify-end gap-2 pt-2">
         <Button type="submit" disabled={isPending || !anyServiceChecked}>
