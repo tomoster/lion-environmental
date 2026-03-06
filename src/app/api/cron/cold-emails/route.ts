@@ -149,8 +149,7 @@ export async function GET(request: NextRequest) {
     (suppressedRows ?? []).map((r) => r.email.toLowerCase())
   );
 
-  // Get up to 5 due prospects — follow-ups first, then oldest scheduled
-  const batchSize = Math.min(remaining, 5);
+  // Get 1 due prospect — follow-ups first, then oldest scheduled
   const { data: prospects } = await supabase
     .from("prospects")
     .select("*")
@@ -159,7 +158,7 @@ export async function GET(request: NextRequest) {
     .lte("next_send", new Date().toISOString())
     .order("seq_step", { ascending: false })
     .order("next_send", { ascending: true })
-    .limit(batchSize);
+    .limit(1);
 
   if (!prospects || prospects.length === 0) {
     return NextResponse.json({
