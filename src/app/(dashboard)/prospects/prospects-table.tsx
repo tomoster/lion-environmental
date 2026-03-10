@@ -76,6 +76,19 @@ interface ProspectsTableProps {
 }
 
 
+function formatPhone(phone: string | null): string {
+  if (!phone) return "—";
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("1")) {
+    const d = digits.slice(1);
+    return `(${d.slice(0, 3)}) ${d.slice(3, 6)}-${d.slice(6)}`;
+  }
+  if (digits.length === 10) {
+    return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`;
+  }
+  return phone;
+}
+
 function StatusBadge({ status }: { status: string }) {
   const label = STATUS_LABELS[status] ?? status;
   const colorClass =
@@ -269,7 +282,7 @@ function ProspectRow({ prospect }: { prospect: Prospect }) {
         {prospect.contact_name ?? "—"}
       </TableCell>
       <TableCell className="hidden xl:table-cell text-muted-foreground">
-        {prospect.phone ?? "—"}
+        {formatPhone(prospect.phone)}
       </TableCell>
       <TableCell className="hidden lg:table-cell text-muted-foreground text-sm truncate max-w-40">
         {prospect.email ?? "—"}
