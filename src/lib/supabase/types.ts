@@ -593,6 +593,7 @@ export type Database = {
           next_send: string | null
           notes: string | null
           phone: string | null
+          phone_enriched: boolean | null
           seq_step: number
           source: string | null
           status: string
@@ -614,6 +615,7 @@ export type Database = {
           next_send?: string | null
           notes?: string | null
           phone?: string | null
+          phone_enriched?: boolean | null
           seq_step?: number
           source?: string | null
           status?: string
@@ -635,6 +637,7 @@ export type Database = {
           next_send?: string | null
           notes?: string | null
           phone?: string | null
+          phone_enriched?: boolean | null
           seq_step?: number
           source?: string | null
           status?: string

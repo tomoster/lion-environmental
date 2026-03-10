@@ -8,6 +8,7 @@ interface ProspectsPageProps {
     search?: string;
     status?: string;
     step?: string;
+    phone?: string;
     page?: string;
   }>;
 }
@@ -15,7 +16,7 @@ interface ProspectsPageProps {
 export default async function ProspectsPage({
   searchParams,
 }: ProspectsPageProps) {
-  const { search, status, step, page: pageParam } = await searchParams;
+  const { search, status, step, phone, page: pageParam } = await searchParams;
   const page = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const from = (page - 1) * PAGE_SIZE;
   const to = from + PAGE_SIZE - 1;
@@ -48,6 +49,12 @@ export default async function ProspectsPage({
     if (stepNum >= 0 && stepNum <= 4) {
       query = query.eq("seq_step", stepNum);
     }
+  }
+
+  if (phone === "enriched") {
+    query = query.eq("phone_enriched", true);
+  } else if (phone === "hq") {
+    query = query.or("phone_enriched.is.null,phone_enriched.eq.false");
   }
 
   const todayStart = new Date();
@@ -93,6 +100,7 @@ export default async function ProspectsPage({
         search={search ?? ""}
         statusFilter={status ?? ""}
         stepFilter={step ?? ""}
+        phoneFilter={phone ?? ""}
         page={page}
         totalCount={count ?? 0}
         pageSize={PAGE_SIZE}

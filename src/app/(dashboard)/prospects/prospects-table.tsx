@@ -69,6 +69,7 @@ interface ProspectsTableProps {
   search: string;
   statusFilter: string;
   stepFilter: string;
+  phoneFilter: string;
   page: number;
   totalCount: number;
   pageSize: number;
@@ -354,6 +355,7 @@ export function ProspectsTable({
   search,
   statusFilter,
   stepFilter,
+  phoneFilter,
   page,
   totalCount,
   pageSize,
@@ -395,6 +397,13 @@ export function ProspectsTable({
   function handleStepChange(value: string) {
     navigateWithParams({
       step: value === "all" ? null : value,
+      page: null,
+    });
+  }
+
+  function handlePhoneChange(value: string) {
+    navigateWithParams({
+      phone: value === "all" ? null : value,
       page: null,
     });
   }
@@ -449,6 +458,19 @@ export function ProspectsTable({
               <SelectItem value="2">Step 2</SelectItem>
               <SelectItem value="3">Step 3</SelectItem>
               <SelectItem value="4">Step 4</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={phoneFilter || "all"}
+            onValueChange={handlePhoneChange}
+          >
+            <SelectTrigger className="w-36">
+              <SelectValue placeholder="All phones" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All phones</SelectItem>
+              <SelectItem value="enriched">Enriched (direct)</SelectItem>
+              <SelectItem value="hq">HQ only</SelectItem>
             </SelectContent>
           </Select>
         </div>
